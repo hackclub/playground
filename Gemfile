@@ -73,4 +73,4 @@ gem "json", "~> 2.21"
 
 # Screenshot uploads go to the Hack Club R2 bucket through its S3 API.
 # ruby-vips comes with image_processing.
-gem "aws-sdk-s3", "~> 1.170", require: false
+gem "aws-sdk-s3", "~> 1.232", require: false
