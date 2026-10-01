@@ -1,0 +1,20 @@
+<%# The login's first step, in login.exe on the desktop. On a page of its own,
+    it shows as login.exe on the desktop's wallpaper. %>
+<section class="panel center login">
+  <p class="login-title" aria-hidden="true">login.exe</p>
+  <%= render "sessions/steps", current: "hack_club" %>
+  <h2>ship your desktop pet</h2>
+  <p>log in with your Hack Club account to track your hours, ship your pet, and redeem prizes.</p>
+  <% if Rails.application.credentials.dig(:hack_club, :client_id) %>
+    <%= button_to "log in with Hack Club", "/auth/hack_club", data: { turbo: false }, form: { target: "_top" }, class: "btn primary" %>
+  <% end %>
+  <p class="muted">then you'll link Hackatime, which tracks your coding time.</p>
+  <% if FakeServices.on? %>
+    <p class="muted">development logins:</p>
+    <p class="dev-logins">
+      <% %w[participant unverified red admin froppii].each do |kind| %>
+        <%= link_to kind, dev_login_path(as: kind), target: "_top" %>
+      <% end %>
+    </p>
+  <% end %>
+</section>

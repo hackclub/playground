@@ -1,0 +1,33 @@
+<%= form_with model: project, class: "stack" do |f| %>
+  <% if project.errors.any? %>
+    <p class="banner alert"><%= project.errors.full_messages.to_sentence %></p>
+  <% end %>
+  <label>name <%= f.text_field :name, required: true, maxlength: 80 %></label>
+  <label>description <span class="muted">what does your pet do?</span>
+    <%= f.text_area :description, rows: 3, maxlength: 2000 %></label>
+  <%# A new pet asks for its name and description only. The ship popup on the
+      pet page it lands on lists what is still missing, and edit adds the rest. %>
+  <% if project.persisted? %>
+    <label>code URL <span class="muted">a public link to its code, such as a GitHub repository</span>
+      <%= f.url_field :code_url, placeholder: "https://github.com/you/your-pet" %></label>
+    <label>shipped link <span class="muted">a GitHub release with an installer or executable, or a public website</span>
+      <%= f.url_field :playable_url, placeholder: "https://github.com/you/your-pet/releases/latest" %></label>
+    <fieldset>
+      <legend>screenshots <span class="muted">saved as they upload. the first is the cover.</span></legend>
+      <%= render "screenshot_upload", project: %>
+    </fieldset>
+
+    <fieldset>
+      <legend>Hackatime projects</legend>
+      <%= render "hackatime_picker", project: %>
+    </fieldset>
+  <% end %>
+
+  <div class="row">
+    <%= f.submit project.new_record? ? "create pet" : "save", class: "btn primary" %>
+    <%= link_to "cancel", project.new_record? ? dashboard_path : project, class: "btn" %>
+  </div>
+<% end %>
+<% if current_user.hackatime_unlinked %>
+  <%= form_tag hackatime_oauth_path, id: "hackatime-relink", target: "_top", data: { turbo: false }, hidden: true do %><% end %>
+<% end %>

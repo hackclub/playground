@@ -1,0 +1,24 @@
+<div class="cards">
+  <% { review: admin_review_path, fraud: admin_fraud_path, fulfillment: admin_fulfillment_path }.each do |stage, path| %>
+    <%= link_to path, class: "card" do %>
+      <span class="big"><%= @counts[stage] %></span>
+      <span><%= stage %></span>
+    <% end %>
+  <% end %>
+  <%= link_to admin_people_path, class: "card" do %>
+    <span class="big"><%= @people %></span><span>people</span>
+  <% end %>
+</div>
+<section class="panel">
+  <h2>how this works</h2>
+  <p>queues run one stage across everyone: open one and it hands you the oldest item nobody else holds. press <kbd>n</kbd> to skip, and a verdict takes you to the next. a person page runs review, fraud, and fulfillment for one participant in one go.</p>
+  <p class="muted">order: review, then fraud. pending hours become approved only when both pass. every redeemed goal goes through fulfillment.</p>
+</section>
+<section class="panel">
+  <h2>recent</h2>
+  <ul class="events">
+    <% @events.each do |e| %>
+      <li><span class="muted"><%= time_ago_in_words(e.created_at) %> ago</span> · <%= e.actor&.display_name || "system" %> · <%= e.action %> · <%= e.subject_type %> <%= e.subject_id %></li>
+    <% end %>
+  </ul>
+</section>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= [ content_for(:title), "playground" ].compact_blank.join(" · ") %></title>
+    <%= render "shared/icons" %>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%# A link preview is fetched logged out, so only a page seen logged out,
+        such as the login, carries its tags. A page behind the login has none. %>
+    <%= render "shared/link_preview", **(@link_preview || {}) unless current_user %>
+    <%= stylesheet_link_tag "playground" %>
+    <%= render "shared/plausible" %>
+    <%= javascript_importmap_tags %>
+    <%# A page with fields to type in keeps out of Turbo's preview, the cached
+        copy it shows while the page loads, since typing into the copy is lost
+        when the page arrives. %>
+    <%= yield :head %>
+  </head>
+  <body class="app">
+    <script>if (window.top !== window.self) document.body.classList.add("in-window")</script>
+    <% if notice %><p class="flash notice"><%= notice %></p><% end %>
+    <% if alert %><p class="flash alert"><%= alert %></p><% end %>
+    <%= yield %>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+<%# One screenshot's cell in the edit grid. An empty one is the template for an upload. %>
+<%= tag.li class: [ "shot-cell", "thumb", ("cover" if cover) ], tabindex: 0, aria: { label:, describedby: hint },
+           data: { id: shot["id"], action: "keydown->screenshot-upload#key pointerdown->screenshot-upload#grab click->screenshot-upload#pickFor dragover->screenshot-upload#overThumb dragleave->screenshot-upload#leaveThumb drop->screenshot-upload#dropOn" } do %>
+  <%= tag.img src: shot["url"], alt: "" %>
+  <%= tag.button "×", type: "button", class: "remove", aria: { label: "remove #{label.split(",").first}" },
+                 data: { action: "screenshot-upload#remove" } %>
+  <progress max="1" value="0" hidden></progress>
+  <span class="thumb-state" hidden></span>
+<% end %>

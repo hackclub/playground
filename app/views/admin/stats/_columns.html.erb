@@ -1,0 +1,17 @@
+<%# Upright bars, one per column, each topped by its count linked to its people. A mark labels a column's left edge, as a goal does. %>
+<% top = [ columns.map { it[:group].count }.max.to_i, 1 ].max %>
+<table class="<%= token_list("bars", long: columns.size > 20) %>">
+  <% if columns.any? { it[:mark] } %>
+    <tr class="marks"><% columns.each do |c| %><td class="<%= "mark" if c[:mark] %>"><%= c[:mark] %></td><% end %></tr>
+  <% end %>
+  <tr class="wells">
+    <% columns.each do |c| %>
+      <td class="<%= "mark" if c[:mark] %>"><div class="well">
+        <% if c[:group].count.positive? %>
+          <%= people_count(c[:group]) %><span class="fill" style="--h: <%= (c[:group].count.to_f / top).round(3) %>" title="<%= c[:group].label %>: <%= c[:group].count %>"></span>
+        <% end %>
+      </div></td>
+    <% end %>
+  </tr>
+  <tr class="labels"><% columns.each do |c| %><td class="<%= "mark" if c[:mark] %>"><%= c[:label] %></td><% end %></tr>
+</table>

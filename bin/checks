@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Runs every job in .github/workflows/ci.yml locally, the way CI runs them:
+# tests run without config/master.key, because CI has none. Run before every
+# commit; it exits non-zero if any job fails.
+set -u
+cd "$(dirname "$0")/.."
+
+failed=0
+run() {
+  local name=$1; shift
+  printf "%-14s" "$name"
+  if out=$("$@" 2>&1); then echo "pass"; else echo "FAIL"; echo "$out" | tail -15; failed=1; fi
+}
+
+key=config/master.key
+aside=$(mktemp -d)/master.key
+restore() { [ -f "$aside" ] && mv "$aside" "$key"; }
+trap restore EXIT
+
+run scan_ruby bin/brakeman --no-pager -q
+run bundler-audit bin/bundler-audit
+run scan_js bin/importmap audit
+run lint bin/rubocop
+[ -f "$key" ] && mv "$key" "$aside"
+run test bin/rails db:test:prepare test
+run system-test bin/rails test:system
+restore
+
+exit $failed

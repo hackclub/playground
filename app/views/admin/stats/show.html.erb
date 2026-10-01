@@ -1,0 +1,244 @@
+<section class="panel">
+  <h2>how many hours, in which stage?</h2>
+  <% stages = @stats.hours_by_stage %>
+  <% total = stages.values.sum %>
+  <% if total.zero? %>
+    <p class="muted">nobody has any hours yet.</p>
+  <% else %>
+    <div class="row pie-row">
+      <%= hours_pie(stages) %>
+      <table class="kv stages">
+        <% stages.each do |stage, seconds| %>
+          <tr><td><span class="key <%= stage %>"></span> <%= stage %></td><td><%= hours(seconds) %></td><td><%= share(seconds.to_f / total) %></td></tr>
+        <% end %>
+        <tr class="total"><td>total</td><td><%= hours(total) %></td><td></td></tr>
+      </table>
+    </div>
+  <% end %>
+  <% if @stats.review.claimed.positive? %>
+    <% cut = @stats.cut %>
+    <p>cut in review: <strong><%= hours(cut.total) %></strong>
+      <span class="muted">· deflated <%= hours(cut.deflated) %> · deducted in fraud <%= hours(cut.deducted) %> · rejected ships <%= hours(cut.rejected) %></span></p>
+  <% end %>
+  <% refreshes = @stats.refreshes %>
+  <% if refreshes.pets.positive? %>
+    <p class="muted">unshipped hours are as of each pet's last Hackatime refresh, which runs every hour and whenever its owner opens their dashboard.
+      <% if refreshes.oldest %>the oldest refresh is <%= wait(refreshes.oldest) %> old, the median <%= wait(refreshes.median) %>.<% end %>
+      <% if refreshes.never.positive? %><%= pluralize(refreshes.never, "pet") %> with Hackatime projects never refreshed.<% end %></p>
+  <% end %>
+</section>
+
+<section class="panel">
+  <h2>where do people drop out?</h2>
+  <% steps = @stats.funnel %>
+  <% everyone = steps.first.reached.count %>
+  <% if everyone.zero? %>
+    <p class="muted">nobody has signed up yet.</p>
+  <% else %>
+    <p class="muted">each step counts the people who passed it and every step above it. stuck here: passed the step above, not this one.</p>
+    <table class="list funnel">
+      <tr><th>step</th><th>people</th><th>of the step above</th><th>stuck here</th></tr>
+      <% steps.each do |step| %>
+        <tr>
+          <td><%= step.label %><%= bar(step.reached.count.to_f / everyone) %></td>
+          <td><%= people_count(step.reached) %></td>
+          <td><%= share(step.share) if step.stuck %></td>
+          <td><% if step.stuck %><%= people_count(step.stuck) %><% if step.biggest_drop %> <span class="late">biggest drop</span><% end %><% end %></td>
+        </tr>
+      <% end %>
+    </table>
+  <% end %>
+</section>
+
+<section class="panel">
+  <h2>who can I nudge today?</h2>
+  <p class="muted">banned people are left out.</p>
+  <div class="cards nudges">
+    <% @stats.nudges.each do |group| %>
+      <%= content_tag(group.count.positive? ? :a : :div, class: "card", href: (admin_people_path(filter: group.key) if group.count.positive?)) do %>
+        <span class="big"><%= group.count %></span>
+        <span><%= group.label %></span>
+        <% if group.key == "ship_now" && group.count.positive? %><span class="muted">holding <%= hours(@stats.ship_now_seconds) %> unshipped</span><% end %>
+      <% end %>
+    <% end %>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>is review slowing people down?</h2>
+  <% review = @stats.review %>
+  <table class="kv">
+    <% { "waiting for review" => [ review.review_queue, admin_review_path ], "waiting for fraud" => [ review.fraud_queue, admin_fraud_path ] }.each do |name, (queue, path)| %>
+      <tr><td><%= name %></td>
+        <td><%= link_to pluralize(queue.count, "ship"), path %><% if queue.count.positive? %> · oldest waiting <%= wait(@stats.now - queue.oldest) %> · <%= hours(queue.seconds) %> pending<% end %></td></tr>
+    <% end %>
+    <tr><td>ship to review verdict</td><td><%= review.to_review ? "median #{wait(review.to_review)}" : "no verdicts yet" %></td></tr>
+    <tr><td>review to fraud verdict</td><td><%= review.to_fraud ? "median #{wait(review.to_fraud)}" : "no verdicts yet" %></td></tr>
+    <tr><td>sent back for changes</td>
+      <td><% if review.reviewed.positive? %><%= share(review.sent_back.to_f / review.reviewed) %> of <%= pluralize(review.reviewed, "reviewed ship") %><% else %>nothing reviewed yet<% end %></td></tr>
+    <tr><td>shipped again after changes</td>
+      <td><% if review.sent_back.positive? %><%= share(review.shipped_again.to_f / review.sent_back) %>, <%= review.shipped_again %> of <%= review.sent_back %><% else %>none sent back yet<% end %></td></tr>
+    <tr><td>approved of claimed hours</td>
+      <td><% if review.claimed.positive? %><%= share(review.approved.to_f / review.claimed) %>, <%= hours(review.approved) %> of <%= hours(review.claimed) %> on finished ships<% else %>no ship finished yet<% end %></td></tr>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>do the goals pull people on?</h2>
+  <% buckets = @stats.histogram %>
+  <% if buckets.sum { it.group.count }.zero? %>
+    <p class="muted">nobody has any hours yet.</p>
+  <% else %>
+    <p class="muted">people with any hours, by their total on the meter. a line marks each goal.</p>
+    <%= render "columns", columns: buckets.map { { label: it.label, group: it.group, mark: (it.goal && safe_join([ "#{it.goal.hours}h ", tag.span(it.goal.key, class: "goal-name") ])) } } %>
+    <% goals = @stats.goals %>
+    <table class="list">
+      <tr><th></th><% goals.each do |row| %><th><%= row.goal.hours %>h <%= row.goal.key %></th><% end %></tr>
+      <% { total: "reached in total hours", approved: "reached in approved hours", redeemed: "redeemed", fulfilled: "fulfilled" }.each do |measure, name| %>
+        <tr><td><%= name %></td><% goals.each do |row| %><td><%= people_count(row.public_send(measure)) %></td><% end %></tr>
+      <% end %>
+    </table>
+  <% end %>
+</section>
+
+<section class="panel">
+  <h2>what stops pets from shipping?</h2>
+  <% pets = @stats.pets %>
+  <% if pets.count.zero? %>
+    <p class="muted">no pet with unshipped hours is waiting for its first ship.</p>
+  <% else %>
+    <p><%= pluralize(pets.count, "pet") %> hold <%= hours(pets.seconds) %> unshipped and never shipped.
+      <span class="muted">the ship checks they fail, leaving out those that need the network, such as whether the links load.</span></p>
+    <table class="list">
+      <tr><th>missing</th><th>pets</th><th>their owners</th></tr>
+      <% pets.conditions.each do |condition| %>
+        <tr><td><%= condition.label %></td><td><%= condition.pets %></td><td><%= people_count(condition.owners) %></td></tr>
+      <% end %>
+      <tr><td>nothing: these could ship now</td><td><%= pets.ready_pets %></td><td><%= people_count(pets.ready) %></td></tr>
+    </table>
+  <% end %>
+</section>
+
+<section class="panel">
+  <h2>what do reviewers keep asking for?</h2>
+  <% notes = @stats.feedback %>
+  <% if notes.empty? %>
+    <p class="muted">no ship has been sent back for changes yet.</p>
+  <% else %>
+    <table class="list">
+      <tr><th>when</th><th>pet</th><th>feedback</th></tr>
+      <% notes.each do |ship| %>
+        <tr><td class="muted"><%= ship.reviewed_at.to_date %></td><td><%= link_to ship.project.name, admin_ship_path(ship) %></td><td><%= ship.review_feedback %></td></tr>
+      <% end %>
+    </table>
+  <% end %>
+</section>
+
+<section class="panel">
+  <h2>how many people sign up each day?</h2>
+  <% signups = @stats.signups %>
+  <% days = signups.days %>
+  <% if days.empty? %>
+    <p class="muted">the program window hasn't opened yet.</p>
+  <% elsif days.sum { it.group.count }.zero? %>
+    <p class="muted">nobody has signed up since the window opened.</p>
+  <% else %>
+    <%= render "columns", columns: days.map { { label: it.date.day, group: it.group } } %>
+    <p class="muted"><%= days.first.date.strftime("%B %-d") %> to <%= days.last.date.strftime("%B %-d") %>, in US Eastern time.</p>
+  <% end %>
+  <% if signups.before.count.positive? %><p class="muted"><%= people_count(signups.before) %> signed up before the window opened.</p><% end %>
+</section>
+
+<section class="panel">
+  <h2>when do people code?</h2>
+  <% days = @stats.coding_days.select(&:counted) %>
+  <% if days.sum(&:seconds).zero? %>
+    <p class="muted">no coding time in the window yet.</p>
+  <% else %>
+    <% busiest = days.map(&:seconds).max %>
+    <div class="heat-scroll">
+      <table class="heat days">
+        <tr><td></td><% @stats.coding_weeks.each do |week| %><th scope="col"><%= week.compact.first.date.strftime("%b %-d") %></th><% end %></tr>
+        <% 7.times do |wday| %>
+          <tr>
+            <th scope="row"><%= Date::ABBR_DAYNAMES[wday].downcase %></th>
+            <% @stats.coding_weeks.each do |week| %>
+              <% day = week[wday] %>
+              <% if day&.counted %>
+                <% about = "#{day.date.strftime("%a %B %-d")}: #{hours(day.seconds)}, #{pluralize(day.people, "person", plural: "people")} coding" %>
+                <td class="l<%= heat(day.seconds, busiest) %>" title="<%= about %>"><span class="visually-hidden"><%= about %></span></td>
+              <% else %>
+                <td></td>
+              <% end %>
+            <% end %>
+          </tr>
+        <% end %>
+      </table>
+    </div>
+    <p class="legend heat-legend">less <% 5.times do |level| %><span class="cell l<%= level %>"></span><% end %> more
+      <span class="muted">· the busiest day had <%= hours(busiest) %> coded</span></p>
+    <details>
+      <summary>each day in numbers</summary>
+      <table class="list">
+        <tr><th>day</th><th>coded</th><th>people coding</th><th>signed up</th></tr>
+        <% days.reverse_each do |day| %>
+          <tr><td><%= day.date.strftime("%a %B %-d") %></td><td><%= hours(day.seconds) %></td><td><%= day.people %></td><td><%= people_count(day.signups) %></td></tr>
+        <% end %>
+      </table>
+    </details>
+
+    <h3>by hour of the day, US Eastern time</h3>
+    <% grid = @stats.hour_grid %>
+    <% peak = grid.compact.flatten.max %>
+    <div class="heat-scroll">
+      <table class="heat hours">
+        <colgroup><col class="names"><col span="24"></colgroup>
+        <tr><td></td><% (0...24).step(6) do |hour| %><th colspan="6" scope="colgroup"><%= hour_name(hour) %></th><% end %></tr>
+        <% grid.each_with_index do |averages, wday| %>
+          <tr>
+            <th scope="row"><%= Date::ABBR_DAYNAMES[wday].downcase %></th>
+            <% 24.times do |hour| %>
+              <% if averages %>
+                <% about = "#{Date::ABBR_DAYNAMES[wday].downcase} #{hour_name(hour)}: #{hours(averages[hour])} on average" %>
+                <td class="l<%= heat(averages[hour], peak) %>" title="<%= about %>"><span class="visually-hidden"><%= about %></span></td>
+              <% else %>
+                <td></td>
+              <% end %>
+            <% end %>
+          </tr>
+        <% end %>
+      </table>
+    </div>
+    <p class="muted">each cell is everyone's time coded in that hour, averaged over the times that weekday has come in the window.
+      busiest: <%= @stats.busiest_hours.map { |seconds, wday, hour| "#{Date::ABBR_DAYNAMES[wday].downcase} #{hour_name(hour)} (#{hours(seconds)})" }.join(", ") %>.</p>
+  <% end %>
+  <% fetches = @stats.fetches %>
+  <% if fetches.linked.positive? %>
+    <p class="muted">coding time comes from Hackatime, fetched for each participant every hour.
+      <% if fetches.oldest %>the oldest fetch is <%= wait(fetches.oldest) %> old, the median <%= wait(fetches.median) %>.<% end %>
+      <% if fetches.never.positive? %><%= pluralize(fetches.never, "participant") %> with Hackatime linked not fetched yet.<% end %></p>
+  <% end %>
+</section>
+
+<section class="panel">
+  <h2>are people coding more or less?</h2>
+  <% momentum = @stats.momentum %>
+  <% coders = @stats.coders %>
+  <% window = ProgramWindow.current %>
+  <% if momentum.coded.zero? %>
+    <p class="muted">no coding time in the window yet.</p>
+  <% else %>
+    <table class="kv">
+      <tr><td>last 7 days</td><td><%= hours(momentum.last_7_days) %> coded · <%= weekly_change(momentum.last_7_days, momentum.previous_7_days) %>
+        <% if @stats.now - window.starts_at < 14.days %><span class="muted">· the window opened <%= wait([ @stats.now - window.starts_at, 0 ].max) %> ago, so the weeks are not yet whole</span><% end %></td></tr>
+      <tr><td>people coding</td><td><%= people_count(coders[:today]) %> today · <%= people_count(coders[:week]) %> in the last 7 days</td></tr>
+      <tr><td>coded in the window</td><td><%= hours(momentum.coded) %></td></tr>
+      <tr><td>projection for the end</td>
+        <td><% if momentum.projected %>about <%= hours(momentum.projected) %> by <%= program_time(window.ends_at) %>, if the last 7 days' pace holds
+          <% elsif @stats.now >= window.ends_at %>the window has closed<% else %>the window hasn't opened yet<% end %></td></tr>
+      <tr><td>signup to first coded hour</td>
+        <td><% if momentum.to_first_code %>median <%= wait(momentum.to_first_code) %>, over the <%= people_count(coders[:ever]) %> who have coded<% else %>nobody has coded yet<% end %></td></tr>
+    </table>
+    <p class="muted">coded time is from Hackatime, before review: time later deflated or rejected still counts here. days are US Eastern.</p>
+  <% end %>
+</section>

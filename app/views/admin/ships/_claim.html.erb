@@ -1,0 +1,10 @@
+<% if claim %>
+  <div data-controller="heartbeat"
+       data-heartbeat-url-value="<%= admin_claims_heartbeat_path %>"
+       data-heartbeat-type-value="Ship" data-heartbeat-id-value="<%= ship.id %>" data-heartbeat-stage-value="<%= stage %>">
+    <p class="banner alert" data-heartbeat-target="banner" <%= "hidden" unless held %>>
+      <span data-holder><%= claim.user.display_name %></span> is working on this <%= stage %>.
+      <%= link_to "take over", admin_ship_path(ship, stage:, take: 1, flow: params[:flow]) %>
+    </p>
+  </div>
+<% end %>

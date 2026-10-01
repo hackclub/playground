@@ -1,0 +1,29 @@
+<%# The picker of the participant's Hackatime projects, for the edit form and
+    for ship.exe. %>
+<% if !current_user.hackatime_connected? %>
+  <p class="muted">link Hackatime on your dashboard first.</p>
+<% elsif current_user.hackatime_unlinked %>
+  <%# A form can't hold another, so this button submits the relink form after the pet form. %>
+  <p class="banner alert"><%= Hackatime::UNLINKED %> <%= button_tag "link it again", form: "hackatime-relink", name: nil, class: "linkish", data: { turbo: false } %></p>
+<% elsif @hackatime_error %>
+  <p class="banner alert">could not load Hackatime: <%= @hackatime_error %></p>
+<% elsif @hackatime_projects.empty? %>
+  <p class="muted">no Hackatime projects with time since <%= program_time(ProgramWindow.current.starts_at) %> yet. start coding and they'll appear here.</p>
+<% else %>
+  <%= hidden_field_tag "project[hackatime_projects][]", "" %>
+  <ul class="picker">
+    <% @hackatime_projects.each do |hp| %>
+      <li>
+        <label>
+          <%= check_box_tag "project[hackatime_projects][]", hp.name, project.hackatime_projects.include?(hp.name), id: nil %>
+          <strong><%= hp.name %></strong>
+          <% if hp.most_recent_heartbeat %>
+            <span class="muted"><%= hours(hp.total_seconds) %> · last active <%= time_ago_in_words(hp.most_recent_heartbeat) %> ago</span>
+          <% else %>
+            <span class="muted">no time counted yet</span>
+          <% end %>
+        </label>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

@@ -1,0 +1,91 @@
+<% r = @redemption; u = r.user %>
+<header class="itemhead">
+  <div>
+    <h1><%= r.goal.name %> <span class="muted">for <%= link_to u.display_name, admin_person_path(u) %></span></h1>
+    <p><%= state_badge(r.status) %> · redeemed <%= time_ago_in_words(r.created_at) %> ago
+      · hang time <span class="<%= "late" if r.hang_days >= 2 && r.status == "pending" %>"><%= pluralize(r.hang_days, "day") %></span></p>
+  </div>
+  <div class="row">
+    <% unless flow? %><%= link_to "skip", admin_fulfillment_path(skip: r.id), class: "btn", data: { shortcut: "n" } %><kbd>n</kbd><% end %>
+  </div>
+</header>
+
+<% if @claim %>
+  <div data-controller="heartbeat" data-heartbeat-url-value="<%= admin_claims_heartbeat_path %>"
+       data-heartbeat-type-value="Redemption" data-heartbeat-id-value="<%= r.id %>" data-heartbeat-stage-value="fulfillment">
+    <p class="banner alert" data-heartbeat-target="banner" <%= "hidden" unless @held %>>
+      <span data-holder><%= @claim.user.display_name %></span> is working on this. <%= link_to "take over", admin_redemption_path(r, take: 1, flow: params[:flow]) %>
+    </p>
+  </div>
+<% end %>
+
+<div class="columns">
+  <aside class="col side">
+    <section class="panel">
+      <h2>participant</h2>
+      <p><strong><%= u.display_name %></strong><br>full name: <%= u.full_name %><br><%= u.email %><br>
+        <%= u.eligible? ? "✓ verified, eligible" : "✗ not eligible now" %>
+        <% if u.banned? %><br><span class="badge badge-banned">banned</span><% end %></p>
+      <p>approved <strong><%= hours(u.hours.approved_seconds) %></strong> · goal needs <%= r.goal.hours %>h</p>
+      <p class="muted">other redemptions: <%= u.redemptions.where.not(id: r.id).map { "#{it.goal.name} (#{it.status})" }.join(", ").presence || "none" %></p>
+    </section>
+  </aside>
+  <main class="col main">
+    <section class="panel" data-controller="copy">
+      <h2>ship to</h2>
+      <% if @address %>
+        <%# The parcel's label, line by line, and all of it at once. %>
+        <% lines = { "name" => [@address["first_name"], @address["last_name"]].compact_blank.join(" "), "line 1" => @address["line_1"], "line 2" => @address["line_2"],
+                     "city" => @address["city"], "state" => @address["state"], "postal code" => @address["postal_code"], "country" => @address["country"] }.compact_blank %>
+        <table class="kv address">
+          <% lines.each do |label, value| %>
+            <tr><td class="muted"><%= label %></td><td><%= value %></td>
+              <td><button class="btn small" data-action="copy#copy" data-copy="<%= value %>">copy</button></td></tr>
+          <% end %>
+        </table>
+        <button class="btn" data-action="copy#copy" data-copy="<%= lines.values.join("\n") %>" data-shortcut="y">copy all</button><kbd>y</kbd>
+        <%# How to reach them, for a carrier's form or a question about the
+            parcel. It is not part of the label, so copy all leaves it out,
+            and each has a key of its own. It shows only with the address. %>
+        <% contact = [ [ "email", u.email, "e" ], [ "phone", @address["phone_number"], "m" ], [ "Slack ID", u.slack_id, "k" ] ].select { it[1].present? } %>
+        <% if contact.any? %>
+          <h3>contact</h3>
+          <table class="kv contact">
+            <% contact.each do |label, value, key| %>
+              <tr><td class="muted"><%= label %></td><td><%= value %></td>
+                <td><button class="btn small" data-action="copy#copy" data-copy="<%= value %>" data-shortcut="<%= key %>">copy</button><kbd><%= key %></kbd></td></tr>
+            <% end %>
+          </table>
+        <% end %>
+        <p class="muted">address access is logged.</p>
+      <% else %>
+        <%= button_to "reveal address", reveal_admin_redemption_path(r, flow: params[:flow]), class: "btn", data: { shortcut: "v" }, form: { data: { turbo: false } } %><kbd>v</kbd>
+        <p class="muted">frozen from Hack Club Auth when they redeemed. each reveal is logged.</p>
+      <% end %>
+    </section>
+
+    <% if r.status.in?(%w[pending on_hold]) %>
+      <section class="panel">
+        <h2>fulfill</h2>
+        <%= form_with url: verdict_admin_redemption_path(r, flow: params[:flow]), class: "stack" do %>
+          <label>tracking number or order reference <%= text_field_tag :tracking, r.tracking, data: { shortcut: "t" } %></label>
+          <label>cost in USD <span class="muted">optional</span> <%= number_field_tag :cost, nil, step: 0.01, min: 0 %></label>
+          <label>notes <span class="muted">required to hold or reject</span> <%= text_area_tag :notes, r.notes, rows: 2 %></label>
+          <div class="row">
+            <button class="btn primary" name="verdict" value="fulfill" data-shortcut="s" data-shortcut-confirm>mark shipped</button><kbd>s s</kbd>
+            <% if r.status == "pending" %>
+              <button class="btn" name="verdict" value="hold" data-shortcut="o">hold</button><kbd>o</kbd>
+            <% else %>
+              <button class="btn" name="verdict" value="release">release hold</button>
+            <% end %>
+            <button class="btn danger" name="verdict" value="reject" data-shortcut="r" data-shortcut-confirm>reject</button><kbd>r r</kbd>
+          </div>
+        <% end %>
+      </section>
+    <% else %>
+      <section class="panel"><h2><%= r.status %></h2>
+        <p><%= "by #{r.fulfilled_by&.display_name} on #{r.fulfilled_at&.to_date}" if r.fulfilled_at %> <%= "tracking #{r.tracking}" if r.tracking %></p>
+        <p><%= r.notes %></p></section>
+    <% end %>
+  </main>
+</div>

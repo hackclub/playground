@@ -1,0 +1,302 @@
+<% content_for :title, "Build a virtual pet in Godot" %>
+<p class="dashboard-link"><%= link_to "← desktop", root_path %></p>
+<article class="guide panel" data-controller="os">
+  <header>
+    <%# Shown only inside guide.txt's window, for reading it full size. %>
+    <p class="guide-new-tab"><%= link_to "open the guide in a new tab ↗", guide_path, target: "_blank", rel: "noopener" %></p>
+    <h1>Build a virtual pet in Godot</h1>
+    <%# New text, in place of a placeholder. %>
+    <p>You’ll build a little pet that lives on your desktop: a Godot game with no window frame and no background, just your sprite. It walks along your screen, turns around at the edges, stops for a rest now and then, and you can pick it up and drag it around.</p>
+  </header>
+
+  <%# Hidden until os_controller.js runs, as it does nothing without it. %>
+  <fieldset class="os-switch" data-os-target="switch" hidden>
+    <legend>your computer</legend>
+    <% GuideHelper::SYSTEMS.slice("macos", "windows", "linux").each do |os, name| %>
+      <label><input type="radio" name="guide-os" value="<%= os %>" data-action="os#pick"> <%= name %></label>
+    <% end %>
+  </fieldset>
+
+  <nav class="guide-contents" aria-labelledby="guide-overview">
+    <h2 id="guide-overview">Guide overview</h2>
+    <ol>
+      <li><a href="#setup-godot">Set up Godot</a></li>
+      <li><a href="#github">Make a GitHub Repository</a></li>
+      <li><a href="#sync">Sync your Godot project with the GitHub repo</a></li>
+      <li><a href="#commands">Important commands</a></li>
+      <li><a href="#start">Let's start making the pet</a></li>
+      <li><a href="#transparent">Let's make the scene transparent!</a></li>
+      <li><a href="#pretty">Making it pretty!</a></li>
+      <li><a href="#script">Yay! The scene is set up</a></li>
+      <li><a href="#movement">1. Movement</a></li>
+      <li><a href="#on-screen">2. Keep it on screen</a></li>
+      <li><a href="#bounce">3. Bounce off the edges</a></li>
+      <li><a href="#animations">4. Animations</a></li>
+      <li><a href="#break">5. Let it take a break</a></li>
+      <li><a href="#drag">6. Pick it up and drag it around</a></li>
+      <li><a href="#your-own">7. Make it your own!</a></li>
+      <li><a href="#publish">8. Export your pet and put it on itch.io</a></li>
+    </ol>
+  </nav>
+
+  <section aria-labelledby="setup-godot">
+    <h2 id="setup-godot">Set up Godot</h2>
+    <p><a href="https://godotengine.org/" target="_blank" rel="noopener">Godot</a> is a free, open source game engine. Game engines are used to make games easily. Go to <a href="https://godotengine.org/" target="_blank" rel="noopener">godotengine.org</a> to install it. If you cannot install it, you can also use the web editor at <a href="https://editor.godotengine.org/releases/latest/" target="_blank" rel="noopener">editor.godotengine.org</a>.</p>
+    <p>Open Godot, click Create New Project, name your game, select the Compatibility renderer, for Project Path select a Game folder, and click Create.</p>
+    <%= guide_video "new-project", "Screen recording: the Create New Project window, with the name My very cool pet, the Compatibility renderer picked, and Create clicked." %>
+
+    <h3 id="hackatime">Install Godot Hackatime, and set up Hackatime on your machine</h3>
+    <p>Open the Asset Store tab, search for Wakatime, and install “Godot Super Wakatime” by BartoszB</p>
+    <%= guide_video "install-wakatime", "Screen recording: Godot's Asset Store tab, searching for wakatime and installing Godot Super Wakatime." %>
+    <p>If needed, set up Hackatime according to the guide, here: <a href="https://hackatime.hackclub.com/docs/getting-started/quick-start" target="_blank" rel="noopener">https://hackatime.hackclub.com/docs/getting-started/quick-start</a></p>
+  </section>
+
+  <section aria-labelledby="github">
+    <h2 id="github">Make a GitHub Repository</h2>
+    <p>GitHub is a website that allows anyone to share their code, and keep it safe.</p>
+    <p>Go to <a href="https://github.com" target="_blank" rel="noopener">github.com</a> and sign up if you don’t already have an account.</p>
+    <p>open <a href="https://github.com/new" target="_blank" rel="noopener">https://github.com/new</a> to create a new repository, name it, make it public. Don’t add a license or gitignore as this will make the next step harder. You can add one later !</p>
+    <%= guide_video "github-repo", "Screen recording: GitHub's new repository page, naming the repository My very cool pet, keeping it public, and creating it." %>
+  </section>
+
+  <section aria-labelledby="sync">
+    <h2 id="sync">Sync your Godot project with the GitHub repo you just made</h2>
+    <%# Each computer's way to a terminal in the project folder. Once the switch
+        picks one, it reads as the guide's own step, with no heading or box. %>
+    <div class="os-step" data-os="macos">
+      <h3>macOS</h3>
+      <p>open your project folder in the terminal, you can do that by navigating to your project folder in Finder, and right clicking on it in the path bar and selecting ‘Open in terminal’</p>
+      <%= guide_shot "finder-show-path-bar", "Finder's View menu, with Show Path Bar highlighted." %>
+      <%= guide_shot "finder-open-in-terminal", "A Finder window of the my-very-cool-pet folder. The folder is right-clicked in the path bar at the bottom, and Open in Terminal is highlighted in the menu." %>
+    </div>
+    <div class="os-step" data-os="windows">
+      <h3>Windows</h3>
+      <p>open your project folder in the terminal, you can do that by navigating to your project folder in the file explorer, holding down Shift, and then right clicking to open a context menu, and then click open in Terminal.</p>
+      <%= guide_shot "explorer-open-in-terminal", "File Explorer in an empty folder, with its right-click menu open and Open in Terminal in the list." %>
+    </div>
+    <div class="os-step" data-os="linux">
+      <h3>Linux</h3>
+      <p>open your project folder in the terminal, you can do that by right clicking the folder in your file manager and choosing ‘Open in Terminal’</p>
+    </div>
+    <p>in the terminal, run</p>
+    <%= guide_code "git-init" %>
+    <p>Go to the GitHub repository you created in the browser earlier and copy the link, and replace <code>&lt;your-github-repository-link&gt;</code> with your link, and then run it</p>
+    <%= guide_code "git-remote" %>
+  </section>
+
+  <section aria-labelledby="commands">
+    <h2 id="commands">Important commands</h2>
+    <h3>In Godot</h3>
+    <p>Save your project often using <%= guide_keys :save %>.</p>
+    <p>Play your game with <%= guide_keys :play %>.</p>
+    <h3>In the terminal</h3>
+    <p>Be sure to commit regularly</p>
+    <%= guide_code "git-commit" %>
+  </section>
+
+  <section aria-labelledby="start">
+    <h2 id="start" class="guide-part">Finally, we’re set up! Let's start making the pet</h2>
+    <p>Let's start by making a 2D scene, this will be the world your pet will live in.</p>
+    <p>Click 2D scene in Godot to create a 2D scene</p>
+    <p>then press <%= guide_keys :save %> to save, and give your scene a name.</p>
+    <%= guide_video "2d-scene", "Screen recording: clicking 2D Scene to make the root node, then saving the scene as Main_scene.tscn." %>
+    <p>Now that you have the scene, let's add some things to it.</p>
+    <p>In the Scene panel (top left), click <strong>+</strong> to add a new node.</p>
+    <ol>
+      <li>type animatedSprite 2D into the search bar.</li>
+      <li>Select AnimatedSprite2D, and click Create.</li>
+    </ol>
+    <%= guide_video "add-node", "Screen recording: the Create New Node window, searching for animated and creating an AnimatedSprite2D." %>
+    <p>Repeat this process to add an <strong>Area2D</strong> node and a <strong>CollisionShape2D</strong> node.</p>
+    <p>Drag the CollisionShape2D node onto the Area2D node so the CollisionShape2D node becomes a child of the Area2D node</p>
+    <%= guide_video "collision-child", "Screen recording: dragging CollisionShape2D onto Area2D in the Scene panel, so it sits under Area2D." %>
+    <p>Once you’ve done that your scene tree should look like this.</p>
+    <%= guide_shot "scene-tree", "The scene tree: Node2D, with AnimatedSprite2D and Area2D under it, and CollisionShape2D under Area2D." %>
+  </section>
+
+  <section aria-labelledby="transparent">
+    <h2 id="transparent">Let's make the scene transparent!</h2>
+    <p>By default a Godot window has a background, but we want our sprite to sit on the desktop with no background!</p>
+    <p>to do this we need to adjust the project’s settings.</p>
+    <p>Click Project &gt; Project Settings…</p>
+    <%= guide_shot "project-settings-menu", "Godot's Project menu, with Project Settings… at the top." %>
+    <p>under the Window tab on the left of the Project Settings menu we want to change a couple settings.</p>
+    <p>set Viewport Width to 200, and Viewport Height to 200. Just enough for your pet!</p>
+    <p>make sure</p>
+    <ul>
+      <li>Borderless</li>
+      <li>Always on Top</li>
+      <li>Transparent</li>
+    </ul>
+    <p>are on</p>
+    <%= guide_shot "window-settings", "Project Settings at Display, Window: Viewport Width and Viewport Height are 200, and Borderless, Always on Top, and Transparent are on." %>
+    <p>once you’ve done that search for <strong>Rendering</strong> in the top bar, select Viewport and enable Transparent Background</p>
+    <%= guide_shot "transparent-background", "Project Settings searched for Rendering, with Viewport selected and Transparent Background on." %>
+    <p>And finally search for <strong>Per Pixel</strong>, select Window and enable Per Pixel Transparency</p>
+    <%= guide_shot "per-pixel-transparency", "Project Settings searched for per Pixel, with Window selected and Per Pixel Transparency, Allowed, on." %>
+    <p>You’ll see a pop up at the bottom prompting to save &amp; restart. Click the button and wait for Godot to restart</p>
+    <%= guide_shot "save-and-restart", "The bar at the bottom of Project Settings: Changed settings will be applied to the editor after restarting, and a Save & Restart button." %>
+  </section>
+
+  <section aria-labelledby="pretty">
+    <h2 id="pretty">Making it pretty!</h2>
+    <p>I’m using this free sprite pack I found on <a href="https://itch.io" target="_blank" rel="noopener">itch.io</a> you can use assets you find online as long as the license allows for it, but I encourage you to make your own art, or commission a friend.</p>
+    <p><a href="https://smithygames.itch.io/crow-sprite" target="_blank" rel="noopener">https://smithygames.itch.io/crow-sprite</a></p>
+    <p>import your pet’s assets into your project’s FileSystem, you can do this by just dragging your assets in.</p>
+    <%= guide_video "import-sprites", "Screen recording: dragging Crow.png from a Finder window into Godot's FileSystem panel." %>
+    <p>To add animations, select AnimatedSprite2D in the Scene tree in the top left,</p>
+    <%= guide_shot "animated-sprite-selected", "The Scene tree with AnimatedSprite2D selected." %>
+    <p>Add a new SpriteFrames resource to the AnimatedSprite2D on the right in the inspector</p>
+    <%= guide_video "sprite-frames", "Screen recording: in the Inspector, opening the Sprite Frames menu and picking New SpriteFrames." %>
+    <p>If you’re using a Sprite Sheet like me, you can use the Add Frames from Sprite Sheet button to slice your Sprite Sheet into its individual frames, else you can easily add frames individually rather than using a Sprite Sheet.</p>
+    <p>Slice your Sprite Sheet, and rename the animation.</p>
+    <%= guide_video "sprite-sheet", "Screen recording: opening Crow.png with Add Frames from Sprite Sheet, setting the grid, picking a row of frames, adding them, and renaming the animation." %>
+    <p>Add more animations for each state your pet has, I’m going to make Walk, and Idle</p>
+    <%= guide_shot "walk-animation", "The Animations list with one animation, Walk, under the Add Animation button." %>
+    <p>Click play to see your animation!</p>
+    <%= guide_video "play-animation", "Screen recording: the crow in the editor, playing its Idle and then its Walk animation." %>
+    <p>Select the CollisionShape2D, assign a RectangleShape2D to the Shape field, and scale it to fit the sprite</p>
+    <%= guide_video "collision-shape", "Screen recording: selecting CollisionShape2D, picking a new RectangleShape2D for its Shape, and dragging the rectangle's handles to fit the crow." %>
+  </section>
+
+  <section aria-labelledby="script">
+    <h2 id="script">Yay! The scene is set up, now we can add the functionality</h2>
+    <p>Attach a script to the base Node2D node</p>
+    <ul>
+      <li>Select Node2D in the Scene tree</li>
+      <li>Click the create script button</li>
+      <li>Name it whatever you want</li>
+    </ul>
+    <%= guide_video "attach-script", "Screen recording: selecting Node2D, clicking the attach script button, naming the script whatever.gd, and creating it." %>
+    <p>Remove everything except for extends Node2D</p>
+    <%= guide_video "clear-script", "Screen recording: the new script, with everything below extends Node2D selected to delete." %>
+  </section>
+
+  <section aria-labelledby="movement">
+    <h2 id="movement">1. Movement</h2>
+    <%= guide_code "movement" %>
+    <p><code>_physics_process</code> runs about 60 times a second. Each time it runs, we:</p>
+    <ol>
+      <li>get the window's current position,</li>
+      <li>nudge it in our <code>direction</code> by <code>speed</code> pixels per second, and</li>
+      <li>put the window at the new position.</li>
+    </ol>
+    <p><code>delta</code> is the time since the last frame. Multiplying by it keeps the speed the same no matter how fast your computer is.</p>
+    <p><code>direction = Vector2(1, 0)</code> means "go right". <code>Vector2(0, 1)</code> would be "go down".</p>
+    <p>Press <%= guide_keys :play %> to test it out!</p>
+    <%= guide_shot "embedded-game", "The Godot editor with the script open and the game running in a small window inside the editor, the crow on a checkerboard, and the Output panel printing (5.0, 0.0) over and over." %>
+    <p>and you will see it do…. nothing</p>
+    <p>This is because Godot embeds your project by default, and the DisplayServer doesn’t work when it’s embedded.</p>
+    <%= guide_shot "embed-game-off", "The embedded game's three dot menu, with Embed Game on Next Play turned off." %>
+    <p>under the 3 dot menu on the right of the embedded player, disable ‘Embed Game on Next Play’</p>
+    <p>Press <%= guide_keys :play %> again to try it, and you should see it move! It will walk straight off your screen though, which is what we’ll fix now.</p>
+  </section>
+
+  <section aria-labelledby="on-screen">
+    <h2 id="on-screen">2. Keep it on screen</h2>
+    <p>To stop your pet from leaving you, we need to know how big the screen is and how big the window is. Add these variables under the others:</p>
+    <%= guide_code "screen-vars" %>
+    <p><code>window_size</code> is 200×200 because that's what we set in Project Settings earlier.</p>
+    <p>Godot’s <code>_ready()</code> method runs when the game starts, we don’t know the user’s screen size until the game starts so we’ll set <code>screen_size</code> on <code>_ready()</code></p>
+    <p>Add this code to capture the user’s screen size</p>
+    <%= guide_code "screen-ready" %>
+    <p>Now we can use <code>clamp</code> to stop the position going past the edges. Add these two lines in <code>_physics_process</code></p>
+    <%= guide_code "screen-clamp" %>
+    <p>Play it, and your pet should now stop at the edge of the screen!</p>
+  </section>
+
+  <section aria-labelledby="bounce">
+    <h2 id="bounce">3. Bounce off the edges</h2>
+    <p>Just having it stop is boring, so let's make it turn around instead! Add this code to <code>_physics_process</code></p>
+    <%= guide_code "bounce" %>
+    <p>If the pet hits the left or right edge, we flip its horizontal direction. If it hits the top or bottom, we flip its vertical direction. Multiplying by -1 turns 1 into -1 and -1 into 1.</p>
+    <p>Click play and you should see it move back and forth!</p>
+  </section>
+
+  <section aria-labelledby="animations">
+    <h2 id="animations">4. Animations</h2>
+    <p>Currently it looks a little strange, it just slides left and right. We need to use those animations we made earlier!</p>
+    <p>To do this we need our code to speak to the AnimatedSprite2D node, create a variable that references it like this</p>
+    <%= guide_code "sprite-var" %>
+    <p>Add this to <code>_ready()</code> to start the animation when the game starts</p>
+    <%= guide_code "sprite-play" %>
+    <p>And add this line to flip the sprite when it touches a wall so it’s walking in the correct direction.</p>
+    <%= guide_code "sprite-flip" %>
+  </section>
+
+  <section aria-labelledby="break">
+    <h2 id="break">5. Let it take a break</h2>
+    <p>Sometimes when the pet bumps into a wall, it should stop and chill for a moment. We need two new variables, one to say whether it's resting and one to count down how long for:</p>
+    <%= guide_code "idle-vars" %>
+    <p>Add a function that gives the pet a 30% chance of resting and picks a random resting animation</p>
+    <%= guide_code "idle-maybe" %>
+    <p><code>randf_range(1.0, 3.0)</code> means it rests for 1 to 3 seconds. <code>randi() % 3</code> gives a random 0, 1 or 2, which we use to choose an animation.</p>
+    <p>Call <code>maybe_idle()</code> whenever the pet bounces. Update your bounce code from Step 3 so it looks like this:</p>
+    <%= guide_code "idle-bounce" %>
+    <p>While it's resting, the pet shouldn't move. Add this at the very top of <code>_physics_process</code></p>
+    <%= guide_code "idle-rest" %>
+  </section>
+
+  <section aria-labelledby="drag">
+    <h2 id="drag">6. Pick it up and drag it around</h2>
+    <p>This is what the Area2D and CollisionShape2D are for: they detect when you click on the pet. Get a reference to the Area2D with a new <code>@onready</code> line</p>
+    <%= guide_code "drag-area" %>
+    <p>Add two variables for dragging</p>
+    <%= guide_code "drag-vars" %>
+    <p><code>drag_offset</code> remembers where on the pet you grabbed it, so the pet doesn't jump so its corner snaps to your mouse.</p>
+    <p>Add a function that runs when you click on the Area2D:</p>
+    <%= guide_code "drag-input" %>
+    <p>When you press the left mouse button, dragging starts and we remember the offset. When you let go, dragging stops and the pet wanders off in a new direction.</p>
+    <p>Connect this function to the Area2D's <code>input_event</code> signal, so Godot calls it on a click. Add this to <code>_ready()</code>:</p>
+    <%= guide_code "drag-connect" %>
+    <p>Finally, make the window follow the mouse while you're dragging. Add this at the very top of <code>_physics_process()</code></p>
+    <%= guide_code "drag-follow" %>
+    <p>This goes first because dragging should win over everything else. If you're holding the pet, it shouldn't be resting or walking.</p>
+    <p>Don't forget to commit!</p>
+    <%= guide_code "git-done" %>
+  </section>
+
+  <section aria-labelledby="your-own">
+    <h2 id="your-own">7. Make it your own!</h2>
+    <p>your project will be rejected if you just follow this guide and change nothing. Make the project your own! Experiment, and do something entirely different.</p>
+    <p>There are so many things you can do, and this guide is here to show you the ropes so you can do something for yourself.</p>
+    <p>If you need ideas or help, ask in <a href="https://hackclub.slack.com/archives/C0ASBTMS82H" target="_blank" rel="noopener">#Playground</a> we’ll be glad to help!</p>
+  </section>
+
+  <section aria-labelledby="publish">
+    <h2 id="publish">8. Export your pet and put it on itch.io</h2>
+    <p>To publish your pet, we need to export your project as a downloadable app and put it on a distribution platform such as itch.io!</p>
+    <p>The first step is to install Godot's export templates. Open <strong>Editor &gt; Manage Export Templates…</strong></p>
+    <%= guide_shot "export-templates", "Godot's Editor menu, open, with Manage Export Templates… highlighted." %>
+    <p>We're exporting for desktop, so select Desktop. When you have the platform you want to publish to selected, click <strong>Install Selected Templates</strong>.</p>
+    <%= guide_video "install-templates", "Screen recording: in the Export Templates window, choosing Desktop and clicking Install Selected Templates." %>
+    <p>They should then install and show up under the Installed Templates menu.</p>
+    <%= guide_shot "installed-templates", "Godot's Installed Templates list, with the Windows and Linux templates in it." %>
+    <p>You can now export your project! Open the export menu under <strong>Project &gt; Export…</strong></p>
+    <%= guide_shot "export-button", "Godot's Project menu, open, with Export… highlighted." %>
+    <p>To export for Windows, in the Export window click <strong>Add… &gt; Windows Desktop</strong>.</p>
+    <%= guide_shot "add-windows", "The Add… list in Godot's Export window: Android, iOS, Linux, macOS, visionOS, Web, and Windows Desktop, which is highlighted." %>
+    <p>Turn on <strong>Embed PCK</strong> so the project is only one file.</p>
+    <%= guide_shot "embed-pck", "The Windows Desktop preset in Godot's Export window, with Embed PCK turned on under Binary Format." %>
+    <p>And then click <strong>Export Project…</strong></p>
+    <%= guide_shot "export-project-1", "The Export Project… button at the bottom of Godot's Export window." %>
+    <%= guide_shot "export-project-2", "Godot's save window for the export, with Export With Debug off, and Cancel and Save buttons." %>
+    <p>Export to your Downloads, or somewhere else temporary, because you don't want this in your project folder.</p>
+
+    <h3>It's time to upload your project to itch.io!</h3>
+    <ol>
+      <li>Sign in or create an account on itch.io.</li>
+      <li>Open the creator dashboard at <a href="https://itch.io/dashboard" target="_blank" rel="noopener">itch.io/dashboard</a></li>
+      <li>And create a new project.</li>
+    </ol>
+    <%= guide_shot "itch-new-project", "The Create new project button on itch.io's creator dashboard." %>
+    <p>Fill it out!!!! Add a cover image, a tagline, a name and screenshots for the world to see.</p>
+    <%= guide_shot "itch-fill-out", "itch.io's new project page, filled out with the title Crow pet, a tagline, a cover image of a crow over a green hill, and an Add screenshots button." %>
+    <p>Scroll down and upload the playable files.</p>
+    <%= guide_video "itch-upload", "Screen recording: on itch.io's project page, scrolling down to Uploads and uploading crowpet.exe, with a progress bar." %>
+    <p>And then set the visibility to public.</p>
+    <%= guide_shot "itch-visibility", "itch.io's Visibility and access setting, with Public selected." %>
+    <%# On the desktop, the link opens ship.exe (landing.js). %>
+    <p>and of course <%= link_to "ship", root_path(open: "ship"), target: "_top" %>!</p>
+  </section>
+</article>

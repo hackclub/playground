@@ -1,0 +1,45 @@
+<%# The delete button, below the edit form: button_to makes its own form, which
+    cannot sit inside another. It opens three popups at once, and the pet is
+    deleted only when all three are confirmed. Each popup's safe choice starts
+    focused. Each one drags by its title bar.
+
+    On the desktop's trash page (desktop: true) the popups open at once, and
+    the desktop hears whether the pet went or stayed. A shipped pet cannot be
+    deleted, so there it gets one popup that says so. %>
+<% desktop = local_assigns[:desktop] %>
+<% shipped = project.ships.any? %>
+<div data-controller="delete-confirm"<% if desktop %> data-delete-confirm-desktop-value="true" data-delete-confirm-project-value="<%= project.id %>"<% end %>>
+  <% unless shipped %>
+    <%= button_to "delete pet", project, method: :delete, class: "linkish danger", hidden: desktop,
+          form: { data: { delete_confirm_target: "form" } },
+          data: { delete_confirm_target: "button", action: "delete-confirm#open:prevent" } %>
+  <% end %>
+  <% popups = if shipped
+       [ [ "delete.exe", "error", "X", "a shipped pet cannot be deleted", nil, "ok" ] ]
+     else
+       [
+         [ "delete.exe", "warn", "!", "delete #{project.name}?", "delete", "cancel" ],
+         [ "delete.exe", "ask", "?", "are you sure you want to delete #{project.name}?", "yes", "no" ],
+         [ "delete.exe", "error", "X", "really? #{project.name} will be gone forever.", "delete it", "keep it" ]
+       ]
+     end %>
+  <% popups.each.with_index(1) do |(title, kind, mark, message, yes, no), i| %>
+    <dialog class="popup" role="alertdialog" aria-labelledby="delete-popup-<%= i %>-title" aria-describedby="delete-popup-<%= i %>-message"
+            data-controller="popup-drag" data-delete-confirm-target="popup" data-action="pointerdown->delete-confirm#raise focusin->delete-confirm#raise">
+      <div class="popup-head" data-popup-drag-target="head" data-action="pointerdown->popup-drag#start pointermove->popup-drag#move pointerup->popup-drag#end pointercancel->popup-drag#end lostpointercapture->popup-drag#end">
+        <h2 class="popup-title" id="delete-popup-<%= i %>-title"><%= title %></h2>
+        <button type="button" class="popup-close" aria-label="close" data-action="delete-confirm#cancel">X</button>
+      </div>
+      <div class="popup-body">
+        <div class="popup-message">
+          <span class="popup-icon <%= kind %>" aria-hidden="true"><%= mark %></span>
+          <p id="delete-popup-<%= i %>-message"><%= message %></p>
+        </div>
+        <div class="row popup-buttons">
+          <% if yes %><button type="button" class="btn danger" data-action="delete-confirm#confirm"><%= yes %></button><% end %>
+          <button type="button" class="btn" autofocus data-action="delete-confirm#cancel"><%= no %></button>
+        </div>
+      </div>
+    </dialog>
+  <% end %>
+</div>

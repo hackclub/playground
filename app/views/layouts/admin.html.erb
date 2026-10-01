@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>playground admin</title>
+    <%= render "shared/icons" %>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "playground" %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body class="app admin" data-controller="shortcuts">
+    <nav class="adminnav">
+      <%= link_to "playground admin", admin_root_path, class: "brand" %>
+      <%= link_to "review", admin_review_path %><kbd>1</kbd>
+      <%= link_to "fraud", admin_fraud_path %><kbd>2</kbd>
+      <%= link_to "fulfillment", admin_fulfillment_path %><kbd>3</kbd>
+      <%= link_to "people", admin_people_path %><kbd>4</kbd>
+      <%= link_to "stats", admin_stats_path %><kbd>5</kbd>
+      <span class="spacer"></span>
+      <span class="muted"><%= current_user.display_name %></span>
+      <%= link_to "site", root_path %>
+      <a hidden data-shortcut="1" href="<%= admin_review_path %>"></a>
+      <a hidden data-shortcut="2" href="<%= admin_fraud_path %>"></a>
+      <a hidden data-shortcut="3" href="<%= admin_fulfillment_path %>"></a>
+      <a hidden data-shortcut="4" href="<%= admin_people_path %>"></a>
+      <a hidden data-shortcut="5" href="<%= admin_stats_path %>"></a>
+    </nav>
+    <% if notice %><p class="flash notice"><%= notice %></p><% end %>
+    <% if alert %><p class="flash alert"><%= alert %></p><% end %>
+    <%= yield %>
+  </body>
+</html>

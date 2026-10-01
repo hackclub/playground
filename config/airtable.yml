@@ -1,0 +1,9 @@
+# The program base and the tables the rolling sync writes. The submission
+# table's field names are the YSWS Project Submissions component's.
+shared:
+  base: app8YvwtP42LOZ8jq # YSWS - Playground
+  enabled: <%= ENV.fetch("AIRTABLE_SYNC", "0") == "1" %>
+  tables:
+    users: Users
+    ships: YSWS Project Submission
+    redemptions: Redemptions

@@ -1,0 +1,73 @@
+# The box around each desktop icon's drawn pixels, as fractions of its
+# image: left, top, right, bottom. Baked by `bin/rails icons:bounds` from
+# app/services/icon_bounds.rb, with each image's SHA-256. Do not edit.
+file.png:
+  box:
+  - 0.1754
+  - 0.1015
+  - 0.8369
+  - 0.9138
+  sha256: a36d3a026834c1134772a1b267a7eb38dcb74f4ed77d6cb5d33a6501eefb3601
+iconplaceholder.png:
+  box:
+  - 0.0
+  - 0.0
+  - 1.0
+  - 1.0
+  sha256: 66f71b9be3b1e8fef8c4db194490bd1e2bcd54e1f043fc04823a2eccf245b4b4
+hackclub.webp:
+  box:
+  - 0.0
+  - 0.0
+  - 1.0
+  - 1.0
+  sha256: 960ba7959899020f1a88d20c336653eadc79dd3f36888b3d0ab1a9ba93a8afa9
+privacy-and-terms.webp:
+  box:
+  - 0.0
+  - 0.0
+  - 1.0
+  - 1.0
+  sha256: 8756b64853a6f4bc51769bf55bab3e51cfaf7560042773a237c9c61d07096dd4
+bounty.webp:
+  box:
+  - 0.0
+  - 0.0
+  - 1.0
+  - 1.0
+  sha256: ce1027275dfd5a7324e64c4596109f9781a9dd128a322d934c44ca570f9bd28f
+security.webp:
+  box:
+  - 0.0
+  - 0.0
+  - 1.0
+  - 1.0
+  sha256: aa4a7c74ab352daf823f5727ab94a4d5c1805dd7a976c960632da9f40d9ecb5f
+sponsor.webp:
+  box:
+  - 0.0
+  - 0.0
+  - 1.0
+  - 1.0
+  sha256: 77768577a5f024091cde04383594528f204f2ad79a486b88a352eb1746d6ccb7
+trash-empty.png:
+  box:
+  - 0.1563
+  - 0.1641
+  - 0.8281
+  - 0.9297
+  sha256: 4a3077b52f30f7d5e0aa7f08b349475ce23e7570929267922696e48254a2f559
+trash-full.png:
+  box:
+  - 0.1563
+  - 0.0234
+  - 0.8281
+  - 0.9688
+  sha256: 0bafcf949151a2d1fac720efd588db1b3424088d140b96d11e40a0325d379122
+banana-peel.png:
+  box:
+  - 0.0938
+  - 0.2734
+  - 0.8672
+  - 0.8828
+  sha256: e8669c26c518ce0ebca918745b0c33fe6764f394d26272372ae38146bc450332

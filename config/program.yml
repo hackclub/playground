@@ -1,0 +1,7 @@
+# The program window. Each value is "YYYY-MM-DD HH:MM" in US Eastern time
+# (America/New_York), Hack Club HQ's zone, with daylight saving applied. Time
+# from the start counts; time from the end on does not. ProgramWindow reads
+# and checks these, and a bad value stops boot.
+shared:
+  starts_at: "<%= ENV.fetch("PROGRAM_STARTS_AT", "2026-09-25 17:00") %>"
+  ends_at: "<%= ENV.fetch("PROGRAM_ENDS_AT", "2026-10-12 09:00") %>"

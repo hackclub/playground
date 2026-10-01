@@ -1,0 +1,50 @@
+<header class="itemhead">
+  <div>
+    <h1><%= @user.display_name %> <span class="muted">(<%= @user.full_name %>)</span></h1>
+    <p><%= @user.email %> · <%= @user.eligible? ? "✓ verified, eligible" : "✗ #{@user.verification_status || "unverified"}" %>
+      · Hackatime trust <%= @user.hackatime_trust_level || "unknown" %>
+      <% if @user.banned? %> · <span class="badge badge-banned">banned</span> <%= @user.ban_reason %><% end %></p>
+  </div>
+</header>
+
+<section class="panel">
+  <h2>meter</h2>
+  <%= meter(@hours) %>
+  <p class="legend"><span><span class="key approved"></span> approved <%= hours(@hours.approved_seconds) %></span>
+    <span><span class="key pending"></span> pending <%= hours(@hours.pending_seconds) %></span>
+    <span><span class="key unshipped"></span> unshipped <%= hours(@hours.unshipped_seconds) %></span></p>
+</section>
+
+<section class="panel">
+  <h2>one shot: every stage for <%= @user.display_name %></h2>
+  <table class="list">
+    <tr><th>item</th><th>claimed</th><th>review</th><th>fraud</th><th>approved</th><th></th></tr>
+    <% @ships.each do |s| %>
+      <tr>
+        <td><%= s.project.name %> #<%= s.number %> <span class="muted"><%= s.created_at.to_date %></span></td>
+        <td><%= hours(s.claimed_seconds) %></td>
+        <td><%= state_badge(s.review_status) %></td>
+        <td><%= state_badge(s.fraud_status) %></td>
+        <td><%= s.approved_seconds ? hours(s.approved_seconds) : "—" %></td>
+        <td>
+          <% if s.pending? && s.review_status == "pending" %><%= link_to "review →", admin_ship_path(s, stage: "review", flow: 1), class: "btn primary small" %>
+          <% elsif s.pending? && s.fraud_status == "pending" %><%= link_to "fraud →", admin_ship_path(s, stage: "fraud", flow: 1), class: "btn primary small" %>
+          <% else %><%= link_to "open", admin_ship_path(s, flow: 1) %><% end %>
+        </td>
+      </tr>
+    <% end %>
+    <% @redemptions.each do |r| %>
+      <tr>
+        <td>🎁 <%= r.goal.name %> <span class="muted"><%= r.created_at.to_date %></span></td>
+        <td colspan="3"><%= state_badge(r.status) %></td><td></td>
+        <td><%= link_to(r.status.in?(%w[pending on_hold]) ? "fulfill →" : "open", admin_redemption_path(r, flow: 1), class: ("btn primary small" if r.status.in?(%w[pending on_hold]))) %></td>
+      </tr>
+    <% end %>
+    <% if @ships.empty? && @redemptions.empty? %><tr><td colspan="6" class="muted">nothing shipped or redeemed yet.</td></tr><% end %>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>history</h2>
+  <ul class="events"><% @events.each do |e| %><li><span class="muted"><%= e.created_at.to_fs(:short) %></span> <%= e.actor&.display_name %> · <%= e.action %> <%= e.data.presence&.to_json %></li><% end %></ul>
+</section>

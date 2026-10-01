@@ -1,0 +1,110 @@
+<img src="<%= image_path("landing/hack-club-flag-2026.svg") %>" alt="Hack Club 2026" id="background-flag">
+<a id="flag-link" href="https://hackclub.com" aria-label="Hack Club" draggable="false"></a>
+<div class="background-logo-wrapper">
+    <img src="<%= image_path("landing/logo.png") %>" alt="Background Logo" class="background-logo">
+    <p class="background-logo-text">make a desktop pet, get cool merch!</p>
+</div>
+<div class="window" id="welcome">
+    <div class="windowheader" id="welcomeheader">
+        <h1 class="headertext">welcome.txt</h1>
+        <button type="button" class="windowclose" aria-label="close">X</button>
+    </div>
+    <div class="windowcontent">
+        <p>
+            make a desktop pet, ship it (put it out where others can use it), and we'll send you merch! playground is run by Hack Club, a nonprofit for teens who make cool projects.
+        </p>
+        <h3>what is a desktop pet?</h3>
+        <p>
+            a small program that lives on your desktop, like a character that walks around, reacts to you, or sits on your windows. the rock on this page is one!
+        </p>
+        <h3>what counts?</h3>
+        <p>
+            a cool desktop pet!! it can be anything you want, as long as it's a desktop pet! it can be a widget, a screensaver, an app, or even a website! just make sure it's something that can be easily shared and used by others! (also no AI generated pets, we want to see your creativity!!)
+        </p>
+        <p><a href="<%= guide_path %>" id="guide-link">new to this? check out the guide!</a></p>
+        <h3>what do i get?</h3>
+        <ul>
+            <li>cool stickersheet >:3 - 2 hours</li>
+            <img src="<%= image_path("landing/stickysheet.png") %>" alt="stickersheet">
+            <li>very awesome playground keychain - 5 hours</li>
+            <img src="<%= image_path("landing/keychain.png") %>" alt="keychain">
+            <li>shirt with all the shipped playground pets on it - 10 hours</li>
+            <img src="<%= image_path("landing/shirt.png") %>" alt="shirt">
+        </ul>
+        <h3>i dont know what to make</h3>
+        <p>
+            check out these cool desktop pets!!
+        </p>
+        <div class="image-grid">
+            <div class="image-card">
+                <a class="image-link" href="https://sharyap.itch.io/frog-pond" tabindex="-1" aria-hidden="true"><img class="grid-image" src="<%= image_path("landing/frogpond.png") %>" alt="Desktop pet example 1"></a>
+                <p class="image-title"><a href="https://sharyap.itch.io/frog-pond">frog pong by sharyap</a></p>
+            </div>
+            <div class="image-card">
+                <a class="image-link" href="https://hempuli.itch.io/baba-friend" tabindex="-1" aria-hidden="true"><img class="grid-image" src="<%= image_path("landing/babafriend.gif") %>" alt="Desktop pet example 2"></a>
+                <p class="image-title"><a href="https://hempuli.itch.io/baba-friend">baba friend by hempuli</a></p>
+            </div>
+            <div class="image-card">
+                <a class="image-link" href="https://samperson.itch.io/desktop-goose" tabindex="-1" aria-hidden="true"><img class="grid-image" src="<%= image_path("landing/desktopgoose.gif") %>" alt="Desktop pet example 3"></a>
+                <p class="image-title"><a href="https://samperson.itch.io/desktop-goose">desktop goose by samperson</a></p>
+            </div>
+            <div class="image-card">
+                <a class="image-link" href="https://jonasmack.itch.io/desktop-garden" tabindex="-1" aria-hidden="true"><img class="grid-image" src="<%= image_path("landing/desktopgarden.png") %>" alt="Desktop pet example 4"></a>
+                <p class="image-title"><a href="https://jonasmack.itch.io/desktop-garden">desktop garden by jonasmack</a></p>
+            </div>
+        </div>
+        <h3>i have more questions :(</h3>
+        <p>
+            join <a href="https://hackclub.slack.com/archives/C0ASBTMS82H">#playground</a> on the Hack Club Slack, where teen makers chat!! or ask @froppii there!!
+        </p>
+        <br>
+        <p>made with ❤︎ by @froppii and <%= link_to "Armand", ApplicationHelper::SPONSOR_URL %></p>
+    </div>
+</div>
+<div id="credits">
+    <%# Hack Club's required links as text, and the sponsor's credit, whose
+        name must show on the landing page without scrolling. %>
+    <p id="credit-links">
+        <a href="https://hackclub.com">Hack Club</a>&nbsp;·
+        <a href="https://hackclub.com/privacy-and-terms">Terms &amp; Privacy</a>&nbsp;·
+        <a href="https://forms.hackclub.com/bounty">Fulfillment</a>&nbsp;·
+        <a href="https://security.hackclub.com">Security</a><span id="credit-sponsor">&nbsp;·
+        <span>sponsored by <%= link_to "Armand", ApplicationHelper::SPONSOR_URL %></span></span>
+    </p>
+</div>
+<div id="bar">
+    <%# Each word plays its gulp, CC0 from Freesound (app/assets/audio/SOURCES.md):
+        gulp.mp3 is https://freesound.org/s/445970/ by Breviceps, and gulp2.mp3 is
+        https://freesound.org/s/450624/ by Breviceps. %>
+    <p style="margin-left: 16px;">
+        <button type="button" data-sound="<%= audio_path("gulp.mp3") %>">gulp</button>
+    </p>
+    <p style="margin-right: 16px;">
+        <button type="button" data-sound="<%= audio_path("gulp2.mp3") %>">gulp2</button>
+    </p>
+    
+</div>
+
+<%# The rock's grumble when it goes into the trash, CC0 from Freesound
+    (app/assets/audio/SOURCES.md): https://freesound.org/s/427972/ by lipalearning. %>
+<img id="desktop-pet" src="<%= image_path("landing/rock_idle.gif") %>" alt="Desktop Pet" data-trashed-sound="<%= audio_path("rock-trashed.mp3") %>">
+
+<div id="apps" data-file-icon="<%= image_path("landing/file.png") %>" data-exe-icon="<%= image_path("landing/iconplaceholder.png") %>"
+    data-hackclub-icon="<%= image_path("landing/hackclub.webp") %>" data-terms-icon="<%= image_path("landing/privacy-and-terms.webp") %>"
+    data-bounty-icon="<%= image_path("landing/bounty.webp") %>" data-security-icon="<%= image_path("landing/security.webp") %>"
+    data-sponsor-icon="<%= image_path("landing/sponsor.webp") %>"
+    data-sponsor-url="<%= ApplicationHelper::SPONSOR_URL %>"
+    data-shortcut-icon="<%= image_path("landing/shortcut.webp") %>"
+    data-trash-icon="<%= image_path("landing/trash-empty.png") %>" data-trash-full-icon="<%= image_path("landing/trash-full.png") %>"
+    data-pet-icon="<%= image_path("landing/file.png") %>"
+    <%# The banana peel picture came from Armand. Its licence is unknown. %>
+    data-banana-peel-icon="<%= image_path("landing/banana-peel.png") %>"
+    <%# The box around each icon picture's drawn pixels, baked by bin/rails icons:bounds. %>
+    data-icon-bounds="<%= IconBounds.all.to_h { |name, box| [ image_path("landing/#{name}"), box ] }.to_json %>"
+    <%# Which desktop window each page belongs to. %>
+    data-window-pages="<%= DesktopWindows.pages.to_json %>"
+    <%# A signed-in participant's pets, what they put in the trash, and the
+        account the open windows are saved for in this browser. %>
+    <% if current_user %>data-pets="<%= @pets.to_json %>" data-trash="<%= current_user.desktop_trash_with_peel.to_json %>" data-account="<%= current_user.id %>"<% end %>></div>
+
+    

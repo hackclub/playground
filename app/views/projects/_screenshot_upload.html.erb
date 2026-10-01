@@ -1,0 +1,38 @@
+<%# The pet's screenshots in a grid of ScreenshotLimits::PER_PET cells, cover
+    first, then a cell that adds more, then empty cells. The whole grid takes
+    a drop, and files dragged over it tint it. Files dropped or chosen
+    together upload one after another, each in its cell with its own
+    progress. A screenshot moves by drag, or by the arrow keys once it has
+    focus. A click, Enter, or a file dropped on it replaces it, and its ×
+    removes it. %>
+<% hint = dom_id(project, :screenshots_hint) %>
+<div class="shots-editor" data-controller="screenshot-upload"
+     data-screenshot-upload-url-value="<%= project_screenshots_path(project) %>"
+     data-screenshot-upload-order-url-value="<%= order_project_screenshots_path(project) %>"
+     data-action="dragenter->screenshot-upload#enter dragover->screenshot-upload#over dragleave->screenshot-upload#leave drop->screenshot-upload#drop"
+     <%= tag.attributes(ScreenshotLimits.data_attributes.transform_keys { "data-screenshot-upload-#{it.to_s.dasherize}-value" }) %>>
+  <div class="shots-grid" data-screenshot-upload-target="grid">
+    <ol class="shots" aria-label="screenshots, in order" data-screenshot-upload-target="list">
+      <% project.screenshots.each.with_index(1) do |shot, number| %>
+        <%= render "screenshot_thumb", shot:, hint:, label: "screenshot #{number} of #{project.screenshots.size}#{", the cover" if number == 1}",
+                                       cover: number == 1 %>
+      <% end %>
+    </ol>
+    <% free = ScreenshotLimits::PER_PET - project.screenshots.size %>
+    <div class="shot-cell add" role="button" tabindex="0" data-screenshot-upload-target="add" <%= "hidden" if free.zero? %>
+         data-action="click->screenshot-upload#pick keydown.enter->screenshot-upload#pick keydown.space->screenshot-upload#pick:prevent">
+      <svg class="plus" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
+      <span>add screenshots</span>
+    </div>
+    <% (ScreenshotLimits::PER_PET - 1).times do |n| %>
+      <div class="shot-cell empty" aria-hidden="true" data-screenshot-upload-target="empty" <%= "hidden" if n >= free - 1 %>>
+        <svg viewBox="0 0 48 36"><rect x="2" y="2" width="44" height="32"/><circle cx="15" cy="12" r="4"/><path d="M6 31l11-11 7 6 6-9 12 14z"/></svg>
+      </div>
+    <% end %>
+  </div>
+  <p id="<%= hint %>" class="visually-hidden">arrow keys move it, enter replaces it, delete removes it.</p>
+  <template data-screenshot-upload-target="template"><%= render "screenshot_thumb", shot: {}, hint:, label: "", cover: false %></template>
+  <input type="file" multiple accept="<%= ScreenshotLimits::INPUT_TYPES.join(",") %>" hidden
+         data-screenshot-upload-target="input" data-action="change->screenshot-upload#chosen">
+  <p class="upload-status" data-screenshot-upload-target="status" aria-live="polite"></p>
+</div>

@@ -1,0 +1,5 @@
+<% turbo_exempts_page_from_preview %>
+<p><%= link_to "← #{@project.name}", @project %></p>
+<section class="panel"><h2>edit <%= @project.name %></h2><%= render "form", project: @project %></section>
+<%# A shipped pet cannot be deleted, so it has no delete button. %>
+<% if @project.ships.empty? %><%= render "delete", project: @project %><% end %>

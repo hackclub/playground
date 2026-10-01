@@ -1,0 +1,32 @@
+<%# A pet's screenshots, one at a time, cover first. One screenshot shows alone.
+    Several get a round arrow at each side and a dot for each, on the image,
+    a swipe on touch, and the arrow keys once the carousel has focus. Each
+    arrow takes clicks across a strip down its side of the image. The
+    screenshots share one spot, so the carousel is as big as the biggest and
+    holds still as they change. %>
+<% if urls.one? %>
+  <img class="shot" src="<%= urls.first %>" alt="screenshot of <%= name %>">
+<% elsif urls.many? %>
+  <div class="carousel" role="region" aria-roledescription="carousel" aria-label="screenshots of <%= name %>" tabindex="0"
+       data-controller="carousel"
+       data-action="keydown->carousel#key pointerdown->carousel#press pointerup->carousel#release pointercancel->carousel#release resize@window->carousel#place">
+    <div class="slides" data-carousel-target="slides">
+      <% urls.each.with_index(1) do |url, number| %>
+        <%= tag.img class: "shot", src: url, alt: "screenshot #{number} of #{urls.size} of #{name}",
+                    aria: { hidden: number > 1 || nil }, data: { carousel_target: "slide", action: "load->carousel#place" } %>
+      <% end %>
+      <% { previous: "M15 5l-7 7 7 7", next: "M9 5l7 7-7 7" }.each do |side, chevron| %>
+        <button type="button" class="side <%= side %>" aria-label="<%= side %> screenshot" data-action="carousel#<%= side %>">
+          <span class="knob"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="<%= chevron %>"/></svg></span>
+        </button>
+      <% end %>
+      <div class="dots">
+        <% urls.each_index do |index| %>
+          <%= tag.button type: "button", class: "dot", aria: { label: "screenshot #{index + 1}", current: index.zero? || nil },
+                         data: { action: "carousel#go", carousel_index_param: index, carousel_target: "dot" } %>
+        <% end %>
+      </div>
+    </div>
+    <p class="visually-hidden" aria-live="polite" data-carousel-target="status"></p>
+  </div>
+<% end %>

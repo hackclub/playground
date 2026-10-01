@@ -1,0 +1,17 @@
+<%# The login's two steps, a numbered square each, joined by a line that
+    fills once the first is done. just_done names a step finished a moment
+    ago: it ticks over as the page shows (see playground.css). The tick is the
+    one a reached goal wears on the meter. %>
+<% done = local_assigns.fetch(:done, []) %>
+<ol class="login-steps" aria-label="login steps">
+  <% { "hack_club" => "Hack Club", "hackatime" => "Hackatime" }.each.with_index(1) do |(key, label), number| %>
+    <% state = done.include?(key) ? "done" : ("current" if key == current) %>
+    <%= tag.li class: token_list("login-step", state, "just-done": key == local_assigns[:just_done]), aria: { current: ("step" if state == "current") } do %>
+      <span class="step-node" aria-hidden="true">
+        <span class="step-number"><%= number %></span>
+        <svg class="step-tick" viewBox="0 0 12 12"><path d="M1.9 6.3Q3.7 7.8 4.9 9.6Q7.3 5.5 10.3 2.4"/></svg>
+      </span>
+      <span class="step-label"><%= label %><% if state == "done" %><span class="visually-hidden">, done</span><% end %></span>
+    <% end %>
+  <% end %>
+</ol>

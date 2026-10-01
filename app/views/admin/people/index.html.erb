@@ -1,0 +1,26 @@
+<section class="panel">
+  <%= form_with url: admin_people_path, method: :get, class: "row" do %>
+    <%= text_field_tag :q, params[:q], placeholder: "name, email, or slack id", data: { shortcut: "/" } %>
+    <%= hidden_field_tag :filter, params[:filter] if params[:filter].present? %>
+    <button class="btn">search</button><kbd>/</kbd>
+  <% end %>
+  <% if params[:filter].present? %>
+    <p class="filter">filter: <strong><%= @filter&.label || "unknown, so nobody matches" %></strong>
+      <span class="muted">· <%= pluralize(@count, "person", plural: "people") %><%= ", showing the newest 100" if @count > 100 %></span>
+      · <%= link_to "clear filter", admin_people_path(q: params[:q].presence) %></p>
+  <% end %>
+</section>
+<section class="panel wide">
+  <table class="list">
+    <tr><th>who</th><th>full name</th><th>status</th><th>approved</th><th>pending</th><th>unshipped</th><th>joined</th></tr>
+    <% @users.each do |u| h = u.hours %>
+      <tr>
+        <td><%= link_to u.display_name, admin_person_path(u) %> <span class="muted"><%= u.email %></span></td>
+        <td><%= u.full_name %></td>
+        <td><%= u.eligible? ? "eligible" : (u.verification_status || "unverified") %><%= " · banned" if u.banned? %><%= " · admin" if u.admin? %></td>
+        <td><%= hours(h.approved_seconds) %></td><td><%= hours(h.pending_seconds) %></td><td><%= hours(h.unshipped_seconds) %></td>
+        <td class="muted"><%= u.created_at.to_date %></td>
+      </tr>
+    <% end %>
+  </table>
+</section>

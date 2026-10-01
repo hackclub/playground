@@ -1,0 +1,10 @@
+<%# The login's second step, as login.exe on the desktop's wallpaper, with the
+    first step ticking over. %>
+<section class="panel center login">
+  <p class="login-title" aria-hidden="true">login.exe</p>
+  <%= render "sessions/steps", current: "hackatime", done: %w[hack_club], just_done: "hack_club" %>
+  <h2>one more step: Hackatime</h2>
+  <p>taking you to Hackatime, Hack Club's free coding time tracker…</p>
+  <%= hackatime_button "continue to Hackatime", deny: params[:deny].presence, class: "btn primary",
+                       form: { data: { controller: "auto-submit" } } %>
+</section>

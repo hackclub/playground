@@ -1,0 +1,25 @@
+<%# The one field that fixes a step in ship.exe. It saves on change through
+    update, marked with checks, and sends the keys of the steps listed now, so
+    a step it fixes stays in the list. The server checks the value and says
+    what is wrong under the field. The upload saves itself. %>
+<% if item.field == :screenshot %>
+  <div id="ship-screenshot" class="fix"><%= render "screenshot_upload", project: @project %></div>
+<% else %>
+  <%= form_with model: @project, class: "fix", html: { novalidate: true }, data: { ship_checks_target: "form" } do |f| %>
+    <%= hidden_field_tag :checks, 1, id: nil %>
+    <% @checklist.items.each do |shown| %><%= hidden_field_tag "shown[]", shown.key, id: nil %><% end %>
+    <% case item.field %>
+    <% when :description %>
+      <%= f.text_area :description, rows: 3, maxlength: 2000, aria: { label: "description" } %>
+    <% when :code_url %>
+      <%= f.url_field :code_url, placeholder: "https://github.com/you/your-pet", aria: { label: "code URL" } %>
+    <% when :playable_url %>
+      <%= f.url_field :playable_url, placeholder: "https://github.com/you/your-pet/releases/latest", aria: { label: "shipped link" } %>
+    <% when :ship_message_url %>
+      <%= f.url_field :ship_message_url, placeholder: "https://hackclub.slack.com/archives/C0C51NCK1DG/p…", aria: { label: "ship message link" } %>
+    <% when :hackatime_projects %>
+      <%= render "hackatime_picker", project: @project %>
+    <% end %>
+    <% @project.errors.full_messages_for(item.field).each do |message| %><p class="banner alert"><%= message %></p><% end %>
+  <% end %>
+<% end %>

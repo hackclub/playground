@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>playground</title>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "playground" %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <%# The desktop lays this page over itself, so only its popups show: no
+      background, no flash, and no page view counted. %>
+  <body class="app popups-only">
+    <%= yield %>
+  </body>
+</html>

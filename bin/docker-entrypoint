@@ -1,0 +1,17 @@
+#!/bin/bash -e
+
+# The encrypted credentials are not in the repository. Write them from the
+# environment so Rails can decrypt them with RAILS_MASTER_KEY.
+if [ -n "${RAILS_CREDENTIALS_CONTENT}" ]; then
+  printf '%s' "${RAILS_CREDENTIALS_CONTENT}" > /rails/config/credentials.yml.enc
+elif [ "${RAILS_ENV}" == "production" ]; then
+  echo "RAILS_CREDENTIALS_CONTENT is not set. The app has no credentials." >&2
+  exit 1
+fi
+
+# If running the rails server then create or migrate existing database
+if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+  ./bin/rails db:prepare
+fi
+
+exec "${@}"

@@ -1,0 +1,57 @@
+<%# Inside a desktop window the pet page has no way back: it is a window of its own. %>
+<p class="dashboard-link"><%= link_to "← dashboard", dashboard_path %></p>
+<section class="panel">
+  <h2><%= @project.name %> <%= state_badge(@project.state) %></h2>
+  <p><%= @project.description %></p>
+  <p class="muted">
+    <% if @project.code_url.present? %><%= link_to "code", @project.code_url, target: "_blank", rel: "noopener" %> · <% end %>
+    <% if @project.playable_url.present? %><%= link_to "shipped link", @project.playable_url, target: "_blank", rel: "noopener" %> · <% end %>
+    Hackatime: <%= @project.hackatime_projects.presence&.join(", ") || "none linked" %>
+  </p>
+  <p>
+    tracked <strong><%= hours(@project.tracked_seconds) %></strong> ·
+    unshipped <strong><%= hours(@project.unshipped_seconds) %></strong>
+  </p>
+  <div class="row" data-controller="ship-popup" data-ship-popup-url-value="<%= checks_project_path(@project) %>"
+       data-ship-popup-project-value="<%= @project.id %>" data-ship-popup-name-value="<%= @project.name %>">
+    <%= link_to "edit", edit_project_path(@project), class: "btn" %>
+    <%# The ship popup lists only what still blocks shipping, each with its own
+        fix, and ships. On the desktop it opens as a window of its own. The
+        link opens the same list as a page in a new tab. %>
+    <%= link_to "ship", checks_project_path(@project), class: "btn primary", aria: { haspopup: "dialog" },
+          data: { action: "ship-popup#open:prevent" } %>
+    <dialog class="popup ship-popup" aria-labelledby="ship-popup-title" data-controller="popup-drag" data-ship-popup-target="dialog"
+            data-action="keydown->ship-popup#trap cancel->ship-popup#save close->ship-popup#closed ship-checks:saving->ship-popup#started ship-checks:saved->ship-popup#ended screenshot-upload:changed->ship-popup#changed">
+      <div class="popup-head" data-popup-drag-target="head" data-action="pointerdown->popup-drag#start pointermove->popup-drag#move pointerup->popup-drag#end pointercancel->popup-drag#end lostpointercapture->popup-drag#end">
+        <h2 class="popup-title" id="ship-popup-title">ship.exe</h2>
+        <button type="button" class="popup-close" aria-label="close" data-action="ship-popup#close">X</button>
+      </div>
+      <div class="popup-body" data-ship-popup-target="body"><div id="ship-checks"><p class="muted">checking…</p></div></div>
+    </dialog>
+  </div>
+</section>
+
+<section class="panel">
+  <h2><%= @project.screenshots.many? ? "screenshots" : "screenshot" %></h2>
+  <% if @project.screenshots.any? %>
+    <%= render "screenshots", urls: @project.screenshot_urls, name: @project.name %>
+  <% else %>
+    <p class="muted">no screenshot yet</p>
+  <% end %>
+</section>
+
+<% if @project.ships.any? %>
+  <section class="panel">
+    <h2>ships</h2>
+    <ul class="ships">
+      <% @project.ships.reverse_each do |ship| %>
+        <li>
+          <strong>#<%= ship.number %></strong> <%= state_badge(ship.state) %>
+          <%= local_date(ship.created_at) %> · claimed <%= hours(ship.claimed_seconds) %>
+          <% if ship.approved? %> · approved <strong><%= hours(ship.approved_seconds) %></strong><% end %>
+          <% if ship.review_feedback.present? && !ship.pending? %><blockquote><%= ship.review_feedback %></blockquote><% end %>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+<% end %>

@@ -1,0 +1,224 @@
+<% queue_path = @stage == "review" ? admin_review_path(skip: @ship.id) : admin_fraud_path(skip: @ship.id) %>
+<header class="itemhead">
+  <div>
+    <h1><%= @project.name %> <span class="muted">ship #<%= @ship.number %></span></h1>
+    <p>
+      by <%= link_to @user.display_name, admin_person_path(@user) %> ·
+      <%= state_badge(@ship.state) %> · review <%= state_badge(@ship.review_status) %> · fraud <%= state_badge(@ship.fraud_status) %> ·
+      shipped <%= time_ago_in_words(@ship.created_at) %> ago
+    </p>
+  </div>
+  <div class="row">
+    <%= link_to "review", admin_ship_path(@ship, stage: "review", flow: params[:flow]), class: "btn #{"primary" if @stage == "review"}" %>
+    <%= link_to "fraud", admin_ship_path(@ship, stage: "fraud", flow: params[:flow]), class: "btn #{"primary" if @stage == "fraud"}" %>
+    <% unless flow? %><%= link_to "skip", queue_path, class: "btn", data: { shortcut: "n" } %><kbd>n</kbd><% end %>
+  </div>
+</header>
+<%= render "claim", claim: @claim, held: @held, ship: @ship, stage: @stage %>
+
+<div class="columns">
+  <aside class="col side">
+    <section class="panel">
+      <h2>participant</h2>
+      <p><strong><%= @user.display_name %></strong><br><%= @user.email %><br>
+        <% if @user.slack_id %>slack <%= link_to @user.slack_id, "https://hackclub.slack.com/team/#{@user.slack_id}", target: "_blank" %><br><% end %>
+        <%= @user.eligible? ? "✓ verified, eligible" : "✗ #{@user.verification_status || "unverified"}" %>
+        <% if @user.banned? %><br><span class="badge badge-banned">banned</span> <%= @user.ban_reason %><% end %>
+      </p>
+      <p>Hackatime <strong><%= @ship.snapshot["hackatime_user_id"] %></strong> · trust
+        <span class="badge badge-<%= { "red" => "banned", "yellow" => "pending", "green" => "approved" }[@user.hackatime_trust_level] || "draft" %>"><%= @user.hackatime_trust_level || "unknown" %></span></p>
+    </section>
+    <section class="panel">
+      <h2>hours</h2>
+      <table class="kv">
+        <% @ship.snapshot.fetch("projects", {}).each do |name, sec| %>
+          <tr><td><%= name %></td><td><%= hours(sec) %></td><td class="muted"><%= @live&.projects&.key?(name) ? "now #{hours(@live.projects[name])}" : "" %></td></tr>
+        <% end %>
+        <tr><td>tracked at ship</td><td><%= hours(@ship.snapshot["tracked_seconds"]) %></td><td></td></tr>
+        <% if @ship.snapshot["previously_claimed_seconds"].to_i.positive? %>
+          <tr><td>earlier ships</td><td>− <%= hours(@ship.snapshot["previously_claimed_seconds"]) %></td><td></td></tr>
+        <% end %>
+        <tr class="total"><td>claimed</td><td><%= hours(@ship.claimed_seconds) %></td><td></td></tr>
+        <% if @ship.review_seconds %><tr><td>review approved</td><td><%= hours(@ship.review_seconds) %></td><td></td></tr><% end %>
+        <% if @ship.approved_seconds %><tr class="total"><td>final approved</td><td><%= hours(@ship.approved_seconds) %></td><td></td></tr><% end %>
+      </table>
+      <p class="muted">art counts at most <%= Ship::ART_CAP_PERCENT %>% of approved hours. art arrives through Lapse, linked to one of these projects.</p>
+    </section>
+    <section class="panel">
+      <h2>Lapses</h2>
+      <% lapses = Array(@ship.snapshot["lapses"]) %>
+      <% if @ship.snapshot["lapse_error"] %>
+        <p class="banner">Lapses unavailable: <%= @ship.snapshot["lapse_error"] %></p>
+      <% elsif !@ship.snapshot.key?("lapses") %>
+        <p class="muted">this ship was taken before Lapse lookup existed.</p>
+      <% elsif lapses.empty? %>
+        <p class="muted">no Lapse time on these projects.</p>
+      <% else %>
+        <% share = @ship.claimed_seconds.positive? ? (100.0 * @ship.snapshot["lapse_seconds"].to_i / @ship.claimed_seconds).round : 0 %>
+        <p>art <strong><%= hours(@ship.snapshot["lapse_seconds"]) %></strong> of <%= hours(@ship.claimed_seconds) %> claimed ·
+          <strong class="<%= "late" if share > Ship::ART_CAP_PERCENT %>"><%= share %>%</strong> <span class="muted">(cap <%= Ship::ART_CAP_PERCENT %>%)</span></p>
+        <ul class="events">
+          <% lapses.each do |l| %>
+            <li><%= link_to l["title"].presence || l["id"], l["url"], target: "_blank", rel: "noopener" %> <span class="muted"><%= hours(l["duration"]) %> · <%= l["project"] %></span></li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
+    <% if Array(@ship.snapshot["warnings"]).any? %>
+      <section class="panel warnbox">
+        <h2>warnings</h2>
+        <ul><% @ship.snapshot["warnings"].each do |w| %><li>! <%= w %></li><% end %></ul>
+      </section>
+    <% end %>
+    <% if @duplicates&.any? %>
+      <section class="panel warnbox">
+        <h2>same repo elsewhere</h2>
+        <ul><% @duplicates.each do |p| %><li><%= link_to p.name, admin_person_path(p.user) %> by <%= p.user.display_name %></li><% end %></ul>
+      </section>
+    <% end %>
+    <% if @shared_hackatime&.any? %>
+      <section class="panel warnbox">
+        <h2>same Hackatime account elsewhere</h2>
+        <ul><% @shared_hackatime.each do |u| %><li><%= link_to u.display_name, admin_person_path(u) %></li><% end %></ul>
+      </section>
+    <% end %>
+    <section class="panel">
+      <h2>other ships</h2>
+      <% if @other_ships.empty? %><p class="muted">none</p><% end %>
+      <ul class="events">
+        <% @other_ships.each do |s| %>
+          <li><%= link_to "#{s.project.name} ##{s.number}", admin_ship_path(s) %> <%= state_badge(s.state) %> <%= hours(s.approved_seconds || s.claimed_seconds) %></li>
+        <% end %>
+      </ul>
+    </section>
+  </aside>
+
+  <main class="col main">
+    <section class="panel">
+      <h2>links</h2>
+      <p class="links">
+        <%= link_to "code", @ship.snapshot["code_url"], target: "_blank", rel: "noopener" if @ship.snapshot["code_url"] %>
+        <%= link_to "shipped link", @ship.snapshot["playable_url"], target: "_blank", rel: "noopener" if @ship.snapshot["playable_url"] %>
+        <%= link_to "ship message", @ship.snapshot["ship_message_url"], target: "_blank", rel: "noopener" if @ship.snapshot["ship_message_url"] %>
+        <%# The participant's own page, by their Hackatime id, when there is one. %>
+        <% hackatime_id = @ship.snapshot["hackatime_user_id"].presence || @user&.hackatime_user_id.presence %>
+        <%= link_to "Telescreen", (hackatime_id ? "https://telescreen.hackclub.com/subjects/#{ERB::Util.url_encode(hackatime_id.to_s)}" : "https://telescreen.hackclub.com"), target: "_blank", rel: "noopener" %>
+        <%= link_to "Lapse review", "https://telescreen.hackclub.com/workbench/lapse", target: "_blank", rel: "noopener" %>
+      </p>
+      <% if (release = @ship.snapshot["release"]) %>
+        <p>release <strong><%= release["tag"] %></strong>:
+          <%= release["assets"].map { "#{it["name"]} (#{number_to_human_size(it["size"])})" }.join(", ").presence || "no files" %></p>
+      <% end %>
+      <% if @repo %>
+        <p class="muted"><%= @repo.full_name %> · <%= pluralize(@repo.commits, "commit") %> · last push <%= @repo.pushed_at&.first(10) %> · ★ <%= @repo.stars %></p>
+      <% elsif @ship.snapshot["code_url"].present? %>
+        <%# Code off GitHub has no README or commits to show: read it at its link. %>
+        <p class="muted">no GitHub data. the code is at <%= link_to @ship.snapshot["code_url"], @ship.snapshot["code_url"], target: "_blank", rel: "noopener" %></p>
+      <% end %>
+      <%# Every screenshot the ship was taken with, cover first. An older ship
+          has only its one. %>
+      <% shots = Array(@ship.snapshot["screenshots"]).presence || Array(@ship.snapshot["screenshot_url"].presence) %>
+      <% shots.each.with_index(1) do |url, number| %>
+        <img class="shot" src="<%= url %>" alt="screenshot <%= number %> of <%= shots.size %>">
+      <% end %>
+      <p><%= @ship.snapshot["description"] %></p>
+    </section>
+
+    <% if @stage == "review" %>
+      <% if @readme %>
+        <details class="panel" open><summary><h2 class="inline">README</h2></summary>
+          <div class="readme"><%= readme_html(@readme, repo: @project.github_repo) %></div></details>
+      <% end %>
+      <% if @repo %>
+        <details class="panel"><summary><h2 class="inline">recent commits</h2></summary>
+          <ul class="events"><% @commits.each do |c| %><li><code><%= c["sha"] %></code> <%= c["date"]&.first(10) %> <%= c["message"] %></li><% end %></ul>
+        </details>
+      <% end %>
+
+      <section class="panel" data-controller="checklist" data-checklist-url-value="<%= checklist_admin_ship_path(@ship) %>">
+        <h2>checklist</h2>
+        <% { "runs" => "the shipped build runs, or the site loads", "is_pet" => "it is a desktop pet", "not_ai" => "the pet is not AI generated",
+             "readme" => "the README explains how to install and run it", "hours_fit" => "the hours fit the scope", "art_cap" => "art is at most #{Ship::ART_CAP_PERCENT}% of the hours",
+             "not_double" => "not already shipped to another YSWS" }.each do |key, label| %>
+          <label class="tick"><input type="checkbox" name="<%= key %>" <%= "checked" if @ship.review_checklist[key] %> data-action="checklist#save" <%= "disabled" unless @ship.review_status == "pending" %>> <%= label %></label>
+        <% end %>
+      </section>
+
+      <% if @ship.review_status == "pending" && @ship.pending? %>
+        <section class="panel">
+          <h2>verdict</h2>
+          <%# The presets fill in shares of the claimed hours that are not quarter hours, so the field's step is only for its arrows. %>
+          <%= form_with url: review_admin_ship_path(@ship, flow: params[:flow]), class: "stack", id: "verdict", html: { novalidate: true },
+                data: { controller: "deflate", deflate_claimed_value: @ship.claimed_seconds / 3600.0 } do %>
+            <label>approved hours <span class="muted">claimed <%= (@ship.claimed_seconds / 3600.0).round(2) %>. deflate when the evidence says less.</span>
+              <%= number_field_tag :approved_hours, (@ship.claimed_seconds / 3600.0).round(2), step: 0.25, min: 0, max: (@ship.claimed_seconds / 3600.0).round(2), data: { shortcut: "h", deflate_target: "hours" } %></label>
+            <div class="row" role="group" aria-label="deflate to a share of the claimed hours">
+              <span class="muted">deflate to</span>
+              <% [ 15, 30, 50, 75 ].each do |percent| %>
+                <button type="button" class="btn" data-percent="<%= percent %>" data-action="deflate#set"><%= percent %>% · <%= (@ship.claimed_seconds * percent / 360000.0).round(2) %>h</button>
+              <% end %>
+            </div>
+            <label>your judgement <span class="muted">internal. goes into the justification. the numbers are written for you.</span>
+              <%= text_area_tag :judgement, nil, rows: 3, data: { shortcut: "j" } %></label>
+            <label>note to the participant <span class="muted">shown to them. required for changes needed.</span>
+              <%= text_area_tag :feedback, nil, rows: 2, data: { shortcut: "f" } %></label>
+            <div class="row">
+              <button class="btn primary" name="verdict" value="approve" data-shortcut="a" data-shortcut-confirm>approve</button><kbd>a a</kbd>
+              <button class="btn" name="verdict" value="changes" data-shortcut="c" data-shortcut-confirm>changes needed</button><kbd>c c</kbd>
+              <button class="btn danger" name="verdict" value="reject" data-shortcut="r" data-shortcut-confirm>reject</button><kbd>r r</kbd>
+            </div>
+            <p class="muted"><kbd>h</kbd> hours <kbd>j</kbd> judgement <kbd>f</kbd> note · press a verdict key twice</p>
+          <% end %>
+        </section>
+      <% else %>
+        <section class="panel"><h2>review</h2>
+          <p><%= state_badge(@ship.review_status) %> by <%= @ship.reviewer&.display_name %> <%= @ship.reviewed_at && "#{time_ago_in_words(@ship.reviewed_at)} ago" %></p>
+          <p><strong>judgement:</strong> <%= @ship.review_judgement %></p>
+          <% if @ship.review_feedback.present? %><p><strong>to participant:</strong> <%= @ship.review_feedback %></p><% end %>
+        </section>
+      <% end %>
+    <% else %>
+      <section class="panel">
+        <h2>review said</h2>
+        <p><%= state_badge(@ship.review_status) %> <%= hours(@ship.review_seconds) if @ship.review_seconds %> by <%= @ship.reviewer&.display_name || "nobody yet" %></p>
+        <p><%= @ship.review_judgement %></p>
+      </section>
+      <section class="panel">
+        <h2>fraud checks</h2>
+        <ul class="checks">
+          <li class="<%= @user.hackatime_red? ? "fail" : "ok" %>"><span class="icon"><%= @user.hackatime_red? ? "✗" : "✓" %></span> Hackatime trust level: <%= @user.hackatime_trust_level || "unknown" %></li>
+          <li class="<%= @duplicates&.any? ? "warn" : "ok" %>"><span class="icon"><%= @duplicates&.any? ? "!" : "✓" %></span> repo not shipped by another playground participant</li>
+          <li class="<%= @shared_hackatime&.any? ? "warn" : "ok" %>"><span class="icon"><%= @shared_hackatime&.any? ? "!" : "✓" %></span> Hackatime account not linked to another playground participant</li>
+          <li class="warn"><span class="icon">?</span> Unified DB double-dip check: search the Unified DB for <code><%= @ship.snapshot["code_url"] %></code> (no read token yet)</li>
+          <li class="warn"><span class="icon">?</span> watch the Lapses in Telescreen and deduct AFK time</li>
+        </ul>
+      </section>
+      <% if @ship.fraud_status == "pending" && @ship.pending? %>
+        <section class="panel">
+          <h2>fraud verdict</h2>
+          <%= form_with url: fraud_admin_ship_path(@ship, flow: params[:flow]), class: "stack" do %>
+            <label>deduct hours <span class="muted">0.25 steps, of <%= (@ship.review_seconds.to_i / 3600.0).round(2) %> approved by review</span>
+              <%= number_field_tag :deduct_hours, 0, step: 0.25, min: 0, max: (@ship.review_seconds.to_i / 3600.0).round(2), data: { shortcut: "d" } %></label>
+            <label>notes <span class="muted">required for a deduction or a ban</span>
+              <%= text_area_tag :notes, nil, rows: 3, data: { shortcut: "j" } %></label>
+            <div class="row">
+              <button class="btn primary" name="verdict" value="pass" data-shortcut="p" data-shortcut-confirm>pass</button><kbd>p p</kbd>
+              <button class="btn" name="verdict" value="deduct" data-shortcut="x" data-shortcut-confirm>pass with deduction</button><kbd>x x</kbd>
+              <button class="btn danger primary" name="verdict" value="ban" data-shortcut="b" data-shortcut-confirm>fraud: reject and ban</button><kbd>b b</kbd>
+            </div>
+          <% end %>
+        </section>
+      <% elsif @ship.fraud_status != "waiting" %>
+        <section class="panel"><h2>fraud</h2>
+          <p><%= state_badge(@ship.fraud_status) %> by <%= @ship.fraud_reviewer&.display_name %>. <%= "deducted #{hours(@ship.fraud_deduction_seconds)}." if @ship.fraud_deduction_seconds.positive? %> <%= @ship.fraud_notes %></p>
+        </section>
+      <% else %>
+        <p class="banner">fraud waits until review approves this ship.</p>
+      <% end %>
+    <% end %>
+
+    <% if @justification %>
+      <details class="panel"><summary><h2 class="inline">justification for Airtable</h2></summary><pre class="just"><%= @justification %></pre></details>
+    <% end %>
+  </main>
+</div>

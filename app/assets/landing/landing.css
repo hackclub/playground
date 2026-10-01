@@ -1,0 +1,779 @@
+@import url('https://fonts.googleapis.com/css2?family=Chelsea+Market&display=swap');
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    position: relative;
+    background-image: url("/landing/background.png"); 
+    background-size: cover; 
+    background-repeat: no-repeat;
+    min-height: 100vh; 
+    margin: 0;
+    font-family: 'Chelsea Market';
+}
+
+#background-flag {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 220px;
+    z-index: -1;
+    pointer-events: none;
+}
+
+#desktop-pet {
+    position: fixed;
+    width: 150px;
+    height: auto;
+    left: 120px;
+    bottom: -9px;
+    z-index: 15;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+}
+
+#desktop-pet.walking {
+    animation: pet-walk 6s ease-in-out infinite alternate;
+}
+
+#desktop-pet.stopped {
+    animation: none !important;
+}
+
+/* playground: the rock in the trash shows nowhere. */
+#desktop-pet.in-trash,
+#desktop-pet-static.in-trash {
+    display: none !important;
+}
+
+#desktop-pet.pet-dragging,
+#desktop-pet-static.pet-dragging {
+    cursor: grabbing;
+    animation: none !important;
+    animation-play-state: paused;
+}
+
+#desktop-pet-static {
+    position: fixed;
+    width: 150px;
+    height: auto;
+    z-index: 15;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    display: none;
+}
+
+@keyframes pet-walk {
+    from {
+        transform: translateX(-20px);
+    }
+    to {
+        transform: translateX(20px);
+    }
+}
+
+#welcome {
+    top: 30%;
+    left: 60%;
+    text-align: center;
+    --window-max-height: 400px;
+}
+
+.window {
+    position: absolute;
+    width: 500px;
+    min-width: 464px;
+    max-height: var(--window-max-height, calc(100vh - 40px));
+    border: 4px solid #3a70b8;
+    background: #3a70b8;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    z-index: 9;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.windowheader {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    cursor: grab;
+    z-index: 10;
+    background: #3a70b8;
+    height: 20px;
+}
+
+.headertext {
+    margin: 0;
+    color: white;
+    font-size: 18px;
+    padding: 0 4px;
+}
+
+.windowcontent {
+    padding: 24px 24px 20px;
+    background: white;
+    color: #2b3a4d;
+    border-top: 2px solid #3a70b8;
+    overflow-y: auto;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.windowcontent img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto 18px;
+}
+
+.windowcontent p {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.windowcontent ul {
+    margin: 18px 0 0;
+    padding-left: 20px;
+}
+
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin: 16px 0 20px;
+}
+
+.image-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.image-grid .grid-image {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin: 0;
+}
+
+/* playground: a picture opens its pet's page, as its title does. The title
+   stays the one link a keyboard or a screen reader meets. */
+.image-card .image-link {
+    display: block;
+    width: 100%;
+}
+
+.image-title {
+    margin: 10px 0 0;
+    font-size: 0.95rem;
+    color: #2b3a4d;
+}
+
+.image-title a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.image-title a:hover {
+    text-decoration: underline;
+}
+
+.appicon {
+    width: 64px;
+    height: 64px;
+}
+
+#bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: space-between;
+    display: flex;
+    align-items: center;
+    height: 40px;
+    background-color: #d9d9d9;
+}
+/* playground: each word is a button that plays a sound, and looks as the
+   word did. */
+#bar button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.background-logo-wrapper {
+    position: absolute;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.background-logo {
+    width: 700px;
+    display: block;
+    margin: 0 auto;
+}
+
+.background-logo-text {
+    margin: -10px;
+    color: #fff;
+    -webkit-text-stroke: 1.5px black;
+    font-size: 34px;
+    pointer-events: none;
+}
+
+#apps {
+    position: absolute;
+    top: 57%;
+    left: 40%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 12px;
+    z-index: 5;
+}
+
+.app {
+    text-align: center;
+    padding: 16px;
+    width: fit-content;
+    cursor: pointer;
+}
+
+.app p {
+    margin: 0;
+    color: #fff;
+}
+/* playground additions below. The rules above are froppii's, unchanged. */
+
+/* overflow: hidden still lets the browser scroll the body, so a Tab to the
+   X of a window past the right edge slid the whole desktop sideways under
+   the credits and the taskbar. clip never scrolls. */
+body { overflow: clip; }
+
+/* A window is never wider than the browser window, and landing.js keeps it
+   inside. It is never taller than the desktop between the credits and the
+   taskbar (landing.js sets --desktop-top and --desktop-bottom), and its
+   content scrolls inside it. welcome.txt also fits below its 30% top, which
+   keeps its X clear of the credits on a short screen. The minimum is the smallest a resize
+   makes a window: the longest title and the X fit the header with room to
+   grab it, and a line of text shows below. Every window opens larger. */
+.window {
+    max-height: min(var(--window-max-height, 100vh), calc(var(--desktop-bottom, 100vh) - var(--desktop-top, 10px)));
+    max-width: calc(100vw - 20px);
+    min-width: min(200px, calc(100vw - 20px));
+    min-height: min(80px, calc(100vh - 10px));
+}
+#welcome { --window-max-height: min(400px, calc(70vh - 10px)); }
+
+/* The required links must be easy to find (docs: YSWS Website
+   Requirements). */
+#credits {
+    position: fixed;
+    top: 10px;
+    right: 12px;
+    z-index: 20;
+    text-align: right;
+    color: #fff;
+    -webkit-text-stroke: 0.4px black;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    font-size: 15px;
+    line-height: 1.4;
+}
+#credits p { margin: 0; }
+/* Only the links take a press. The row's gaps, and its words between the
+   links, leave it to the flag and the desktop under them. */
+#credits { pointer-events: none; }
+#credits a { color: #fff; pointer-events: auto; }
+
+/* The required links are desktop icons. landing.js builds the icons and
+   then marks the page icons-ready. Until then, or if it never runs, the
+   links show as text in the top right corner. They also stay there on a
+   narrow or short screen, where welcome.txt opens over most of the icons
+   or they fill the screen. */
+a.app { text-decoration: none; }
+/* On a phone the row takes two lines, split evenly between links, each
+   whole and with its dot. */
+#credit-links { text-wrap: balance; }
+#credit-links a { white-space: nowrap; }
+.icons-ready #credit-links { display: none; }
+@media (max-width: 899px), (max-height: 600px), (max-width: 1239px) and (max-height: 849px) {
+    .icons-ready #credit-links { display: block; }
+}
+/* The row ends with the sponsor's credit, "sponsored by Armand", kept whole.
+   On a phone the row stands in for the icons that link off the site, the
+   sponsor's included, so they do not show there. On a desktop they do, and
+   the armand.sponsor icon is the credit. Without the script the row shows
+   it at every size. */
+#credit-sponsor > span { white-space: nowrap; }
+/* On a phone the row sits just under the flag, which is 220px wide and
+   shaped 534:207 at every size, and runs the width of the screen, so no line
+   of it lies on the flag. */
+@media (max-width: 560px) {
+    .app.in-row { display: none; }
+    #credits { top: calc(220px * 207 / 534 + 6px); left: 12px; }
+}
+@media (min-width: 561px) {
+    .icons-ready #credit-sponsor { display: none; }
+}
+
+/* The icons sit on landing.js's grid across the whole desktop, each box
+   centred on its cell, 168px wide. The layer takes no presses itself, so a
+   press between icons lands on the wallpaper. A label too long for the cell
+   ends in an ellipsis, and a finger on an icon drags it. */
+#apps {
+    inset: 0;
+    transform: none;
+    display: block;
+    padding: 0;
+    pointer-events: none;
+}
+.app {
+    position: absolute;
+    box-sizing: border-box;
+    /* As wide as its label, up to its cap, even at the right edge. */
+    width: max-content;
+    max-width: 168px;
+    transform: translateX(-50%);
+    pointer-events: auto;
+    touch-action: none;
+}
+/* A label is as wide as its text, so a selected one's fill hugs it. It has
+   the credits' thin dark outline and a soft shadow down and right, so it
+   reads on the lightest clouds and the busiest grass. It keeps to its lines,
+   one on a phone, and past them ends in an ellipsis after a whole word. It
+   breaks at a space, and where it has two lines, after a dot. A word too
+   long for a line takes a smaller font (landing.js), and only past that
+   breaks anywhere. A word that just fits never ends in an ellipsis: the
+   clamp draws the ellipsis, and a fraction of a pixel over the line clips
+   instead. 1px of padding each side holds what a letter draws past its
+   width, such as the bar of a last t, so the clip never takes it. */
+/* A break after a dot counts only where a label has two lines. */
+.app p wbr { display: none; }
+.app p {
+    box-sizing: border-box;
+    padding-inline: 1px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    overflow: hidden;
+    text-overflow: clip;
+    -webkit-text-stroke: 0.4px black;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+}
+/* A selected icon, as on an XP desktop, and the box a drag across the
+   wallpaper draws, in the windows' blue: the label on a solid fill a little
+   past its text, and the picture tinted where it is drawn, not where it is
+   clear. landing.js adds the tint's filter. landing.js draws the box's
+   outline in marker. */
+.app.selected p,
+.app.drop-target p {
+    background: #3a70b8;
+    box-shadow: 0 0 0 1px #3a70b8;
+}
+.app.selected .appicon,
+.app.selected .shortcut,
+.app.drop-target .appicon { filter: url(#icon-tint); }
+/* The shortcut arrow on an icon that leaves the site: a third of the
+   picture, on its bottom left corner. The picture sits 16px down and
+   centred. The press lands on the icon under it. */
+.shortcut {
+    position: absolute;
+    top: calc(16px + 64px - 22px);
+    left: calc(50% - 32px);
+    width: 22px;
+    height: 22px;
+    pointer-events: none;
+}
+.icon-tint { position: absolute; }
+/* Icons on the move show through a little, as on a classic desktop, so the
+   trash can under them shows it will take them. */
+.app.moving { z-index: 1; opacity: 0.7; }
+#selection-box {
+    position: fixed;
+    z-index: 6;
+    background: rgba(58, 112, 184, 0.25);
+    pointer-events: none;
+}
+#selection-box svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+#selection-box path { fill: #3a70b8; }
+
+/* The example pets range from about 5:4 to 16:9, so at their own shapes the
+   images differ in height and the titles fall out of line. One 7:5 frame,
+   cropped from the centre, keeps every card the same size. It still shows
+   all of the frog pond drawing, trims the 16:9 captures by a fifth, and
+   holds the space before an image loads. */
+.image-grid .grid-image {
+    aspect-ratio: 7 / 5;
+    object-fit: cover;
+}
+
+/* ship.exe holds the dashboard in a frame, and a pet's window holds its pet
+   page the same way. ship.exe's id keeps its old name (landing.js). */
+#window-goal\.exe,
+.pet-window {
+    width: min(620px, calc(100vw - 20px));
+    --window-max-height: calc(100vh - 60px);
+}
+#window-goal\.exe .windowcontent,
+.pet-window .windowcontent { padding: 0; }
+/* guide.txt holds the guide in a frame too, wider, for its code, and no
+   taller than 640px. The guide scrolls in it, and a drag makes it bigger. */
+#window-guide\.txt {
+    width: min(720px, calc(100vw - 20px));
+    --window-max-height: min(640px, calc(100vh - 60px));
+}
+#window-guide\.txt .windowcontent,
+#window-requirements\.txt .windowcontent { padding: 0; }
+/* login.exe holds the login in a frame too, at a window's own width, as
+   tall as the login and no taller. */
+#window-login\.exe .windowcontent { padding: 0; }
+
+/* landing.js sets --page-height to the page's own height, so the window fits
+   its page: ship.exe's dashboard, the login, a pet's page, or the guide,
+   which is taller than any screen and scrolls in its frame. The fallback
+   holds until the page has loaded. */
+.ship-frame,
+.login-frame,
+.pet-frame,
+.guide-frame,
+.requirements-frame {
+    display: block;
+    width: 100%;
+    height: var(--page-height, min(640px, calc(100vh - 110px)));
+    border: 0;
+}
+
+/* An iframe swallows mousemove and mouseup, so a drag that crosses ship.exe's
+   dashboard would never end. froppii's drag handlers set body.dragging while
+   a window or the pet is held. */
+body.dragging iframe { pointer-events: none; }
+
+/* The rock lives in front of the desktop: the wallpaper, the logo, the
+   icons, and every window (from .window's 9, however many are open), a
+   pet's delete popups, the credits, and the trash menu. It walks over the
+   bottom rows' labels. The taskbar alone stays in front of it, as the
+   taskbar lies over the windows, so the rock stands behind its top edge.
+   Held, it rises in front of everything, the taskbar too.
+   The GIF and its stopped-frame canvas share each layer. The held state has
+   its own class, because the stopped frame also carries pet-dragging and a
+   window drag also sets body.dragging.
+   Its picture is a square with the rock drawn in its lower middle, so only
+   that part takes a press (see rockDrawn in landing.js): a press on the
+   clear rest of the square lands on the window or icon behind it. */
+#desktop-pet,
+#desktop-pet-static {
+    z-index: 1000;
+    clip-path: inset(30% 16% 22% 16%);
+}
+#bar { z-index: 1001; }
+body.pet-held #desktop-pet,
+body.pet-held #desktop-pet-static { z-index: 1002; }
+/* On a phone (the site's 560px breakpoint) the rock stays hidden, so it
+   neither walks nor covers the icons, whatever landing.js shows. */
+@media (max-width: 560px) {
+    #desktop-pet,
+    #desktop-pet-static { display: none !important; }
+}
+
+/* The X at the right end of each header, in the window's own blue, white,
+   border, and font. A long title shortens so the X stays in the header. */
+.headertext {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.windowclose {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    margin: 0 2px 0 auto;
+    padding: 0;
+    border: 2px solid white;
+    background: #3a70b8;
+    color: white;
+    font: bold 12px/1 'Chelsea Market';
+    cursor: pointer;
+}
+.windowclose:hover,
+.windowclose:focus-visible {
+    background: white;
+    color: #3a70b8;
+}
+
+/* landing.js resizes a window from any side or corner of its frame, and
+   only the cursor shows it. .window's overflow: hidden cuts off anything
+   laid over a border, so the 4px frame is padding in the same blue. The hit
+   areas sit behind the header and the content, so only their part on the
+   frame takes the pointer: 4px sides, and at each corner 16px of frame
+   along both sides. The header still drags and the X still closes. */
+.window {
+    border: 0;
+    padding: 4px;
+}
+.windowresize {
+    position: absolute;
+    z-index: -1;
+    touch-action: none;
+}
+/* A finger on the header drags the window, as the mouse does. */
+.windowheader { touch-action: none; }
+/* Named by compass point, as the cursors are. */
+.windowresize.n { top: 0; left: 0; right: 0; height: 4px; cursor: ns-resize; }
+.windowresize.s { bottom: 0; left: 0; right: 0; height: 4px; cursor: ns-resize; }
+.windowresize.e { top: 0; right: 0; bottom: 0; width: 4px; cursor: ew-resize; }
+.windowresize.w { top: 0; left: 0; bottom: 0; width: 4px; cursor: ew-resize; }
+.windowresize.nw { top: 0; left: 0; width: 16px; height: 16px; cursor: nwse-resize; }
+.windowresize.ne { top: 0; right: 0; width: 16px; height: 16px; cursor: nesw-resize; }
+.windowresize.se { bottom: 0; right: 0; width: 16px; height: 16px; cursor: nwse-resize; }
+.windowresize.sw { bottom: 0; left: 0; width: 16px; height: 16px; cursor: nesw-resize; }
+
+/* A resized window holds its own size, up to the desktop between the
+   credits and the taskbar (landing.js sets --desktop-top and
+   --desktop-bottom): past welcome.txt's 400px, and with ship.exe's
+   dashboard or a pet's page filling it. */
+.window.resized { max-height: calc(var(--desktop-bottom, 100vh) - var(--desktop-top, 10px)); }
+.window.resized .ship-frame,
+.window.resized .pet-frame,
+.window.resized .guide-frame,
+.window.resized .requirements-frame { height: 100%; }
+
+/* The Hack Club 2026 banner links to hackclub.com. The banner image ignores
+   the mouse and sits behind everything, so a link covers the same spot
+   (534x207 at froppii's 220px flag width) above the wallpaper and below the
+   windows. Its outline follows the banner's two pennants, so a click on
+   the sky beside them lands on the desktop. */
+#flag-link {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 220px;
+    aspect-ratio: 534 / 207;
+    z-index: 5;
+    clip-path: polygon(0 16.9%, 17.8% 6.3%, 35.4% 0, 46.8% 4.3%, 59.4% 15.5%, 65.4% 26.6%, 65.4% 58.9%,
+        69.1% 53.6%, 78.7% 48.8%, 87.6% 53.1%, 100% 72%, 95.1% 81.2%, 100% 100%, 84.1% 92.3%, 63.9% 99%, 56.2% 95.7%,
+        55.2% 87.9%, 55.2% 59.9%, 51.5% 57%, 32.4% 51.7%, 7.5% 61.4%, 0 64.7%);
+}
+
+/* The desktop is not a page of text. A drag across the wallpaper, a
+   double-click, or a select-all highlights nothing on it: the flag, the logo
+   and its line, the icons, the rock, the taskbar, the credits, and each
+   window's header and frame. A long press on a phone opens no menu there.
+   Text inside a window stays selectable, so it can still be copied. The
+   credit links still take a click and the keyboard. The icons and the flag
+   are draggable="false", so neither drags out as a picture. */
+body {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+.windowcontent {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+}
+
+/* A pet's ship window holds its ship list in a frame, as ship.exe holds the
+   dashboard, a little shorter so it opens below the header of the window
+   that asked. */
+.ship-window .windowcontent { padding: 0; }
+.ship-window-frame {
+    display: block;
+    width: 100%;
+    height: var(--page-height, min(560px, calc(100vh - 150px)));
+    border: 0;
+}
+.window.resized .ship-window-frame { height: 100%; }
+
+/* A goal's redeem window holds its shipping form in a frame, as wide as
+   ship.exe, so the city, state, and postal code fit on one line. */
+.redeem-window { width: min(620px, calc(100vw - 20px)); }
+.redeem-window .windowcontent { padding: 0; }
+.redeem-frame {
+    display: block;
+    width: 100%;
+    height: var(--page-height, min(560px, calc(100vh - 150px)));
+    border: 0;
+}
+.window.resized .redeem-frame { height: 100%; }
+
+/* The trash can's menu, and every other icon's, in the windows' chrome: a
+   blue frame around white items, each blue under the pointer or the
+   keyboard. It lies above the windows and below the credits. A rename's
+   reason looks the same, and wraps sooner. */
+#trash-menu,
+#icon-menu,
+#rename-error {
+    position: fixed;
+    z-index: 19;
+    min-width: 160px;
+    max-width: calc(100vw - 16px);
+    padding: 4px;
+    background: #3a70b8;
+    font-family: 'Chelsea Market';
+}
+#rename-error { max-width: min(240px, calc(100vw - 16px)); }
+/* Each item fills the menu inside its 4px frame, padding included, and a
+   name too long for the screen wraps. */
+#trash-menu button,
+#trash-menu p,
+#icon-menu button,
+#rename-error p {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0;
+    padding: 4px 10px;
+    border: 0;
+    background: white;
+    color: #2b3a4d;
+    font: inherit;
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+#trash-menu button,
+#icon-menu button { cursor: pointer; }
+#trash-menu button:hover,
+#trash-menu button:focus-visible,
+#icon-menu button:hover,
+#icon-menu button:focus-visible {
+    background: #3a70b8;
+    color: white;
+    outline: 1px dotted white;
+    outline-offset: -3px;
+}
+
+/* A pet's label, as it is renamed, gives way to a field in the menus'
+   white and dark text, framed in the windows' blue, as wide as an icon
+   grows. Its text can be selected, unlike the rest of the desktop. */
+.app.renaming p { display: none; }
+.app .rename {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0;
+    padding: 1px 3px;
+    border: 1px solid #3a70b8;
+    border-radius: 0;
+    background: white;
+    color: #2b3a4d;
+    font: inherit;
+    text-align: center;
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+/* A pet dragged into the trash asks with its delete popups, in a clear
+   frame over the whole desktop, credits and all, until they close. */
+.delete-frame {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    z-index: 30;
+    background: transparent;
+}
+.delete-frame[hidden] { display: none; }
+
+/* The logo keeps its shape before its picture loads, and its line keeps one
+   height in any font, so landing.js can place welcome.txt below them at once.
+   1.27 is the font's own line height. */
+.background-logo { aspect-ratio: 1960 / 732; }
+.background-logo-text { line-height: 1.27; }
+/* On a desktop, the logo and its line sit at the top, in the middle, below
+   the credits. The logo takes 700px of a 1440px screen, and the same share
+   of any other. It shrinks on a short screen, with its line in step, so that
+   welcome.txt fits whole below them and above the taskbar: 490px is the
+   logo's top, the gaps, welcome.txt's 400px, the taskbar, and a few pixels
+   to spare for rounding. It also
+   leaves room each side for the icons' rows under the flag (landing.js sets
+   --icon-rows). A phone keeps them where they were. */
+@media (min-width: 561px) {
+    .background-logo-wrapper {
+        --logo-width: max(200px, min(calc(100vw * 700 / 1440), calc((100vh - 490px) * 2.29), calc(100vw - 2 * var(--icon-rows, 320px) - 24px)));
+        top: 24px;
+        transform: translateX(-50%);
+    }
+    .background-logo { width: var(--logo-width); }
+    .background-logo-text { font-size: calc(var(--logo-width) * 34 / 700); }
+}
+
+/* On a desktop the icons stand narrow, as on a desktop's own, 102px wide
+   at most (landing.js), and a label takes up to two lines. A phone keeps its wider
+   icons and one-line labels. */
+@media (min-width: 561px) {
+    .app {
+        max-width: 102px;
+        padding-inline: 0;
+    }
+    .app p {
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+    }
+    .app p wbr { display: inline; }
+}
+/* A phone with more icons than its grid holds packs them closer, 96px wide
+   and 4px apart inside, with labels of two lines (landing.js adds dense),
+   with more still, of one line (denser), and then 88px wide (densest). */
+@media (max-width: 560px) {
+    #apps.dense .app {
+        max-width: 96px;
+        padding: 4px;
+    }
+    #apps.dense .app p {
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+    }
+    #apps.dense .app p wbr { display: inline; }
+    #apps.dense.denser .app p {
+        -webkit-line-clamp: 1;
+        line-clamp: 1;
+    }
+    #apps.dense.denser .app p wbr { display: none; }
+    #apps.dense.densest .app { max-width: 88px; }
+}
+/* On a phone the logo and its line fit the screen's width, 10px in each
+   side, just below the text row of the required links. The icons and
+   welcome.txt start below them (landing.js). */
+@media (max-width: 560px) {
+    .background-logo-wrapper {
+        --logo-width: min(700px, calc(100vw - 20px));
+        /* Just below the text row, which ends where the desktop starts. */
+        top: calc(var(--desktop-top, 130px) + 8px);
+        transform: translateX(-50%);
+    }
+    .background-logo { width: var(--logo-width); }
+    .background-logo-text { font-size: calc(var(--logo-width) * 34 / 700); }
+}

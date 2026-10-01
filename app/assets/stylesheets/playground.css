@@ -1,0 +1,488 @@
+/* The participant and admin pages. Colors and font follow froppii's page:
+   Chelsea Market, window blue #3a70b8, ink #2b3a4d. */
+@import url("https://fonts.googleapis.com/css2?family=Chelsea+Market&display=swap");
+
+:root {
+  --blue: #3a70b8;
+  --ink: #2b3a4d;
+  --muted: #6b7a8c;
+  --paper: #ffffff;
+  --wash: #eef3fa;
+  --green: #3f9a4b;
+  --amber: #d99a1e;
+  --red: #c8423b;
+  --line: #c9d6e8;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+body.app { margin: 0; padding: 16px; font-family: "Chelsea Market", system-ui, sans-serif; color: var(--ink); background: var(--wash); line-height: 1.5; }
+/* A word too long for its line, such as a pet name or description with no
+   spaces, breaks instead of widening the page. */
+body.app { overflow-wrap: break-word; }
+body.app.in-window { background: var(--paper); padding: 12px; }
+body.app.in-window .dashboard-link { display: none; }
+/* The desktop's trash lays the delete popups over the desktop in a clear frame. */
+body.app.popups-only { background: transparent; padding: 0; }
+a { color: var(--blue); }
+h2 { margin: 0 0 8px; font-size: 1.2rem; }
+blockquote { margin: 6px 0 0; padding: 6px 10px; border-left: 3px solid var(--blue); background: var(--wash); }
+.muted { color: var(--muted); font-size: 0.9em; }
+.center { text-align: center; }
+.panel { background: var(--paper); border: 2px solid var(--blue); padding: 14px 16px; margin: 0 0 14px; }
+.in-window .panel { border-width: 0 0 2px; padding: 10px 0 14px; }
+/* Inside a window, the rule only parts one panel from what follows it. */
+.in-window .panel:last-child { border-bottom-width: 0; }
+.topline { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; flex-wrap: wrap; }
+.flash { padding: 8px 12px; margin: 0 0 12px; border: 2px solid var(--blue); background: var(--paper); }
+.flash.alert, .banner.alert { border-color: var(--red); color: var(--red); }
+.banner { padding: 8px 12px; border: 2px dashed var(--amber); background: #fff8e8; margin: 0 0 12px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.inline, form.button_to { display: inline; }
+
+.btn { font: inherit; display: inline-block; padding: 6px 14px; border: 2px solid var(--blue); background: var(--paper); color: var(--blue); cursor: pointer; text-decoration: none; }
+.btn.primary { background: var(--blue); color: white; }
+.btn.danger { border-color: var(--red); color: var(--red); }
+.btn.danger.primary { background: var(--red); color: white; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.linkish { font: inherit; background: none; border: 0; padding: 0; color: var(--blue); text-decoration: underline; cursor: pointer; }
+.linkish.danger { color: var(--red); }
+kbd { font-family: ui-monospace, monospace; font-size: 0.8em; border: 1px solid var(--line); border-bottom-width: 2px; padding: 0 4px; margin-left: 4px; background: var(--wash); }
+
+.badge { font-size: 0.8em; padding: 1px 8px; border: 1px solid currentColor; white-space: nowrap; }
+.badge-draft { color: var(--muted); }
+.badge-pending, .badge-on_hold { color: var(--amber); }
+.badge-approved, .badge-fulfilled, .badge-passed { color: var(--green); }
+.badge-changes_needed, .badge-deducted { color: var(--amber); }
+.badge-rejected, .badge-banned { color: var(--red); }
+
+/* The meter: approved solid, pending hatched, unshipped faint, all as if
+   drawn with one marker. Each hatching stroke is its own shape in
+   meter/pending.svg, a 594px tile with no seam. Each stage is a layer from
+   the bar's left end, later stages on top. Its end is one upright edge of a
+   marker stroke, uneven and a little rough, centred on the exact point, so
+   it overlaps the next stage by half its 24px. The mask holds three such
+   edges, one per stage, so no two ends match. It is inline because a mask
+   image loads with CORS. A stage that reaches the bar's end has no end to
+   draw. */
+.meter { position: relative; margin: 8px 0 26px; container-type: inline-size; --reached: #2f7d3a; }
+.meter-bar { position: relative; height: 22px; border: 2px solid var(--ink); background: var(--paper); overflow: hidden; }
+.seg {
+  position: absolute; top: 0; bottom: 0; left: 0; width: calc(var(--end) + 12px);
+  --mask: linear-gradient(#000 0 0) 0 0 / calc(100% - 24px) 100% no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='54' viewBox='0 0 240 540'%3E%3Cpath d='M0 0l125 0-2 9 0 9 0 9-1 9-2 9 0 9 0 9-1 9-1 9-2 9-1 9 0 9-1 9 1 9 1 9 1 9 0 9-1 9-1 9 0 9-115 0zM0 180l119 0 2 9 1 9 1 9 2 9 1 9 1 9 1 9 1 9 0 9 0 9 0 9 1 9 0 9-1 9-2 9 0 9-2 9-1 9 0 9-1 9-123 0zM0 360l118 0-1 9 0 9 0 9 0 9 0 9 1 9 1 9 1 9 2 9 1 9 1 9 3 9 0 9 0 9-1 9 0 9-1 9-1 9-1 9-1 9-122 0z'/%3E%3C/svg%3E") 100% var(--edge, 0%) / 24px 54px no-repeat;
+  -webkit-mask: var(--mask); mask: var(--mask);
+}
+.seg.pending { --edge: 50%; }
+.seg.unshipped { --edge: 100%; }
+.seg.full { width: 100%; -webkit-mask: none; mask: none; }
+.seg.approved, .key.approved { background: var(--blue); }
+.seg.pending, .key.pending { background: #9bb8e0 url("/meter/pending.svg") 0 50% / 594px 18px repeat-x; }
+.seg.unshipped, .key.unshipped { background: #dbe6f5; }
+.goal-mark { position: absolute; top: -4px; height: 30px; border-left: 2px solid var(--ink); transform: translateX(-1px); font-size: 0.75rem; padding-top: 30px; white-space: nowrap; }
+.goal-mark::before { content: ""; }
+/* A goal's label is its hours and key on one line. On a meter too narrow for
+   that, as in a small ship.exe window, the hours sit above the key, and on
+   the narrowest the hours show alone, so labels never run into each other.
+   A reached label is wider, with its check, so a meter with one wraps
+   sooner. The widths suit the current goals. test/system/meter_labels_test.rb
+   fails if a change to the goals makes labels collide. */
+@container (max-width: 310px) {
+  :where(.meter:has(.goal-mark.reached)) .goal-mark { white-space: normal; width: min-content; }
+  :where(.meter:has(.goal-mark.reached)) .meter-bar { margin-bottom: 18px; }
+}
+@container (max-width: 270px) {
+  .goal-mark { white-space: normal; width: min-content; }
+  .meter-bar { margin-bottom: 18px; }
+}
+@container (max-width: 190px) {
+  .goal-mark .goal-name { display: none; }
+  .meter-bar { margin-bottom: 0; }
+}
+/* Each key square and its label are one item, so the legend wraps whole
+   items and a square always sits left of its own label. A label too long
+   for a narrow window wraps beside its square, which stays on its first line. */
+.legend { font-size: 0.9em; display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; margin: 0 0 10px; }
+.legend > span { display: flex; align-items: flex-start; gap: 6px; }
+.legend .key { margin-top: calc((1lh - 14px) / 2); }
+.key { display: inline-block; flex: none; width: 14px; height: 14px; border: 1px solid var(--ink); vertical-align: middle; }
+.goals { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.goal { border: 2px solid var(--line); padding: 8px; text-align: center; }
+.goal.reached { border-color: var(--blue); }
+.goal img { max-width: 100%; height: 80px; object-fit: contain; }
+.goal p { margin: 4px 0; }
+
+.pets, .ships, .checks, .picker { list-style: none; padding: 0; margin: 0 0 10px; }
+.pets li, .ships li, .picker li { padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.pets li { overflow-wrap: anywhere; }
+.ships time { white-space: nowrap; }
+.checks li { padding: 3px 0; }
+.checks .icon { display: inline-block; width: 1.2em; font-weight: bold; }
+.checks .ok .icon { color: var(--green); }
+.checks .fail .icon, .checks .todo .icon { color: var(--red); }
+.checks .warn .icon { color: var(--amber); }
+
+.stack { display: grid; gap: 10px; }
+.stack label { display: grid; gap: 2px; }
+input[type=text], input[type=url], input[type=tel], input[type=number], textarea, select { font: inherit; padding: 6px 8px; border: 2px solid var(--line); width: 100%; background: white; color: var(--ink); }
+input:focus, textarea:focus { outline: none; border-color: var(--blue); }
+fieldset { border: 2px solid var(--line); padding: 8px 12px; }
+.picker label { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.dev-logins { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+/* The login: its two steps, what the step is for, and one wide button. In
+   login.exe it fills the window. On a page of its own, as the step between
+   the two logins or a login that did not finish, it is login.exe on the
+   desktop's wallpaper, in the windows' chrome from landing.css: a 4px blue
+   frame, a 20px title bar, and a 2px rule over the white. Messages sit
+   above it. */
+.login p { margin: 0 0 12px; }
+.login form.button_to { display: block; margin: 0 0 12px; }
+.login > :last-child { margin-bottom: 0; }
+.login .btn.primary { width: min(100%, 20rem); padding: 8px 14px; }
+/* The browser's own ring is blue on the blue button, so it stands off it. */
+.login .btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.login-title { display: none; }
+body.app:not(.in-window):has(> .login) {
+  min-height: 100dvh; display: grid; place-content: center; grid-template-columns: min(500px, 100%);
+  background: var(--wash) url("/landing/background.png") center / cover no-repeat;
+}
+body.app:not(.in-window) > .login { position: relative; margin: 0; padding: 20px 24px; border: 4px solid var(--blue); border-top-width: 26px; }
+body.app:not(.in-window) > .login .login-title { display: block; position: absolute; top: -24px; left: 0; margin: 0; padding: 0 4px; color: white; font-size: 18px; line-height: 20px; }
+/* Each step is a square with its number, and a done one fills blue and
+   wears a tick. The line between two steps runs from centre to centre,
+   under the squares. The step to do now is outlined blue, and its label is
+   in ink. */
+.login-steps { list-style: none; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; width: min(100%, 240px); margin: 0 auto 14px; padding: 0; }
+.login-step { position: relative; display: grid; justify-items: center; gap: 4px; }
+.login-step:not(:last-child)::after { content: ""; position: absolute; top: 13px; left: 50%; width: 100%; height: 2px; background: var(--line); }
+.login-step.done:not(:last-child)::after { background: var(--blue); }
+.step-node { position: relative; z-index: 1; display: grid; place-items: center; width: 28px; height: 28px; border: 2px solid var(--line); background: var(--paper); color: var(--muted); font-size: 14px; line-height: 1; }
+.step-number, .step-tick { grid-area: 1 / 1; }
+.step-tick { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; visibility: hidden; }
+.step-label { font-size: 0.85em; color: var(--muted); }
+.login-step.current .step-node { border-color: var(--blue); color: var(--blue); }
+.login-step.current .step-label { color: var(--ink); }
+.login-step.done .step-node { border-color: var(--blue); background: var(--blue); color: white; }
+.login-step.done .step-number { visibility: hidden; }
+.login-step.done .step-tick { visibility: visible; }
+/* A step done a moment ago ticks over as the page shows: its square fills,
+   its number gives way to the tick, and the line to the next step fills.
+   The rest of the window slides in from the right. */
+@keyframes step-fill { from { border-color: var(--blue); background: var(--paper); color: var(--blue); } }
+@keyframes step-line { from { background: var(--line); } }
+@keyframes step-number-out { to { opacity: 0; transform: scale(0.6); } }
+@keyframes step-tick-in { from { opacity: 0; transform: scale(0.4); } }
+@keyframes login-slide-in { from { opacity: 0; transform: translateX(28px); } }
+.login-step.just-done .step-node { animation: step-fill 0.45s ease 0.2s backwards; }
+.login-step.just-done::after { animation: step-line 0.45s ease 0.2s backwards; }
+.login-step.just-done .step-number { visibility: visible; animation: step-number-out 0.3s ease 0.2s forwards; }
+.login-step.just-done .step-tick { animation: step-tick-in 0.3s cubic-bezier(0.2, 1.3, 0.4, 1) 0.35s backwards; }
+.login:has(.just-done) > :not(.login-title, .login-steps) { animation: login-slide-in 0.45s cubic-bezier(0.22, 0.8, 0.3, 1) 0.18s backwards; }
+@media (prefers-reduced-motion: reduce) {
+  .login-step.just-done .step-node, .login-step.just-done::after, .login-step.just-done .step-tick,
+  .login:has(.just-done) > :not(.login-title, .login-steps) { animation: none; }
+  .login-step.just-done .step-number { visibility: hidden; animation: none; }
+}
+
+/* The guide: one column of text, as wide as reads well, in the site's font
+   and colours. A screenshot or a recording shows at half its pixels, so it
+   stays sharp, and never wider than the column. */
+.guide { max-width: 760px; margin: 0 auto; line-height: 1.6; }
+body.app > .dashboard-link:has(+ .guide) { max-width: 760px; margin: 0 auto 10px; }
+.guide h1 { margin: 0 0 8px; font-size: 1.7rem; line-height: 1.25; }
+.guide h2 { margin: 34px 0 8px; font-size: 1.3rem; line-height: 1.3; scroll-margin-top: 12px; }
+.guide h3 { margin: 22px 0 6px; font-size: 1.05rem; scroll-margin-top: 12px; }
+.guide h2.guide-part { padding-top: 20px; border-top: 2px solid var(--blue); font-size: 1.45rem; }
+.guide p, .guide ul, .guide ol { margin: 0 0 12px; }
+.guide li { margin: 2px 0; }
+.requirements-note { margin: 0 0 10px; }
+.requirements-list { padding-left: 20px; }
+.requirements-list li { margin: 0 0 10px; }
+.guide :not(pre) > code { padding: 0 4px; border: 1px solid var(--line); background: var(--wash); font: 0.86em var(--mono); overflow-wrap: anywhere; }
+.guide-contents { margin: 18px 0 8px; padding: 10px 16px 12px; border: 2px dashed var(--line); }
+.guide-contents h2 { margin: 0 0 6px; font-size: 1.1rem; }
+.guide-contents ol { margin: 0; padding: 0; list-style: none; columns: 2 15rem; column-gap: 24px; }
+.guide-contents li { break-inside: avoid; }
+.guide-shot { display: block; max-width: 100%; height: auto; margin: 10px 0 16px; border: 1px solid var(--line); }
+/* A recording's button sits on its bottom right corner while it plays, and
+   in its middle, filled, while it waits. */
+.guide-video { position: relative; width: fit-content; max-width: 100%; margin: 10px 0 16px; }
+.guide-video video { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); background: var(--ink); }
+.video-toggle[hidden], .code-copy[hidden] { display: none; }
+.video-toggle { position: absolute; right: 8px; bottom: 8px; padding: 2px 10px; border: 2px solid var(--blue); background: var(--paper); color: var(--blue); font: inherit; font-size: 0.85rem; cursor: pointer; }
+.guide-video.paused .video-toggle { right: 50%; bottom: 50%; transform: translate(50%, 50%); padding: 6px 20px; background: var(--blue); color: white; font-size: 1.05rem; }
+.video-toggle:focus-visible, .code-copy:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+/* A code block scrolls sideways instead of wrapping, with a tab four
+   spaces wide, as in Godot. Where it shows lines around the new ones, as
+   the editor's selection did in a screenshot, the new lines sit on the
+   wash and the lines around them are faded. */
+.code-block { margin: 10px 0 16px; border: 1px solid var(--line); background: var(--paper); }
+.code-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 3px 4px 3px 10px; border-bottom: 1px solid var(--line); background: var(--wash); color: var(--muted); font-size: 0.8rem; }
+.code-copy { padding: 1px 10px; border: 2px solid var(--blue); background: var(--paper); color: var(--blue); font: inherit; cursor: pointer; }
+.code-block pre { margin: 0; padding: 10px 12px; overflow-x: auto; color: var(--ink); font: 0.84rem/1.6 var(--mono); tab-size: 4; }
+.code-block .line { display: inline-block; min-width: 100%; }
+.code-block:has(.context) .line:not(.context) { background: var(--wash); }
+.code-block .context, .code-block .context span { color: var(--muted); }
+/* The pet's own code is for typing out, so it can't be selected to copy. */
+.code-block.no-copy pre { -webkit-user-select: none; user-select: none; }
+.tok-keyword, .tok-node { color: var(--blue); }
+.tok-string, .tok-number { color: var(--red); }
+.tok-comment { color: var(--muted); }
+/* The guide follows one computer (os_controller.js). The switch is a row
+   of radio buttons drawn as the windows' blue buttons, the chosen one
+   filled. Once a computer is chosen, the parts for the others hide, and so
+   do the labels that tell the versions apart. */
+.os-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 14px 0 0; padding: 0; border: 0; }
+.os-switch[hidden] { display: none; }
+.os-switch legend { float: left; margin-right: 4px; padding: 0; }
+.os-switch label { position: relative; padding: 3px 14px; border: 2px solid var(--blue); color: var(--blue); cursor: pointer; }
+.os-switch input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.os-switch label:has(input:checked) { background: var(--blue); color: white; }
+.os-switch label:has(input:focus-visible) { outline: 2px solid var(--blue); outline-offset: 2px; }
+.os-step { margin: 0 0 14px; padding: 10px 14px 2px; border: 2px solid var(--line); }
+.os-step h3 { margin: 0 0 6px; }
+.guide[data-os-current] .os-step { margin: 0; padding: 0; border: 0; }
+.guide[data-os-current] .os-step h3 { display: none; }
+.guide-new-tab { display: none; margin: 0 0 6px; font-size: 0.9rem; }
+.in-window .guide-new-tab { display: block; }
+.guide[data-os-current] .os-label,
+.guide[data-os-current="macos"] [data-os]:not([data-os~="macos"]),
+.guide[data-os-current="windows"] [data-os]:not([data-os~="windows"]),
+.guide[data-os-current="linux"] [data-os]:not([data-os~="linux"]) { display: none; }
+.guide kbd { margin-left: 0; font-size: 0.85em; }
+
+/* Admin. */
+body.admin { max-width: 1400px; margin: 0 auto; }
+.adminnav { display: flex; gap: 6px 14px; align-items: center; flex-wrap: wrap; padding: 8px 12px; background: var(--blue); margin: -16px -16px 16px; }
+.adminnav a { color: white; text-decoration: none; }
+.adminnav .brand { font-weight: bold; margin-right: 12px; }
+.adminnav kbd { margin-left: -10px; }
+.adminnav .muted { color: #dbe6f5; }
+.spacer { flex: 1; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.card { background: var(--paper); border: 2px solid var(--blue); padding: 16px; text-decoration: none; color: var(--ink); display: grid; }
+.card .big { font-size: 2.4rem; color: var(--blue); }
+.itemhead { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.itemhead h1 { margin: 0; font-size: 1.5rem; }
+.itemhead p { margin: 4px 0 12px; }
+.columns { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 14px; align-items: start; }
+@media (max-width: 860px) { .columns { grid-template-columns: 1fr; } }
+.kv, .list { width: 100%; border-collapse: collapse; }
+.kv td, .list td, .list th { padding: 4px 6px; border-bottom: 1px dashed var(--line); text-align: left; vertical-align: top; }
+.kv tr.total td { font-weight: bold; border-bottom: 2px solid var(--ink); }
+.panel h3 { margin: 14px 0 4px; font-size: 1rem; }
+/* The address and the contact details line up, label, value, button. */
+.kv.address td:first-child, .kv.contact td:first-child { width: 7em; }
+.kv.address td:last-child, .kv.contact td:last-child { width: 1%; white-space: nowrap; }
+.warnbox { border-color: var(--amber); }
+.links { display: flex; gap: 14px; flex-wrap: wrap; }
+.shot { max-width: 100%; max-height: 360px; border: 1px solid var(--line); display: block; margin: 8px 0; }
+.readme { max-height: 460px; overflow: auto; font-family: system-ui, sans-serif; font-size: 0.92rem; }
+.readme img { max-width: 100%; }
+details > summary { cursor: pointer; list-style: none; }
+details > summary::before { content: "▸ "; }
+details[open] > summary::before { content: "▾ "; }
+h2.inline { display: inline; }
+.tick { display: flex; gap: 8px; align-items: center; padding: 2px 0; }
+.just { white-space: pre-wrap; font-size: 0.85rem; background: var(--wash); padding: 10px; }
+.events { list-style: none; padding: 0; margin: 0; font-size: 0.9rem; }
+.events li { padding: 3px 0; border-bottom: 1px dashed var(--line); }
+.btn.small { padding: 1px 8px; font-size: 0.85em; }
+.btn.armed { outline: 3px solid var(--amber); outline-offset: 2px; }
+.late { color: var(--red); font-weight: bold; }
+/* A table wider than a phone scrolls inside its panel, not the page. */
+.panel.wide { overflow-x: auto; }
+/* The stats page. Its charts wear the meter's fills and ink outline. */
+.pie-row { gap: 16px 28px; }
+.pie { flex: none; max-width: 100%; height: auto; }
+.pie .approved { fill: var(--blue); }
+.pie .pending { fill: url(#pie-pending); }
+.pie .unshipped { fill: #dbe6f5; }
+.pie .outline { fill: none; stroke: var(--ink); stroke-width: 2; }
+.kv.stages { flex: 0 1 420px; width: auto; }
+.kv.stages td:not(:first-child) { text-align: right; white-space: nowrap; }
+.bar { height: 10px; margin: 3px 0 2px; border: 1px solid var(--ink); background: var(--paper); }
+.bar > span { display: block; height: 100%; background: var(--blue); }
+.funnel td:first-child { width: 55%; }
+.nudges { margin-bottom: 0; }
+.nudges .card { align-content: start; }
+.bars { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.8rem; text-align: center; margin: 4px 0 8px; }
+.bars td { padding: 0 2px; vertical-align: bottom; }
+.bars .wells td { border-bottom: 2px solid var(--ink); }
+/* A bar's count sits on top of it, so the tallest bar leaves a line for it. */
+.bars .well { height: 140px; display: flex; flex-direction: column; justify-content: flex-end; }
+.bars .fill { flex: none; height: calc((100% - 1.4em) * var(--h)); background: var(--blue); border: 1px solid var(--ink); border-bottom: 0; }
+/* Labels break only between words. A narrow column lets a long one run on. */
+.bars .labels td { vertical-align: top; padding-top: 2px; color: var(--muted); line-height: 1.2; overflow-wrap: normal; }
+.bars .marks td { text-align: left; font-size: 0.75rem; line-height: 1.2; overflow-wrap: normal; }
+.bars td.mark { border-left: 2px solid var(--ink); }
+/* On a phone the goal names would run into each other, so a mark shows its
+   hours alone, as the meter's does. The goals table under it names them. */
+@media (max-width: 480px) { .bars .goal-name { display: none; } }
+/* A long run of days on a phone labels every other day. */
+@media (max-width: 480px) { .bars.long .labels td:nth-child(even) { color: transparent; } }
+/* The heat grids: a day or hour with no time is a bare outlined cell, and
+   time shades it in four tints from the unshipped fill to the approved fill.
+   Days outside the window, or still to come, are left empty. */
+.heat-scroll { overflow-x: auto; }
+.heat { border-collapse: separate; border-spacing: 3px; font-size: 0.75rem; margin: 0 0 6px; }
+.heat th { font-weight: normal; color: var(--muted); text-align: left; padding: 0 4px 0 0; white-space: nowrap; }
+.heat.days td { width: 26px; height: 26px; }
+.heat.hours { width: 100%; table-layout: fixed; border-spacing: 2px; }
+.heat.hours col.names { width: 2.6em; }
+.heat.hours td { height: 16px; }
+.heat-legend { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; font-size: 0.8rem; margin: 0 0 10px; }
+.heat-legend .cell { width: 14px; height: 14px; }
+.heat-legend .muted { margin-left: 6px; }
+:is(.heat td, .heat-legend .cell).l0 { background: var(--paper); box-shadow: inset 0 0 0 1px var(--line); }
+:is(.heat td, .heat-legend .cell).l1 { background: #dbe6f5; }
+:is(.heat td, .heat-legend .cell).l2 { background: color-mix(in srgb, var(--blue) 33%, #dbe6f5); }
+:is(.heat td, .heat-legend .cell).l3 { background: color-mix(in srgb, var(--blue) 67%, #dbe6f5); }
+:is(.heat td, .heat-legend .cell).l4 { background: var(--blue); }
+.goal-mark.end { transform: translateX(-100%); border-left: 0; border-right: 2px solid var(--ink); text-align: right; }
+/* A goal the approved hours have reached: its tick and label turn green,
+   dark enough for small text (5.1:1 on white), and a check comes before the
+   label, so colour is not the only sign. The approved fill is as bright as
+   the green, so a thin paper edge keeps the tick apart from it. The check is
+   a drawn mask, not a font glyph, so it looks the same in every browser. It
+   hangs on the hours, which never wrap, so it stays on their line. */
+.goal-mark.reached { color: var(--reached); border-color: var(--reached); filter: drop-shadow(1px 0 0 var(--paper)) drop-shadow(-1px 0 0 var(--paper)); }
+.goal-hours { white-space: nowrap; }
+.goal-mark.reached .goal-hours::before {
+  content: "";
+  display: inline-block; width: 0.8em; height: 0.8em; margin-right: 0.25em; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M1.9 6.3Q3.7 7.8 4.9 9.6Q7.3 5.5 10.3 2.4' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M1.9 6.3Q3.7 7.8 4.9 9.6Q7.3 5.5 10.3 2.4' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+progress { width: 100%; margin-top: 6px; }
+.upload-status { min-height: 1.4em; margin: 4px 0 0; white-space: pre-line; }
+.upload-status.alert { color: var(--red); }
+/* The screenshots in a photo grid of equal cells, three to a row, with thin
+   lines between and around them: the screenshots, cover first, then a cell
+   that adds more, then empty cells. Files dragged over the grid turn its
+   lines blue and tint its cells, and one over a screenshot says it would
+   replace it. A screenshot drags to a new place, so a finger on one moves it
+   instead of the page. */
+.shots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; max-width: 36rem; border: 1px solid var(--line); background: var(--line); }
+.shots-grid .shots { display: contents; }
+.shot-cell { position: relative; min-width: 0; aspect-ratio: 4 / 3; background: var(--paper); list-style: none; }
+.shots-grid .shot-cell[hidden] { display: none; }
+.shots-grid.dropping { border-color: var(--blue); background: var(--blue); }
+.shots-grid.dropping .shot-cell { background: var(--wash); }
+.shots-grid.dropping .thumb img { opacity: 0.85; }
+.shot-cell.add { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px; color: var(--blue); cursor: pointer; text-align: center; font-size: 0.9em; line-height: 1.2; }
+.shot-cell.add .plus { width: 30%; max-width: 44px; fill: none; stroke: currentColor; stroke-width: 3; }
+.shot-cell.add:hover span { text-decoration: underline; }
+.shot-cell.empty { display: grid; place-items: center; }
+.shot-cell.empty svg { width: 34%; max-width: 72px; }
+.shot-cell.empty rect { fill: none; stroke: var(--line); stroke-width: 3; }
+.shot-cell.empty circle, .shot-cell.empty path { fill: var(--line); }
+.shot-cell.add:focus-visible, .thumb:focus-visible, .thumb.hover { outline: 2px solid var(--blue); outline-offset: -2px; z-index: 1; }
+/* In ship.exe the grid sits inside the list of steps, whose items are padded. */
+.shots-grid .thumb { margin: 0; padding: 0; cursor: grab; touch-action: none; user-select: none; overflow: hidden; }
+.thumb img { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.thumb img:not([src]) { visibility: hidden; }
+.thumb.dragging { opacity: 0.6; cursor: grabbing; }
+.thumb.pending { cursor: default; }
+.thumb.cover::after, .thumb.hover::before, .thumb-state { position: absolute; padding: 0 6px; font-size: 0.75em; color: var(--blue); background: var(--paper); border: 1px solid var(--line); }
+.thumb.cover::after { content: "cover"; left: 6px; bottom: 6px; }
+.thumb.hover::before { content: "replace"; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1; }
+.thumb .remove { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; padding: 0; font: inherit; line-height: 1; border: 1px solid var(--blue); background: var(--paper); color: var(--blue); cursor: pointer; }
+.thumb.pending .remove { display: none; }
+.thumb progress { position: absolute; left: 8px; right: 8px; bottom: 8px; width: auto; margin: 0; height: 6px; }
+.thumb progress[hidden], .thumb-state[hidden] { display: none; }
+.thumb-state { left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--muted); white-space: nowrap; }
+/* A pet's screenshots, one at a time. They share one grid cell, so the
+   carousel is the size of the biggest, and a hidden one still counts toward
+   the width a window may grow to. On the screenshot shown sit a round arrow
+   at each side and the dots. Each arrow's button is a strip a fifth of the
+   screenshot wide, at least 44px, down its whole side, and its round knob
+   brightens while the pointer is on the strip. The dots sit on a pale
+   backing, so they read on any screenshot. */
+.carousel { width: fit-content; max-width: 100%; margin: 8px 0; }
+.carousel:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.carousel .slides { position: relative; display: grid; touch-action: pan-y; --shot-left: 0px; --shot-top: 0px; --shot-width: 100%; --shot-height: 100%; }
+.carousel .slides .shot { grid-area: 1 / 1; place-self: center; margin: 0; }
+.carousel .shot[aria-hidden="true"] { visibility: hidden; }
+.carousel .side { position: absolute; top: var(--shot-top); height: var(--shot-height); width: max(44px, calc(var(--shot-width) / 5)); display: flex; align-items: center; padding: 0 8px; border: 0; background: none; cursor: pointer; }
+.carousel .side.previous { left: var(--shot-left); justify-content: flex-start; }
+.carousel .side.next { left: calc(var(--shot-left) + var(--shot-width)); transform: translateX(-100%); justify-content: flex-end; }
+.carousel .knob { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: rgb(255 255 255 / 80%); color: var(--ink); box-shadow: 0 1px 3px rgb(0 0 0 / 30%); }
+.carousel .knob svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.carousel .side:hover .knob { background: var(--paper); }
+.carousel .side:focus-visible { outline: none; }
+.carousel .side:focus-visible .knob { outline: 2px solid var(--blue); outline-offset: 2px; }
+.carousel .dots { position: absolute; left: calc(var(--shot-left) + var(--shot-width) / 2); top: calc(var(--shot-top) + var(--shot-height) - 10px); transform: translate(-50%, -100%); display: flex; padding: 0 4px; border-radius: 12px; background: rgb(255 255 255 / 80%); }
+.carousel .dot { width: 20px; height: 20px; padding: 0; border: 0; background: none; cursor: pointer; }
+.carousel .dot::before { content: ""; display: block; width: 8px; height: 8px; margin: auto; border-radius: 50%; background: var(--muted); }
+.carousel .dot[aria-current="true"]::before { background: var(--blue); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.shipping .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.shipping .row3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; }
+@media (max-width: 560px) { .shipping .row2, .shipping .row3 { grid-template-columns: 1fr; } }
+.checks .fix { margin-left: 1.4em; }
+.goal .progress { font-size: 1.1em; margin: 2px 0 6px; }
+
+/* The delete popups, in the desktop windows' chrome from landing.css: a 4px
+   blue frame, a 20px title bar, and the X. They have one fixed width and do
+   not resize. The three stack in the page or in a desktop window's frame,
+   each one step down and right, so the buttons of those below show. The
+   steps shrink on a narrow or short screen. There is no backdrop. */
+.popup { --top: max(12px, 50% - 130px); --step-x: 28px; --step-y: 60px; }
+@media (max-width: 560px) { .popup { --step-x: 8px; } }
+@media (max-height: 480px) { .popup { --step-y: 28px; } }
+.popup {
+  position: fixed; inset: auto; top: var(--top); left: calc(50% - var(--step-x)); margin: 0;
+  width: min(340px, calc(100% - 24px - 2 * var(--step-x)));
+  max-width: none; max-height: calc(100% - var(--top) - 2 * var(--step-y) - 12px);
+  padding: 4px; border: 0; background: var(--blue); color: var(--ink);
+  transform: translateX(-50%);
+}
+.popup:nth-of-type(2) { top: calc(var(--top) + var(--step-y)); left: 50%; }
+.popup:nth-of-type(3) { top: calc(var(--top) + 2 * var(--step-y)); left: calc(50% + var(--step-x)); }
+.popup[open] { display: flex; flex-direction: column; }
+.popup-head { display: flex; align-items: center; height: 20px; flex: 0 0 auto; }
+/* A popup drags by its title bar, as a window drags by its header. */
+.popup-head { cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none; }
+.popup-title { margin: 0; padding: 0 4px; min-width: 0; color: white; font-size: 18px; line-height: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.popup-close { flex: 0 0 auto; width: 16px; height: 16px; margin: 0 2px 0 auto; padding: 0; border: 2px solid white; background: var(--blue); color: white; font: bold 12px/1 "Chelsea Market", system-ui, sans-serif; cursor: pointer; }
+.popup-close:hover, .popup-close:focus-visible { background: white; color: var(--blue); }
+.popup-body { padding: 16px; background: var(--paper); border-top: 2px solid var(--blue); overflow-y: auto; min-height: 0; }
+.popup-message { display: flex; gap: 14px; align-items: center; margin: 0 0 14px; }
+.popup-message p { margin: 0; min-width: 0; }
+.popup-buttons { justify-content: flex-end; }
+/* A warning, a question, and an error mark, as on old error dialogs. */
+.popup-icon { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; background: var(--red); color: white; font: bold 20px/34px "Chelsea Market", system-ui, sans-serif; text-align: center; }
+.popup-icon.ask { background: var(--blue); }
+.popup-icon.warn { border-radius: 0; background: var(--amber); clip-path: polygon(50% 0, 100% 100%, 0 100%); line-height: 42px; }
+/* ship.exe: one popup in the same chrome, wider for the fixes in its list,
+   and centered in the page or in a desktop window's frame. Its body scrolls. */
+.ship-popup { inset: 0; margin: auto; width: min(480px, calc(100% - 24px)); height: fit-content; max-height: calc(100% - 24px); transform: none; }
+.ship-popup::backdrop { background: none; }
+/* Each step's fix sits under it. */
+#ship-checks .checks { margin-bottom: 14px; }
+/* A label that wraps, and each fix, line up after the step's mark. */
+#ship-checks .checks > li { position: relative; padding-left: 1.4em; }
+#ship-checks .checks > li > .icon { position: absolute; left: 0; }
+#ship-checks .checks > li + li { margin-top: 6px; }
+#ship-checks form.fix, #ship-checks div.fix { margin: 4px 0 0; }
+#ship-checks .fix .banner { margin: 6px 0 0; }
+/* A tip after a step's label: a small circled "i" drawn in the ink's 2px
+   line, and its text in a box fixed to the screen (see the tip controller). */
+.tip-mark { display: inline-block; width: 16px; height: 16px; margin-left: 4px; padding: 0; border: 2px solid var(--ink); border-radius: 50%; background: none; color: var(--ink); font: bold 10px/12px "Chelsea Market", system-ui, sans-serif; text-align: center; vertical-align: 1px; cursor: help; }
+.tip-mark:hover, .tip-mark:focus-visible { background: var(--ink); color: var(--paper); }
+#ship-checks .label-end { white-space: nowrap; }
+.tip-text { position: fixed; z-index: 30; padding: 6px 8px; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); font-size: 0.85rem; line-height: 1.4; white-space: normal; }
+.tip-text[hidden] { display: none; }
+/* The ship button and its line stay in sight below the list, which scrolls
+   above them. */
+#ship-checks > .row { position: sticky; bottom: 0; padding: 8px 0; background: var(--paper); }
+/* A double-click by the ship button selects no text there, which would stay
+   grey once the frame lost focus. */
+#ship-checks > .row { -webkit-user-select: none; user-select: none; }
+/* In the popup the list scrolls inside the body's 16px padding, so the row
+   reaches down over it to the body's edge. */
+.popup-body #ship-checks > .row { bottom: -16px; margin-bottom: -16px; padding-bottom: 24px; }
+
+.slack-prompt p { margin: 0 0 10px; }

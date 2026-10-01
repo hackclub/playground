@@ -1,0 +1,6 @@
+<section class="panel center">
+  <h2>the <%= @stage %> queue is clear 🎉</h2>
+  <p class="muted"><%= @left %> item(s) still waiting are held by someone else, are your own, or you skipped them (<%= @skipped %> skipped).</p>
+  <% if @skipped.positive? %><%= link_to "show skipped again", url_for(reset: 1), class: "btn" %><% end %>
+  <%= link_to "admin home", admin_root_path, class: "btn" %>
+</section>

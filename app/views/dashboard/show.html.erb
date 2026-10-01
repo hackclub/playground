@@ -1,0 +1,88 @@
+<header class="topline">
+  <span>hi <strong><%= current_user.display_name %></strong>!</span>
+  <span>
+    <% if current_user.acts_as_admin? %><%= link_to "admin", admin_root_path, target: "_top" %> · <% end %>
+    <%= button_to "log out", logout_path, method: :delete, form: { target: "_top", class: "inline" }, class: "linkish" %>
+  </span>
+</header>
+
+<% unless current_user.eligible? %>
+  <p class="banner">
+    you can build and track hours now. to <strong>submit</strong>, verify your identity:
+    <%= link_to "verify at auth.hackclub.com", HackClubAuth.portal_url("verify", dashboard_url), target: "_blank", rel: "noopener" %>
+  </p>
+<% end %>
+<% if current_user.banned? %><p class="banner alert">this account is banned from playground.</p><% end %>
+<% if !current_user.hackatime_connected? %>
+  <div class="banner">
+    Hackatime, Hack Club's free coding time tracker, isn't linked yet, so your coding time can't count.
+    <%= hackatime_button "link Hackatime", class: "linkish" %>
+  </div>
+<% elsif current_user.hackatime_red? %>
+  <p class="banner alert">Hackatime has banned this account, so its hours cannot count.</p>
+<% end %>
+
+<% if current_user.slack_prompt? %>
+  <section class="panel slack-prompt">
+    <p>You don't seem to be in the #playground channel! Would you like to join?</p>
+    <div class="row">
+      <%= button_to "Add me!", join_slack_channel_path, class: "btn primary" %>
+      <%= button_to "Don't show this message again", dismiss_slack_channel_path, class: "btn" %>
+    </div>
+  </section>
+<% end %>
+
+<section class="panel">
+  <h2>your meter</h2>
+  <% unless ProgramWindow.current.started? %>
+    <p class="muted">time counts from <%= program_time(ProgramWindow.current.starts_at) %>.</p>
+  <% end %>
+  <%= meter(@hours) %>
+  <p class="legend">
+    <span><span class="key approved"></span> approved <%= hours(@hours.approved_seconds) %></span>
+    <span><span class="key pending"></span> pending <%= hours(@hours.pending_seconds) %></span>
+    <span><span class="key unshipped"></span> unshipped <%= hours(@hours.unshipped_seconds) %></span>
+  </p>
+  <div class="goals">
+    <% Goal.all.each do |goal| %>
+      <% redeemed = @redemptions[goal.key] %>
+      <% state = @hours.goal_state(goal) %>
+      <div class="goal <%= "reached" if state == :redeemable %>">
+        <%= image_tag goal.image, alt: goal.name %>
+        <p><strong><%= goal.name %></strong></p>
+        <% if redeemed %>
+          <p class="badge badge-approved"><%= redeemed.status == "fulfilled" ? "shipped!" : "redeemed · #{redeemed.status.tr("_", " ")}" %></p>
+        <% else %>
+          <p class="progress"><%= goal_progress(@hours, goal) %></p>
+          <% if state == :redeemable && current_user.eligible? && !current_user.banned? %>
+            <%= link_to "redeem", new_redemption_path(goal_key: goal.key), class: "btn primary" %>
+          <% elsif state == :redeemable %>
+            <p class="muted">verify your identity to redeem</p>
+          <% elsif state == :in_review %>
+            <p class="muted">in review. redeem once it's approved</p>
+          <% elsif state == :ship_to_redeem %>
+            <p class="muted">ship to redeem this prize</p>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>your pets</h2>
+  <% if @projects.empty? %>
+    <p class="muted">no pets yet.</p>
+  <% else %>
+    <ul class="pets">
+      <% @projects.each do |project| %>
+        <li>
+          <%= link_to project.name, project %> <%= state_badge(project.state) %>
+          <span class="muted"><%= hours(project.unshipped_seconds) %> unshipped</span>
+          <%= link_to "edit", edit_project_path(project), class: "btn small", aria: { label: "edit #{project.name}" } %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+  <%= link_to "+ new pet", new_project_path, class: "btn" %>
+</section>

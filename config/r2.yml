@@ -1,0 +1,6 @@
+# The Hack Club R2 bucket for screenshots. The keys
+# live in the Rails credentials under r2: endpoint, access_key_id,
+# secret_access_key.
+shared:
+  bucket: hackclub-playground
+  public_host: playground.hackclub-assets.com
