@@ -69,7 +69,7 @@ gem "omniauth-rails_csrf_protection", "~> 2.0"
 
 # json 3.0 changed JSON.parse's arity; ActiveSupport 8.1.3.1 still calls the
 # old form, so jsonb columns and the schema dump fail. cyberdeck runs 2.21.
-gem "json", "~> 2.21"
+gem "json", "~> 3.0"
 
 # Screenshot uploads go to the Hack Club R2 bucket through its S3 API.
 # ruby-vips comes with image_processing.
