@@ -171,7 +171,7 @@ GEM
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
     jmespath (1.6.2)
-    json (2.21.2)
+    json (3.0.2)
     jwt (3.3.0)
       base64
     language_server-protocol (3.17.0.6)
@@ -453,7 +453,7 @@ DEPENDENCIES
   debug
   image_processing (~> 1.2)
   importmap-rails
-  json (~> 2.21)
+  json (~> 3.0)
   omniauth-hack_club (~> 1.0)
   omniauth-oauth2 (~> 1.8)
   omniauth-rails_csrf_protection (~> 2.0)
