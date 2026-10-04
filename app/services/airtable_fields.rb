@@ -18,7 +18,9 @@ module AirtableFields
       "Banned" => u.banned?,
       "Loops - playgroundSignupAt" => u.created_at.iso8601,
       "Loops - playgroundFirstShipAt" => first_ship&.iso8601,
-      "Loops - playgroundFirstPetCreatedAt" => u.first_pet_created_at&.iso8601
+      "Loops - playgroundFirstPetCreatedAt" => u.first_pet_created_at&.iso8601,
+      # Text, not a time: see NoTimeNudge.
+      "Loops - playgroundNoTimeNudge" => (NoTimeNudge::VALUE if u.no_time_nudge_at)
       # "Loops List - Playground" is a formula in the base that gives every row
       # the list id, and Airtable refuses a value for a computed field.
     }.compact
