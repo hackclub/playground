@@ -16,7 +16,9 @@ module AirtableFields
       "Verification Status" => u.verification_status,
       "YSWS Eligible" => u.ysws_eligible,
       "Banned" => u.banned?,
-      "Loops - playgroundSignupAt" => u.created_at.iso8601,
+      # The welcome email in Loops fires when this goes from empty to set, so a
+      # signup after the program ends leaves it empty and gets no welcome.
+      "Loops - playgroundSignupAt" => (u.created_at.iso8601 if u.created_at < ProgramWindow.current.ends_at),
       "Loops - playgroundFirstShipAt" => first_ship&.iso8601,
       "Loops - playgroundFirstPetCreatedAt" => u.first_pet_created_at&.iso8601,
       # Text, not a time: see NoTimeNudge.

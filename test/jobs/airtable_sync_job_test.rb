@@ -99,6 +99,16 @@ class AirtableSyncJobTest < ActiveSupport::TestCase
     assert_not AirtableFields.user(user).key?("Loops List - Playground")
   end
 
+  test "a signup after the program ends sends no signup time to Loops" do
+    before = User.create!(hca_id: "ident!u5", email: "u5@example.com")
+    ProgramWindow.current = ProgramWindow.new(starts_at: Time.utc(2000), ends_at: 1.minute.from_now)
+    travel 2.minutes do
+      after = User.create!(hca_id: "ident!u6", email: "u6@example.com")
+      assert_not AirtableFields.user(after).key?("Loops - playgroundSignupAt")
+      assert_equal before.created_at.iso8601, AirtableFields.user(before)["Loops - playgroundSignupAt"]
+    end
+  end
+
   test "a first pet's time goes to Loops, and stays when that pet is deleted" do
     user = User.create!(hca_id: "ident!u4", email: "u4@example.com")
     assert_not AirtableFields.user(user).key?("Loops - playgroundFirstPetCreatedAt")
