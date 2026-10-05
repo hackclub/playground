@@ -131,13 +131,19 @@ class SlackChannelApiTest < ActiveSupport::TestCase
   end
 
   test "inviting posts the channel and the user, and already in the channel is fine" do
-    calls = answering({ "ok" => false, "error" => "already_in_channel" }) { SlackChannel.invite("U1") }
-    assert_equal :post, calls.first[0]
-    assert_equal({ channel: "C0ASBTMS82H", users: "U1" }, calls.first[2][:form])
+    calls = answering({ "ok" => true }, { "ok" => false, "error" => "already_in_channel" }) { SlackChannel.invite("U1") }
+    assert_equal :post, calls.last[0]
+    assert_equal({ channel: "C0ASBTMS82H", users: "U1" }, calls.last[2][:form])
+  end
+
+  test "inviting joins the channel first" do
+    calls = answering({ "ok" => true }, { "ok" => true }) { SlackChannel.invite("U1") }
+    assert_equal %w[conversations.join conversations.invite], calls.map { it[1][/[a-z]+\.[a-z]+\z/] }
+    assert_equal({ channel: "C0ASBTMS82H" }, calls.first[2][:form])
   end
 
   test "an answer of ok: false raises its error" do
-    answering({ "ok" => false, "error" => "missing_scope" }) do
+    answering({ "ok" => true }, { "ok" => false, "error" => "missing_scope" }) do
       error = assert_raises(SlackChannel::Error) { SlackChannel.invite("U1") }
       assert_equal "missing_scope", error.message
     end
