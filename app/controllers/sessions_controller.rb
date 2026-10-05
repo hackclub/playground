@@ -86,6 +86,7 @@ class SessionsController < ApplicationController
     user.hca_access_token = auth.credentials.token
     user.hca_refresh_token = auth.credentials.refresh_token if auth.credentials.refresh_token
     user.save!
+    SlackInviteJob.perform_later(user.id) if user.slack_id.present? && user.slack_invited_at.nil?
     reset_session
     sign_in(user)
     redirect_to after_login_path(user)

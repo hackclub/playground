@@ -39,9 +39,6 @@ class User < ApplicationRecord
   def verified? = verification_status == "verified"
   def eligible? = verified? && ysws_eligible
   def banned? = banned_at.present?
-  # Whether ship.exe asks the participant to join #playground: they signed up
-  # with a Slack id, have not hidden the prompt, and are not in the channel.
-  def slack_prompt? = slack_prompt_dismissed_at.nil? && !banned? && SlackChannel.absent?(slack_id)
   def hackatime_connected? = hackatime_access_token.present?
   # Set for the current request when Hackatime refused the stored token. Not saved.
   attr_accessor :hackatime_unlinked

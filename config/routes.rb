@@ -13,10 +13,6 @@ Rails.application.routes.draw do
     end
   end
   resource :trash, only: :update, controller: "trash"
-  resource :slack_channel, only: [] do
-    post :join
-    post :dismiss
-  end
   resources :redemptions, only: %i[new create]
 
   get "auth/:provider/callback" => "sessions#create"

@@ -21,6 +21,18 @@ class LoginFlowTest < ActionDispatch::IntegrationTest
     ActionController::Base.allow_forgery_protection = false
   end
 
+  test "a login with a Slack id queues the add to #playground, and one without does not" do
+    assert_no_enqueued_jobs(only: SlackInviteJob) { hca_login("ident!no-slack") }
+
+    user = nil
+    assert_enqueued_with(job: SlackInviteJob) { hca_login("ident!slacker", slack_id: "U0SLACKER") }
+    user = User.find_by!(hca_id: "ident!slacker")
+    assert_enqueued_with(job: SlackInviteJob, args: [ user.id ])
+
+    user.update!(slack_invited_at: Time.current)
+    assert_no_enqueued_jobs(only: SlackInviteJob) { hca_login("ident!slacker", slack_id: "U0SLACKER") }
+  end
+
   test "a new participant goes from Hack Club Auth to Hackatime to the desktop" do
     hca_login("ident!new")
     assert_redirected_to hackatime_step_path
@@ -222,8 +234,8 @@ class LoginFlowTest < ActionDispatch::IntegrationTest
 
   private
 
-  def hca_login(id, email: "#{id.delete_prefix("ident!")}@example.com", status: "verified", eligible: true, **params)
-    identity = { id:, primary_email: email, first_name: "Sam", last_name: "Dev", verification_status: status, ysws_eligible: eligible || nil }
+  def hca_login(id, email: "#{id.delete_prefix("ident!")}@example.com", status: "verified", eligible: true, slack_id: nil, **params)
+    identity = { id:, primary_email: email, first_name: "Sam", last_name: "Dev", verification_status: status, ysws_eligible: eligible || nil, slack_id: }
     OmniAuth.config.mock_auth[:hack_club] = OmniAuth::AuthHash.new(
       provider: "hack_club", uid: id, credentials: { token: "hca-#{id}", refresh_token: "hcr-#{id}" },
       extra: { raw_info: { identity: identity.compact } }

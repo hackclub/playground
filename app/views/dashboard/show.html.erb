@@ -22,16 +22,6 @@
   <p class="banner alert">Hackatime has banned this account, so its hours cannot count.</p>
 <% end %>
 
-<% if current_user.slack_prompt? %>
-  <section class="panel slack-prompt">
-    <p>You don't seem to be in the #playground channel! Would you like to join?</p>
-    <div class="row">
-      <%= button_to "Add me!", join_slack_channel_path, class: "btn primary" %>
-      <%= button_to "Don't show this message again", dismiss_slack_channel_path, class: "btn" %>
-    </div>
-  </section>
-<% end %>
-
 <section class="panel">
   <h2>your meter</h2>
   <% unless ProgramWindow.current.started? %>
