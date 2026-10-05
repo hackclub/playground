@@ -35,6 +35,7 @@ module GuideHelper
     "explorer-open-in-terminal" => [ 1360, 979 ],
     "scene-tree" => [ 570, 984 ],
     "project-settings-menu" => [ 950, 647 ],
+    "plugins-tab" => [ 1360, 871 ],
     "window-settings" => [ 1360, 871 ],
     "transparent-background" => [ 1360, 871 ],
     "per-pixel-transparency" => [ 1360, 871 ],
