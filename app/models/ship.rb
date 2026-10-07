@@ -24,6 +24,8 @@ class Ship < ApplicationRecord
 
   after_update :mark_unsynced, if: -> { saved_change_to_state? || saved_change_to_approved_seconds? }
 
+  after_update_commit :email_participant, if: :saved_change_to_state?
+
   STATES.each { |s| define_method(:"#{s}?") { state == s } }
 
   def number = project.ships.index(self).to_i + 1
@@ -76,6 +78,12 @@ class Ship < ApplicationRecord
   def deflated_seconds = claimed_seconds - review_seconds.to_i
 
   private
+
+  # One email per move into approved or changes_needed. A re-save leaves the
+  # state alone, so it never reaches here. A rejection or a ban sends nothing.
+  def email_participant
+    ShipMailer.notify(self) if state.in?(%w[approved changes_needed])
+  end
 
   def mark_unsynced = update_column(:synced_at, nil)
 end

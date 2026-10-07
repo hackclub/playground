@@ -1,0 +1,13 @@
+[[ARMAND: greeting]] <%= @name %>
+
+[[ARMAND: approved body]]
+
+Pet: <%= @pet_name %>
+Approved hours: <%= @hours %>
+<% if @feedback.present? %>
+Reviewer feedback:
+<%= @feedback %>
+<% end %>
+<%= @pet_url %>
+
+[[ARMAND: sign-off]]
