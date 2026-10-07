@@ -4,6 +4,9 @@ require "test_helper"
 # a click on its title does. The title stays the one link a keyboard or a
 # screen reader meets.
 class WelcomeExamplesTest < ActionDispatch::IntegrationTest
+  setup { NewSite.for_visitors = false }
+  teardown { NewSite.for_visitors = true }
+
   test "each example's picture links to the same page as its title, and only the title takes focus" do
     get root_path
     cards = css_select("#welcome .image-card")

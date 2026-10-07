@@ -9,9 +9,12 @@ class LinkPreviewTest < ActionDispatch::IntegrationTest
   TAGS = "meta[property^='og:'], meta[name^='twitter:'], meta[name='description'], meta[name='theme-color']".freeze
 
   setup do
+    NewSite.for_visitors = false
     host! "playground.hackclub.com"
     https!
   end
+
+  teardown { NewSite.for_visitors = true }
 
   test "the desktop carries the tags, with the image by an absolute URL on the request's host" do
     get root_path

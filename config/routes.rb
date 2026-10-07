@@ -22,8 +22,8 @@ Rails.application.routes.draw do
   end
   resource :trash, only: :update, controller: "trash"
 
-  # The new site's own addresses, for a user with the new site on
-  # (NewSite). For anyone else they do not exist.
+  # The new site's own addresses, for visitors and users with the new site
+  # on (NewSite). Account actions still require login in their controllers.
   constraints(->(request) { NewSite.request?(request) }) do
     # The guide's steps that act on the site, each a frame inside the guide.
     scope "guide", controller: "guide_steps", as: "guide" do

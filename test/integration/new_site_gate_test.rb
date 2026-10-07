@@ -1,29 +1,31 @@
 require "test_helper"
 
-# The new site is behind a flag on each user (NewSite). Without it, signed in
-# or out, every address answers as the desktop site does, and the new site's
-# own addresses do not exist. With it, the new site shows, and the desktop
-# site's pages send the user to theirs. A participant cannot set the flag. An
+# Visitors get the new site. Signed in, the user's flag (NewSite) decides:
+# without it, every address answers as the desktop site does, and the new
+# site's own addresses do not exist. With it, the new site shows, and the
+# desktop site's pages send the user to theirs. A participant cannot set the flag. An
 # admin can, from the person's page, and the person's history says who did.
 class NewSiteGateTest < ActionDispatch::IntegrationTest
   MARKS = [ "new-site", "new_site-", "topbar", "home-window", "pet-window" ].freeze
 
   setup { @pet = User.create!(hca_id: "ident!gate-owner").projects.create!(name: "rock") }
 
-  test "signed out, the new site's own addresses do not exist, and the shared pages are the desktop site's" do
-    new_only_requests(@pet).each do |verb, path|
-      send(verb, path)
-      assert_response :not_found, "#{verb} #{path}"
-    end
-    [ root_path, guide_path, requirements_path, login_path ].each do |path|
+  test "signed out, visitors get the new site and its public guide steps" do
+    assert NewSite.for_visitors
+    [ root_path, guide_path, requirements_path, login_path, *GuidePage.all.map { guide_page_path(it) } ].each do |path|
       get path
       assert_response :ok, path
-      assert_desktop_site path
+      assert_select "body.new-site", 1, path
+      assert_select "#welcome", 0, path
     end
-    get root_path
-    assert_select "#welcome"
-    get guide_path
-    assert_select "h2#guide-overview", "Guide overview"
+    get guide_check_path
+    assert_response :ok
+
+    [ [ :get, guide_side_path ], [ :get, guide_ship_path ], [ :post, guide_link_path ],
+      [ :patch, active_pet_path ], [ :get, ship_project_path(@pet) ], [ :get, delete_project_path(@pet) ] ].each do |verb, path|
+      send(verb, path)
+      assert_redirected_to login_path, "#{verb} #{path} still requires login"
+    end
   end
 
   test "a participant without the flag gets the desktop site, and the new site's addresses do not exist" do
@@ -55,7 +57,8 @@ class NewSiteGateTest < ActionDispatch::IntegrationTest
     assert_redirected_to dashboard_path
   end
 
-  test "every page the site serves shows the desktop site to a visitor and to a participant without the flag" do
+  test "with the legacy visitor setting, every page shows the desktop site to a visitor and to a participant without the flag" do
+    NewSite.for_visitors = false
     user = User.create!(hca_id: "ident!gate-sweep")
     pet = user.projects.create!(name: "rock")
     paths = Rails.application.routes.routes.select { it.verb == "GET" && it.defaults[:controller] }
@@ -98,6 +101,8 @@ class NewSiteGateTest < ActionDispatch::IntegrationTest
         end
       end
     end
+  ensure
+    NewSite.for_visitors = true
   end
 
   test "a user with the flag gets the new site, and the desktop site's pages send them to theirs" do
@@ -138,14 +143,17 @@ class NewSiteGateTest < ActionDispatch::IntegrationTest
     assert cookies[:active_pet].present?
   end
 
-  test "the flag counts only while the login does" do
+  test "an expired login falls back to the visitor's new site without account access" do
     user = log_in("participant")
     user.update!(new_site: true)
     get guide_page_path("move")
     assert_response :ok
     user.increment!(:session_version)
     get guide_page_path("move")
-    assert_response :not_found
+    assert_response :ok
+    assert_select "body.new-site"
+    get projects_path
+    assert_redirected_to login_path
   end
 
   test "a participant cannot turn the new site on" do
@@ -214,7 +222,7 @@ class NewSiteGateTest < ActionDispatch::IntegrationTest
 
   private
 
-  # The new site's own addresses, which only exist for a user with the flag.
+  # The new site's own addresses, unavailable to signed-in users without the flag.
   def new_only_requests(pet)
     GuidePage.all.map { [ :get, guide_page_path(it) ] } +
       [ [ :get, guide_check_path ], [ :get, guide_side_path ], [ :get, guide_ship_path ], [ :post, guide_link_path ],

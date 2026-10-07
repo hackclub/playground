@@ -88,7 +88,7 @@ class SideGuidesTest < ActionDispatch::IntegrationTest
   test "a guide is remembered, the other one switches it, and / sends a signed-out browser back to it" do
     get root_path
     assert_response :ok
-    assert_select "#welcome"
+    assert_select "body.new-site .home-window", 4
 
     get side_guide_path("clubs", "art")
     assert_equal "clubs", cookies[SideGuide::COOKIE.to_s]
@@ -115,11 +115,16 @@ class SideGuidesTest < ActionDispatch::IntegrationTest
     assert_select "#welcome"
   end
 
-  test "a step no guide has is not found, and the new site's own guide stays behind its flag" do
+  test "a step no guide has is not found, and the new site's guide is public but unavailable to an unflagged account" do
     get "/stardance/nope"
     assert_response :not_found
     get "/clubs/Move"
     assert_response :not_found
+    get "/guide/move"
+    assert_response :ok
+    assert_select "body.new-site"
+
+    log_in("participant")
     get "/guide/move"
     assert_response :not_found
   end

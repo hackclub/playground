@@ -294,7 +294,7 @@ class DevLoginFlowTest < ActionDispatch::IntegrationTest
     get new_project_path
     assert_redirected_to login_path
     follow_redirect!
-    assert_select "body > .flash.alert", "log in first"
+    assert_select "body.new-site .flash.alert", "log in first"
     assert_select "section.login"
 
     log_in("participant")

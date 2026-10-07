@@ -3,8 +3,8 @@
 # user, users.new_site. An account made at signup from LAUNCHED_ON on starts
 # with it on (SessionsController). For an older account only an admin turns
 # it on, and an admin can turn it off for anyone, from the admin's page for
-# that user (Admin::PeopleController#new_site). Everyone else, and every
-# signed-out visitor, gets the desktop site, unchanged.
+# that user (Admin::PeopleController#new_site). Older accounts without the
+# flag get the desktop site, unchanged. Signed-out visitors get the new site.
 #
 # The gate sits in three places:
 # - routes: the new site's own addresses sit in a constraint (NewSite.request?),
@@ -23,10 +23,9 @@
 module NewSite
   extend ActiveSupport::Concern
 
-  # Tests only: signed-out visitors get the new site too, so its signed-out
-  # pages can be tested before it opens to everyone. Nothing in a request
-  # can set it.
-  mattr_accessor :for_visitors, default: false
+  # Signed-out visitors get the new site. Tests of the old desktop can turn
+  # this off; nothing in a request can set it.
+  mattr_accessor :for_visitors, default: true
 
   # The day, in Eastern time, from which a new account starts on the new
   # site. Accounts made before it knew the old desktop, so the new landing's
@@ -35,12 +34,16 @@ module NewSite
 
   def self.for?(user) = user ? user.new_site? : for_visitors
 
-  # This browser switched back to the old desktop.
+  # This browser switched back to the old desktop. Only a signed-in user's
+  # requests honor the preference; signed-out visitors still get the new site.
   def self.classic?(cookies) = cookies.signed[:classic] == "1"
 
   # For the routes' constraints, before any controller runs: the same
   # signed-in user that ApplicationController#current_user finds.
-  def self.request?(request) = !classic?(request.cookie_jar) && for?(signed_in(request))
+  def self.request?(request)
+    user = signed_in(request)
+    for?(user) && (!user || !classic?(request.cookie_jar))
+  end
 
   # A user with the flag, whichever site this browser shows them.
   def self.flagged?(request) = signed_in(request)&.new_site? || false
@@ -58,7 +61,7 @@ module NewSite
 
   private
 
-  def new_site? = !NewSite.classic?(cookies) && NewSite.for?(current_user)
+  def new_site? = NewSite.for?(current_user) && (!current_user || !NewSite.classic?(cookies))
 
   # The old desktop shows a way back to the new site only to a user with the
   # flag who switched this browser to the old desktop.
