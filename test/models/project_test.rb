@@ -57,4 +57,27 @@ class ProjectTest < ActiveSupport::TestCase
     assert_nil Project.new(code_url: "https://github.com/../rock").github_repo
     assert_nil Project.new(code_url: "https://github.com/pet/..").github_repo
   end
+
+  test "the last-project placeholder is dropped on save and never read back, even from an old row" do
+    last = Hackatime::IGNORED_PROJECTS.first
+    pet = @project.user.projects.create!(name: "kept", hackatime_projects: [ "rock-pet", last, " <<last_project>> " ])
+    assert_equal [ "rock-pet" ], pet.reload.hackatime_projects
+    assert_equal [ "rock-pet" ], pet.read_attribute(:hackatime_projects)
+
+    pet.update!(hackatime_projects: [ last ])
+    assert_empty pet.reload.hackatime_projects
+
+    # An old row that still stores it: reads leave it out, the row stays.
+    pet.update_columns(hackatime_projects: [ "rock-pet", last ])
+    pet = Project.find(pet.id)
+    assert_equal [ "rock-pet" ], pet.hackatime_projects
+    assert_equal [ "rock-pet" ], pet.hackatime_projects_in_database
+    assert_equal [ "rock-pet", last ], pet.read_attribute(:hackatime_projects)
+    pet.update!(name: "renamed")
+    assert_equal [ "rock-pet" ], pet.reload.hackatime_projects
+
+    pet.update_columns(hackatime_projects: [ last ])
+    assert_empty Project.find(pet.id).hackatime_projects
+    assert_not_includes @project.user.projects.create!(name: "other").hackatime_projects_taken, last
+  end
 end

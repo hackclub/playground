@@ -127,4 +127,50 @@ class HackatimeTest < ActiveSupport::TestCase
     assert_raises(Hackatime::Unlinked) { Hackatime::Fake.new(user).stats([]) }
     assert_raises(Hackatime::Unlinked) { Hackatime::Fake.new(user).spans([ "rock-pet" ], from: 1.day.ago, to: Time.current) }
   end
+
+  LAST = Hackatime::IGNORED_PROJECTS.first
+
+  test "the last-project placeholder is left out of the project list, the stats, and the spans" do
+    ProgramWindow.current = WINDOW
+    client = Hackatime.new("hka_ok")
+    @answer = { "projects" => [ { "name" => LAST, "total_seconds" => 600, "most_recent_heartbeat" => "2026-09-26T10:00:00Z" },
+                                { "name" => "rock-pet", "total_seconds" => 60, "most_recent_heartbeat" => "2026-09-26T09:00:00Z" } ] }
+    assert_equal [ "rock-pet" ], client.projects.map(&:name)
+
+    @answer = { "data" => { "total_seconds" => 60, "projects" => [ { "name" => LAST, "total_seconds" => 600 }, { "name" => "rock-pet", "total_seconds" => 60 } ],
+                            "user_id" => 7 } }
+    stats = client.stats([ LAST, "rock-pet" ])
+    assert_equal({ "rock-pet" => 60 }, stats.projects)
+    assert_equal "rock-pet", query(@urls.last)["filter_by_project"]
+
+    @urls.clear
+    assert_equal 0, client.stats([ LAST ]).total_seconds, "a pet that links only the placeholder counts nothing"
+    assert_nil query(@urls.last)["filter_by_project"]
+
+    @urls.clear
+    assert_empty client.spans([ LAST ], from: WINDOW.starts_at, to: WINDOW.starts_at + 1.hour)
+    assert_empty @urls, "no request for the placeholder alone"
+    @answer = { "spans" => [] }
+    client.spans([ LAST, "rock-pet" ], from: WINDOW.starts_at, to: WINDOW.starts_at + 1.hour)
+    assert_equal "rock-pet", query(@urls.last)["filter_by_project"]
+  end
+
+  test "the fake lists the placeholder nowhere and counts no time on it" do
+    ProgramWindow.current = WINDOW
+    fake = Hackatime::Fake.new(User.create!(hca_id: "ident!fake-last", hackatime_access_token: "fake"))
+    assert_includes fake.catalog.map(&:name), LAST, "the fake has it, as Hackatime does"
+    travel_to(WINDOW.ends_at - 1.minute) do
+      assert_not_includes fake.projects.map(&:name), LAST
+      assert_equal fake.stats([ "rock-pet" ]).total_seconds, fake.stats([ "rock-pet", LAST ]).total_seconds
+      assert_not_includes fake.stats([ "rock-pet", LAST ]).projects.keys, LAST
+      assert_empty fake.spans([ LAST ], from: WINDOW.starts_at, to: WINDOW.ends_at)
+    end
+  end
+
+  test "ignored? matches the placeholder whatever its case or edge spaces" do
+    assert Hackatime.ignored?("<<LAST_PROJECT>>")
+    assert Hackatime.ignored?(" <<last_project>> ")
+    assert_not Hackatime.ignored?("last-project")
+    assert_equal %w[a b], Hackatime.keep([ "a", LAST, "b" ])
+  end
 end

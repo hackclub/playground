@@ -31,7 +31,7 @@
     <section class="panel">
       <h2>hours</h2>
       <table class="kv">
-        <% @ship.snapshot.fetch("projects", {}).each do |name, sec| %>
+        <% @ship.snapshot.fetch("projects", {}).reject { |name, _| Hackatime.ignored?(name) }.each do |name, sec| %>
           <tr><td><%= name %></td><td><%= hours(sec) %></td><td class="muted"><%= @live&.projects&.key?(name) ? "now #{hours(@live.projects[name])}" : "" %></td></tr>
         <% end %>
         <tr><td>tracked at ship</td><td><%= hours(@ship.snapshot["tracked_seconds"]) %></td><td></td></tr>

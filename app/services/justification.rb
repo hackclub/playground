@@ -11,7 +11,7 @@ class Justification
   # "Automation - Unified Justification" formula joins them.
   def hackatime_projects
     snap = @ship.snapshot
-    snap.fetch("projects", {}).map { |name, sec| "#{name} (#{Hours.format(sec)})" }.join(", ") +
+    snap.fetch("projects", {}).reject { |name, _| Hackatime.ignored?(name) }.map { |name, sec| "#{name} (#{Hours.format(sec)})" }.join(", ") +
       ", #{date_range}" +
       (snap["previously_claimed_seconds"].to_i.positive? ? "; earlier ships claimed #{Hours.format(snap["previously_claimed_seconds"])}, this ship claims the time since" : "")
   end
@@ -28,7 +28,7 @@ class Justification
     s = @ship
     snap = s.snapshot
     lines = []
-    lines << "Hackatime projects: " + snap.fetch("projects", {}).map { |name, sec| "#{name} (#{Hours.format(sec)})" }.join(", ") +
+    lines << "Hackatime projects: " + snap.fetch("projects", {}).reject { |name, _| Hackatime.ignored?(name) }.map { |name, sec| "#{name} (#{Hours.format(sec)})" }.join(", ") +
              ", #{date_range}."
     lines << "Submitter Hackatime ID: #{snap["hackatime_user_id"]}. Trust level at ship: #{snap["trust_level"]}."
     if snap["previously_claimed_seconds"].to_i.positive?

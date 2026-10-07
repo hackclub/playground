@@ -30,6 +30,11 @@ class Project < ApplicationRecord
   # event. The owner's row syncs next.
   after_create { User.where(id: user_id, first_pet_created_at: nil).update_all(first_pet_created_at: created_at, synced_at: nil) }
 
+  # Hackatime's placeholder project is never linked or counted, even if an
+  # older row still stores it. Reads leave it out. The stored array is kept.
+  def hackatime_projects = Hackatime.keep(super)
+  def hackatime_projects_in_database = Hackatime.keep(super)
+
   def latest_ship = ships.last
   def pending_ship? = ships.any?(&:pending?)
   def state = latest_ship&.state || "draft"
@@ -76,7 +81,7 @@ class Project < ApplicationRecord
   def shipped_hackatime_projects
     ships.reject(&:changes_needed?).flat_map do
       Array(it.snapshot["hackatime_projects"]) + Array(it.snapshot["projects"].try(:keys))
-    end.uniq
+    end.uniq.then { Hackatime.keep(it) }
   end
 
   private

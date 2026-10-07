@@ -195,4 +195,24 @@ class CodingHoursTest < ActiveSupport::TestCase
     travel_to(et("2026-09-28 11:00")) { CodingHours.refresh(user) }
     assert_nil user.reload.coding_hours_synced_at, "the next sync asks for the whole window"
   end
+
+  test "the last-project placeholder is never asked for, even when a pet's row or a ship's snapshot holds it" do
+    last = Hackatime::IGNORED_PROJECTS.first
+    user = participant(names: [ "rock-pet" ])
+    pet = user.projects.first
+    pet.update_columns(hackatime_projects: [ "rock-pet", last ])
+    pet.ships.create!(user:, claimed_seconds: 60, snapshot: { "hackatime_projects" => [ last, "old-one" ], "projects" => { last => 600, "old-one" => 60 } })
+    assert_equal %w[old-one rock-pet], CodingHours.hackatime_names(user.reload).sort
+
+    @spans = [ [ "2026-09-26 10:00", "2026-09-26 11:00" ] ]
+    travel_to(et("2026-09-28 10:00")) { assert CodingHours.refresh(user) }
+    assert_not_includes spans_queries.sole["filter_by_project"], "LAST_PROJECT"
+    assert_not_includes @calls.map(&:last).join, "LAST_PROJECT"
+
+    only = participant(names: [ last ])
+    @calls.clear
+    travel_to(et("2026-09-28 10:00")) { assert CodingHours.refresh(only) }
+    assert_empty spans_queries, "a pet with only the placeholder asks for no spans"
+    assert_empty only.coding_hours
+  end
 end
