@@ -6,32 +6,20 @@
 # It answers only for today or yesterday, so a reader just past midnight
 # still counts, and a made-up day does not. A burst from one address is cut
 # off after RATE requests an hour, enough for a club's room on one network.
-# The limit's counter is keyed by a keyed hash of the address and the day,
-# not the address itself, and lasts an hour.
+# The limit counts by a keyed hash of the address and the day
+# (AnonymousCounting), not the address itself, and lasts an hour.
 class GuideReadersController < ApplicationController
+  include AnonymousCounting
+
   RATE = 60
 
-  rate_limit to: RATE, within: 1.hour, by: -> { reader_key }
+  rate_limit to: RATE, within: 1.hour, by: -> { anonymous_key }
 
   def create
     guide = SideGuide.find(params[:guide])&.slug
     day = asked_day
-    return head(:unprocessable_entity) unless guide && day&.between?(today - 1, today)
+    return head(:unprocessable_entity) unless guide && day
     GuideReaderDay.count!(guide:, day:)
     head :no_content
-  end
-
-  private
-
-  def today = Time.current.in_time_zone(ProgramWindow::ZONE).to_date
-
-  def asked_day
-    Date.iso8601(params[:day].to_s)
-  rescue Date::Error
-    nil
-  end
-
-  def reader_key
-    OpenSSL::HMAC.hexdigest("SHA256", Rails.application.secret_key_base, "#{today}:#{request.remote_ip}").first(16)
   end
 end

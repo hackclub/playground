@@ -1,6 +1,8 @@
 <% content_for :title, "Build a virtual pet in Godot" %>
+<%# It counts, with no name, which sections this browser reaches (GuideSections). %>
+<% content_for :head, guide_progress_tag %>
 <p class="dashboard-link"><%= link_to "← desktop", root_path %></p>
-<article class="guide panel" data-controller="os">
+<article class="guide panel" data-controller="os guide-progress" <%= tag.attributes(data: guide_progress_data("desktop")) %>>
   <header>
     <%# Shown only inside guide.txt's window, for reading it full size. %>
     <p class="guide-new-tab"><%= link_to "open the guide in a new tab ↗", guide_path, target: "_blank", rel: "noopener" %></p>

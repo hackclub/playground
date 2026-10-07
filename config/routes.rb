@@ -12,6 +12,8 @@ Rails.application.routes.draw do
   get ":guide(/:step)" => "side_guides#show", as: :side_guide, constraints: { guide: /stardance|clubs/, step: /[a-z]+/ }
   # A browser that read one of them long enough on a day says so, once.
   post "guide_readers" => "guide_readers#create", as: :guide_readers
+  # A browser says which sections of a guide it reached, each once.
+  post "guide_sections" => "guide_sections#create", as: :guide_sections
   resources :projects do
     get :checks, on: :member
     get :trash, on: :member
