@@ -2916,7 +2916,8 @@ function widestWidth(win) {
 }
 
 // The width the content asks for, laid out once at its widest and put back
-// before anything is drawn.
+// before anything is drawn. A frame's page also needs room for its
+// scrollbar (see frameScrollbarWidth).
 function contentWidth(win) {
     const frame = win.querySelector("iframe");
     let page = win.querySelector(".windowcontent");
@@ -2928,12 +2929,28 @@ function contentWidth(win) {
         }
         if (!page) return null;
     }
-    const around = win.offsetWidth - (frame ?? page).offsetWidth;
+    const around = win.offsetWidth - (frame ?? page).offsetWidth + (frame ? frameScrollbarWidth(frame) : 0);
     const width = page.style.width;
     page.style.width = "max-content";
     const widest = page.getBoundingClientRect().width;
     page.style.width = width;
     return Math.ceil(widest + around);
+}
+
+// The width a frame's scrollbar takes from its page: 15px where a scrollbar
+// stands beside the page, as in Chrome on Linux, and none where it lies over
+// the page, as on a Mac or a phone. The window keeps that room
+// whether its page scrolls now or not, since a page grows taller as its
+// window grows wider, and its pictures with it. Measured with the scrollbar
+// shown, and put back before anything is drawn.
+function frameScrollbarWidth(frame) {
+    const root = frame.contentDocument.documentElement;
+    const overflow = root.style.overflowY;
+    root.style.overflowY = "scroll";
+    const width = frame.contentWindow.innerWidth - root.clientWidth;
+    root.style.overflowY = overflow;
+    if (!root.getAttribute("style")) root.removeAttribute("style");
+    return width;
 }
 
 // The width the window opens at, whatever it was resized to since.
