@@ -1,6 +1,9 @@
 require "test_helper"
 
-# Login is Hack Club Auth, then Hackatime, then the desktop with ship.exe open.
+# Login is Hack Club Auth, then Hackatime, then the desktop with ship.exe open,
+# for an account from before the new site. A new account starts on the new
+# site (NewSiteSignupTest), so the tests that follow a login to the desktop
+# make their account first.
 # Both OAuth apps are placeholders: OmniAuth's test mode stands in for a
 # provider that says yes, and the state and deny cases run the real strategy,
 # which checks the state before it would call the network.
@@ -34,6 +37,7 @@ class LoginFlowTest < ActionDispatch::IntegrationTest
   end
 
   test "a new participant goes from Hack Club Auth to Hackatime to the desktop" do
+    User.create!(hca_id: "ident!new")
     hca_login("ident!new")
     assert_redirected_to hackatime_step_path
     follow_redirect!
@@ -166,6 +170,7 @@ class LoginFlowTest < ActionDispatch::IntegrationTest
   end
 
   test "declining Hackatime keeps the participant logged in, with a button to try again" do
+    User.create!(hca_id: "ident!decline")
     hca_login("ident!decline")
     OmniAuth.config.test_mode = false
     post "/auth/hackatime"
