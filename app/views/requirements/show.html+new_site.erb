@@ -1,0 +1,12 @@
+<% content_for :title, "submission requirements" %>
+<article class="guide requirements panel">
+  <header>
+    <%# Shown only inside requirements.txt's window, for reading it full size. %>
+    <p class="guide-new-tab"><%= link_to "open the requirements in a new tab ↗", requirements_path, target: "_blank", rel: "noopener" %></p>
+    <h1>submission requirements</h1>
+  </header>
+
+  <%= render "requirements/list" %>
+
+  <p>questions? ask in <a href="https://hackclub.slack.com/archives/C0ASBTMS82H" target="_blank" rel="noopener">#playground</a>.</p>
+</article>

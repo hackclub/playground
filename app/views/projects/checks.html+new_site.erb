@@ -1,0 +1,13 @@
+<% content_for :title, "ship #{@project.name}" %>
+<% turbo_exempts_page_from_preview %>
+<%# The pet's ship page, a window like the pet's card on my pets: what still
+    blocks shipping, each with its fix, and the ship button. The old
+    desktop's ship window shows the same page with window=1. There the
+    window's title names the pet, and the page tells the desktop what it
+    saves. %>
+<% unless params[:window] %><p><%= link_to "← my pets", pet_card_path(@project) %></p><% end %>
+<section class="pet-window page-window" aria-labelledby="ship-title" data-controller="ship-window"
+         data-action="ship-checks:saving->ship-window#saving ship-checks:saved->ship-window#saved screenshot-upload:changed->ship-window#changed turbo:submit-end->ship-window#submitted">
+  <div class="pet-titlebar"><h2 class="pet-title" id="ship-title">ship <%= @project.name %></h2></div>
+  <div class="pet-pane page-pane"><%= render "ship_checks" %></div>
+</section>

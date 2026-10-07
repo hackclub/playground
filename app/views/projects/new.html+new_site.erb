@@ -1,0 +1,8 @@
+<% content_for :title, "new pet" %>
+<% turbo_exempts_page_from_preview %>
+<%# A new pet, in a window like the pets' cards on my pets. %>
+<p><%= link_to "← my pets", projects_path %></p>
+<section class="pet-window page-window" aria-labelledby="new-title">
+  <div class="pet-titlebar"><h2 class="pet-title" id="new-title">new pet</h2></div>
+  <div class="pet-pane page-pane"><%= render "form", project: @project %></div>
+</section>

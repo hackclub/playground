@@ -1,0 +1,34 @@
+<%# The art and script step: the sprite's animations, and the script it moves by. %>
+<section aria-labelledby="pretty">
+  <h2 id="pretty">Making it pretty!</h2>
+  <p>I’m using this free sprite pack I found on <a href="https://itch.io" target="_blank" rel="noopener">itch.io</a> you can use assets you find online as long as the license allows for it, but I encourage you to make your own art, or commission a friend.</p>
+  <p><a href="https://smithygames.itch.io/crow-sprite" target="_blank" rel="noopener">https://smithygames.itch.io/crow-sprite</a></p>
+  <p>import your pet’s assets into your project’s FileSystem, you can do this by just dragging your assets in.</p>
+  <%= guide_step_video "import-sprites", "Screen recording: dragging Crow.png from a Finder window into Godot's FileSystem panel." %>
+  <p>To add animations, select AnimatedSprite2D in the Scene tree in the top left,</p>
+  <%= guide_step_shot "animated-sprite-selected", "The Scene tree with AnimatedSprite2D selected." %>
+  <p>Add a new SpriteFrames resource to the AnimatedSprite2D on the right in the inspector</p>
+  <%= guide_step_video "sprite-frames", "Screen recording: in the Inspector, opening the Sprite Frames menu and picking New SpriteFrames." %>
+  <p>If you’re using a Sprite Sheet like me, you can use the Add Frames from Sprite Sheet button to slice your Sprite Sheet into its individual frames, else you can easily add frames individually rather than using a Sprite Sheet.</p>
+  <p>Slice your Sprite Sheet, and rename the animation.</p>
+  <%= guide_step_video "sprite-sheet", "Screen recording: opening Crow.png with Add Frames from Sprite Sheet, setting the grid, picking a row of frames, adding them, and renaming the animation." %>
+  <p>Add more animations for each state your pet has, I’m going to make Walk, and Idle</p>
+  <%= guide_step_shot "walk-animation", "The Animations list with one animation, Walk, under the Add Animation button." %>
+  <p>Click play to see your animation!</p>
+  <%= guide_step_video "play-animation", "Screen recording: the crow in the editor, playing its Idle and then its Walk animation." %>
+  <p>Select the CollisionShape2D, assign a RectangleShape2D to the Shape field, and scale it to fit the sprite</p>
+  <%= guide_step_video "collision-shape", "Screen recording: selecting CollisionShape2D, picking a new RectangleShape2D for its Shape, and dragging the rectangle's handles to fit the crow." %>
+</section>
+
+<section aria-labelledby="script">
+  <h2 id="script">Yay! The scene is set up, now we can add the functionality</h2>
+  <p>Attach a script to the base Node2D node</p>
+  <ul>
+    <li>Select Node2D in the Scene tree</li>
+    <li>Click the create script button</li>
+    <li>Name it whatever you want</li>
+  </ul>
+  <%= guide_step_video "attach-script", "Screen recording: selecting Node2D, clicking the attach script button, naming the script whatever.gd, and creating it." %>
+  <p>Remove everything except for extends Node2D</p>
+  <%= guide_step_video "clear-script", "Screen recording: the new script, with everything below extends Node2D selected to delete." %>
+</section>

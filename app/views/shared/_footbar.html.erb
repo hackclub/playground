@@ -1,0 +1,11 @@
+<%# Hack Club's required links, and who made playground. %>
+<footer class="footbar">
+  <p>
+    <a href="https://hackclub.com">Hack Club</a> ·
+    <a href="https://hackclub.com/privacy-and-terms">Terms &amp; Privacy</a> ·
+    <a href="https://forms.hackclub.com/bounty">Fulfillment</a> ·
+    <a href="https://security.hackclub.com">Security</a>
+  </p>
+  <%# Each name links its Slack profile. %>
+  <p class="muted">made with &lt;3 by <%= link_to "@froppii", "https://hackclub.enterprise.slack.com/team/U07SX29CECA", target: "_blank", rel: "noopener" %> and <%= link_to "@armand", ApplicationHelper::SPONSOR_URL, target: "_blank", rel: "noopener" %></p>
+</footer>

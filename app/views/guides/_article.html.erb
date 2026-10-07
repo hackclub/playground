@@ -1,0 +1,32 @@
+<%# The guide, the hub's main column, one step at a time (GuidePage). Its
+    steps that act on the site sit where the participant does that thing:
+    sign in first, Hackatime where the plugin goes in, the pet's project
+    after Movement, and ship at the end. %>
+<article class="guide panel" id="guide" data-controller="os-note">
+  <header>
+    <%# Shown only inside guide.txt's window, for reading it full size. %>
+    <p class="guide-new-tab"><%= link_to "open the guide in a new tab ↗", request.path, target: "_blank", rel: "noopener" %></p>
+    <h1>Build a desktop pet in Godot</h1>
+    <% if @step == GuidePage.first %>
+      <%# New text, in place of a placeholder. %>
+      <p>You’ll build a little pet that lives on your desktop: a Godot game with no window frame and no background, just your sprite. It walks along your screen, turns around at the edges, stops for a rest now and then, and you can pick it up and drag it around.</p>
+    <% end %>
+    <%# The step that shows is marked in the list below, or in the outline
+        beside the guide. A screen reader hears it here too. %>
+    <p class="visually-hidden">step <%= @step.number %> of <%= GuidePage.all.size %>: <%= @step.name %></p>
+  </header>
+
+  <%# Every step, to go to any of them. Where the outline beside the guide
+      lists the steps, this list hides. %>
+  <nav class="guide-contents" aria-label="the guide's steps">
+    <ol>
+      <% GuidePage.all.each do |step| %>
+        <li><%= link_to guide_page_path(step), aria: { current: ("page" if step == @step) }, data: { action: "guide-pager#go" } do %><span class="guide-contents-number"><%= step.number %></span> <%= step.name %><% end %></li>
+      <% end %>
+    </ol>
+  </nav>
+
+  <div class="guide-step">
+    <%= render "guides/pages/#{@step.slug}" %>
+  </div>
+</article>

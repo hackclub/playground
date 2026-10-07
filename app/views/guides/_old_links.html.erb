@@ -1,0 +1,13 @@
+<%# A link from when the guide was one long page, such as /guide#movement in
+    an email, a Slack post, or the old desktop's guide window, names a part
+    by its anchor. A browser never sends the anchor, so this script sends the
+    reader on to the step that holds it, at that part, before the step shown
+    here draws. An anchor on this step, or one no step holds, stays. %>
+<script>
+  (() => {
+    const steps = <%= raw json_escape(GuidePage.anchor_paths.to_json) %>
+    const anchor = decodeURIComponent(location.hash.slice(1))
+    const step = Object.hasOwn(steps, anchor) && steps[anchor]
+    if (step && step !== <%= raw json_escape(@step.path.to_json) %>) location.replace(step + location.hash)
+  })()
+</script>

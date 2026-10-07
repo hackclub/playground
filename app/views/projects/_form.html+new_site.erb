@@ -1,0 +1,39 @@
+<%= form_with model: project, class: "stack" do |f| %>
+  <% if project.errors.any? %>
+    <p class="banner alert"><%= project.errors.full_messages.to_sentence %></p>
+  <% end %>
+  <label>name <%= f.text_field :name, required: true, maxlength: 80 %></label>
+  <label>description <span class="muted">what does your pet do?</span>
+    <%= f.text_area :description, rows: 3, maxlength: 2000 %></label>
+  <%# A new pet asks for its name and description only. It lands on its card
+      on my pets, its ship page lists what is still missing, and edit adds
+      the rest. %>
+  <% if project.persisted? %>
+    <label>code URL <span class="muted">a public link to its code, such as a GitHub repository</span>
+      <%= f.url_field :code_url, placeholder: "https://github.com/you/your-pet" %></label>
+    <label>shipped link <span class="muted">your pet's itch.io page</span>
+      <%= f.url_field :playable_url, placeholder: "https://you.itch.io/your-pet" %></label>
+    <fieldset>
+      <legend>screenshots <span class="muted">saved as they upload</span></legend>
+      <%= render "screenshot_upload", project: %>
+    </fieldset>
+
+    <fieldset>
+      <legend>Hackatime projects</legend>
+      <%= render "hackatime_picker", project: %>
+    </fieldset>
+  <% end %>
+
+  <%# Delete sits beside save and cancel, for a pet that never shipped. It
+      is a link to the page that asks first, so no form sits in this one. %>
+  <div class="row form-buttons">
+    <%= f.submit project.new_record? ? "create pet" : "save", class: "btn primary" %>
+    <%= link_to "cancel", project.new_record? ? projects_path : pet_card_path(project), class: "btn" %>
+    <% if project.persisted? && project.ships.empty? %>
+      <%= link_to "delete", delete_project_path(project), class: "btn danger form-delete", aria: { label: "delete #{project.name}" } %>
+    <% end %>
+  </div>
+<% end %>
+<% if current_user.hackatime_unlinked %>
+  <%= form_tag hackatime_oauth_path, id: "hackatime-relink", target: "_top", data: { turbo: false }, hidden: true do %><% end %>
+<% end %>

@@ -1,0 +1,74 @@
+<%# The step to set up: sign in, Godot with the Hackatime plugin, Hackatime
+    connected, the GitHub repository, and the commands to know. %>
+<%# Signed in, there is nothing to do here. Sign out is in the top bar. %>
+<% unless current_user %>
+  <section aria-labelledby="sign-in-title">
+    <h2 id="sign-in-title">Sign in</h2>
+    <%= render "guide_steps/sign_in_step" %>
+  </section>
+<% end %>
+
+<section aria-labelledby="setup-godot">
+  <h2 id="setup-godot">Set up Godot</h2>
+  <p><a href="https://godotengine.org/" target="_blank" rel="noopener">Godot</a> is a free, open source game engine. Game engines are used to make games easily. Go to <a href="https://godotengine.org/" target="_blank" rel="noopener">godotengine.org</a> to install it.</p>
+  <p>Open Godot, click Create New Project, name your game, select the Compatibility renderer, for Project Path select a Game folder, and click Create.</p>
+  <%= guide_step_video "new-project", "Screen recording: the Create New Project window, with the name My very cool pet, the Compatibility renderer picked, and Create clicked." %>
+
+  <h3 id="hackatime">Install Godot Hackatime, and set up Hackatime on your machine</h3>
+  <p>Open the Asset Store tab, search for Wakatime, and install “Godot Super Wakatime” by BartoszB</p>
+  <%= guide_step_video "install-wakatime", "Screen recording: Godot's Asset Store tab, searching for wakatime and installing Godot Super Wakatime." %>
+  <p>Then enable the plugin. Go to <strong>Project &gt; Project Settings &gt; Plugins</strong>, find “Godot Super Wakatime” in the list, and tick its Enabled checkbox.</p>
+  <%= guide_step_shot "plugins-tab-enabled", "Godot's Project Settings window on the Plugins tab, with Godot Super-Wakatime listed and its Enabled checkbox ticked." %>
+  <p>If needed, set up Hackatime according to the guide, here: <a href="https://hackatime.hackclub.com/docs/getting-started/quick-start" target="_blank" rel="noopener">https://hackatime.hackclub.com/docs/getting-started/quick-start</a></p>
+</section>
+
+<section aria-labelledby="connect-hackatime">
+  <h2 id="connect-hackatime">Connect Hackatime</h2>
+  <%# Hackatime's steps ask Hackatime again while they wait, in frames of their own. %>
+  <%= turbo_frame_tag "hackatime-step", src: guide_check_path(frame: "hackatime-step"), class: "guide-steps" %>
+</section>
+
+<section aria-labelledby="github">
+  <h2 id="github">Make a GitHub Repository</h2>
+  <p>GitHub is a website that allows anyone to share their code, and keep it safe.</p>
+  <p>Go to <a href="https://github.com" target="_blank" rel="noopener">github.com</a> and sign up if you don’t already have an account.</p>
+  <p>open <a href="https://github.com/new" target="_blank" rel="noopener">https://github.com/new</a> to create a new repository, name it, make it public. Don’t add a license or gitignore as this will make the next step harder. You can add one later !</p>
+  <%= guide_step_video "github-repo", "Screen recording: GitHub's new repository page, naming the repository My very cool pet, keeping it public, and creating it." %>
+</section>
+
+<section aria-labelledby="sync">
+  <h2 id="sync">Sync your Godot project with the GitHub repo you just made</h2>
+  <%# Each computer's way to a terminal in the project folder. Once the switch
+      picks one, it reads as the guide's own step, with no heading or box. %>
+  <div class="os-step" data-os="macos">
+    <h3>macOS</h3>
+    <p>open your project folder in the terminal, you can do that by navigating to your project folder in Finder, and right clicking on it in the path bar and selecting ‘Open in terminal’</p>
+    <%= guide_step_shot "finder-show-path-bar", "Finder's View menu, with Show Path Bar highlighted." %>
+    <%= guide_step_shot "finder-open-in-terminal", "A Finder window of the my-very-cool-pet folder. The folder is right-clicked in the path bar at the bottom, and Open in Terminal is highlighted in the menu." %>
+  </div>
+  <div class="os-step" data-os="windows">
+    <h3>Windows</h3>
+    <p>open your project folder in the terminal, you can do that by navigating to your project folder in the file explorer, holding down Shift, and then right clicking to open a context menu, and then click open in Terminal.</p>
+    <%= guide_step_shot "explorer-open-in-terminal", "File Explorer in an empty folder, with its right-click menu open and Open in Terminal in the list." %>
+  </div>
+  <div class="os-step" data-os="linux">
+    <h3>Linux</h3>
+    <p>open your project folder in the terminal, you can do that by right clicking the folder in your file manager and choosing ‘Open in Terminal’</p>
+  </div>
+  <%= guide_os_note %>
+  <p>in the terminal, run</p>
+  <%= guide_code "git-init" %>
+  <p>Go to the GitHub repository you created in the browser earlier and copy the link, and replace <code>&lt;your-github-repository-link&gt;</code> with your link, and then run it</p>
+  <%= guide_code "git-remote" %>
+</section>
+
+<section aria-labelledby="commands">
+  <h2 id="commands">Important commands</h2>
+  <h3 id="in-godot">In Godot</h3>
+  <p>Save your project often using <%= guide_keys :save %>.</p>
+  <p>Play your game with <%= guide_keys :play %>.</p>
+  <%= guide_os_note %>
+  <h3 id="in-the-terminal">In the terminal</h3>
+  <p>Be sure to commit regularly</p>
+  <%= guide_code "git-commit" %>
+</section>

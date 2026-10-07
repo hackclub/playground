@@ -9,6 +9,7 @@ class ApplicationController < ActionController::Base
   before_action :refuse_old_chrome_engine_opera, if: :chrome_engine_opera?
 
   helper_method :current_user
+  include NewSite
 
   private
 

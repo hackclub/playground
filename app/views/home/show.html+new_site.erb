@@ -1,0 +1,77 @@
+<%# Armand's layout: the example pets and the prizes over the old desktop's
+    sky, the requirements under the prizes, what to do now, whose button
+    goes to the guide, and then the FAQ. Each box is a window in the old
+    desktop's chrome, with its file name and an X in the title bar. The
+    bar is only a picture: its X closes nothing, so it hides from screen
+    readers and takes no clicks. The sponsor's name shows without
+    scrolling, as Hack Club's YSWS website requirements ask. %>
+<% content_for :no_topbar, true %>
+<% content_for :body_class, "home-page" %>
+<div class="home-sky">
+  <a class="home-flag" href="https://hackclub.com" aria-label="Hack Club"><%= image_tag "landing/hack-club-flag-2026.svg", alt: "" %></a>
+  <p class="home-sponsor">sponsored by <%= link_to "Armand", ApplicationHelper::SPONSOR_URL, target: "_blank", rel: "noopener" %></p>
+  <h1 class="home-logo"><%= image_tag "landing/logo.png", alt: "Hack Club playground" %></h1>
+
+  <h2 class="home-say" id="pets-title">Make a cool desktop pet like these</h2>
+  <section class="home-window home-pets" aria-labelledby="pets-title">
+    <div class="home-titlebar" aria-hidden="true"><span class="home-title">examples</span><span class="home-x">X</span></div>
+    <ul class="home-pane home-examples">
+      <li><a href="https://samperson.itch.io/desktop-goose" target="_blank" rel="noopener"><%= image_tag "landing/desktopgoose.gif", alt: "" %><span>desktop goose by samperson</span></a></li>
+      <li><a href="https://jonasmack.itch.io/desktop-garden" target="_blank" rel="noopener"><%= image_tag "landing/desktopgarden.png", alt: "" %><span>desktop garden by jonasmack</span></a></li>
+      <li><a href="https://sharyap.itch.io/frog-pond" target="_blank" rel="noopener"><%= image_tag "landing/frogpond.png", alt: "" %><span>frog pond by sharyap</span></a></li>
+      <li><a href="https://hempuli.itch.io/baba-friend" target="_blank" rel="noopener"><%= image_tag "landing/babafriend.gif", alt: "" %><span>baba friend by hempuli</span></a></li>
+    </ul>
+  </section>
+
+  <h2 class="home-say" id="merch-title">Get cool merch like this</h2>
+  <section class="home-window home-prizes" aria-labelledby="merch-title">
+    <div class="home-titlebar" aria-hidden="true"><span class="home-title">prizes.txt</span><span class="home-x">X</span></div>
+    <div class="home-pane">
+      <ul class="home-goals">
+        <li><p>Spend 2 hours on your project, get a sticker sheet</p><%= image_tag "landing/stickysheet.png", alt: "a sticker sheet" %></li>
+        <li><p>5 hours<br>custom keychain</p><%= image_tag "landing/keychain.png", alt: "a keychain" %></li>
+        <li><p>10 hours<br>a shirt with yours, and everyone else's pet on it</p><%= image_tag "landing/shirt.png", alt: "a shirt" %></li>
+      </ul>
+      <p class="home-requirements">to earn merch, your pet has to meet the <%= link_to "submission requirements ↗", requirements_path, target: "_blank", rel: "noopener" %></p>
+    </div>
+  </section>
+</div>
+
+<section class="home-window home-now" aria-labelledby="now-title">
+  <div class="home-titlebar" aria-hidden="true"><span class="home-title">start.exe</span><span class="home-x">X</span></div>
+  <div class="home-pane">
+    <h2 id="now-title">What do I do now?</h2>
+    <ol class="home-steps">
+      <li><span class="step-node"><span class="step-number">1</span></span><span>follow the guide to make your pet</span></li>
+      <li><span class="step-node"><span class="step-number">2</span></span><span>make it your own</span></li>
+      <li><span class="step-node"><span class="step-number">3</span></span><span>ship it</span></li>
+      <li><span class="step-node"><span class="step-number">4</span></span><span>get your merch</span></li>
+    </ol>
+    <%= link_to current_user ? "continue the guide →" : "start the guide →", guide_path, class: "btn primary big home-go" %>
+  </div>
+</section>
+
+<%# The old playground's questions, from welcome.txt, in its words. What
+    you get is the prizes above, and the examples are at the top. %>
+<section class="home-window home-faq" aria-labelledby="faq-title">
+  <div class="home-titlebar" aria-hidden="true"><span class="home-title">faq.txt</span><span class="home-x">X</span></div>
+  <div class="home-pane">
+    <h2 id="faq-title">FAQ</h2>
+    <details>
+      <summary>what is a desktop pet?</summary>
+      <p>a small program that lives on your desktop, like a character that walks around, reacts to you, or sits on your windows.</p>
+    </details>
+    <details>
+      <summary>what counts?</summary>
+      <p>a cool desktop pet!! it can be anything you want, as long as it's a desktop pet! it can be a widget, a screensaver, an app, or even a website! just make sure it's something that can be easily shared and used by others! (also no AI generated pets, we want to see your creativity!!)</p>
+    </details>
+    <details>
+      <summary>i dont know what to make</summary>
+      <p>check out the cool desktop pets at the top of this page!!</p>
+    </details>
+    <details>
+      <summary>i have more questions :(</summary>
+      <p>join <a href="https://hackclub.slack.com/archives/C0ASBTMS82H" target="_blank" rel="noopener">#playground</a> on the Hack Club Slack, where teen makers chat!! or ask @froppii there!!</p>
+    </details>
+  </div>
+</section>

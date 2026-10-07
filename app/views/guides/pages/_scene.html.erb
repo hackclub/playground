@@ -1,0 +1,45 @@
+<%# The step to build the scene: its nodes, and a window with no background. %>
+<section aria-labelledby="start">
+  <h2 id="start">Finally, we’re set up! Let's start making the pet</h2>
+  <p>Let's start by making a 2D scene, this will be the world your pet will live in.</p>
+  <p>Click 2D scene in Godot to create a 2D scene</p>
+  <p>then press <%= guide_keys :save %> to save, and give your scene a name.</p>
+  <%= guide_os_note %>
+  <%= guide_step_video "2d-scene", "Screen recording: clicking 2D Scene to make the root node, then saving the scene as Main_scene.tscn." %>
+  <p>Now that you have the scene, let's add some things to it.</p>
+  <p>In the Scene panel (top left), click <strong>+</strong> to add a new node.</p>
+  <ol>
+    <li>type animatedSprite 2D into the search bar.</li>
+    <li>Select AnimatedSprite2D, and click Create.</li>
+  </ol>
+  <%= guide_step_video "add-node", "Screen recording: the Create New Node window, searching for animated and creating an AnimatedSprite2D." %>
+  <p>Repeat this process to add an <strong>Area2D</strong> node and a <strong>CollisionShape2D</strong> node.</p>
+  <p>Drag the CollisionShape2D node onto the Area2D node so the CollisionShape2D node becomes a child of the Area2D node</p>
+  <%= guide_step_video "collision-child", "Screen recording: dragging CollisionShape2D onto Area2D in the Scene panel, so it sits under Area2D." %>
+  <p>Once you’ve done that your scene tree should look like this.</p>
+  <%= guide_step_shot "scene-tree", "The scene tree: Node2D, with AnimatedSprite2D and Area2D under it, and CollisionShape2D under Area2D." %>
+</section>
+
+<section aria-labelledby="transparent">
+  <h2 id="transparent">Let's make the scene transparent!</h2>
+  <p>By default a Godot window has a background, but we want our sprite to sit on the desktop with no background!</p>
+  <p>to do this we need to adjust the project’s settings.</p>
+  <p>Click Project &gt; Project Settings…</p>
+  <%= guide_step_shot "project-settings-menu", "Godot's Project menu, with Project Settings… at the top." %>
+  <p>under the Window tab on the left of the Project Settings menu we want to change a couple settings.</p>
+  <p>set Viewport Width to 200, and Viewport Height to 200. Just enough for your pet!</p>
+  <p>make sure</p>
+  <ul>
+    <li>Borderless</li>
+    <li>Always on Top</li>
+    <li>Transparent</li>
+  </ul>
+  <p>are on</p>
+  <%= guide_step_shot "window-settings", "Project Settings at Display, Window: Viewport Width and Viewport Height are 200, and Borderless, Always on Top, and Transparent are on." %>
+  <p>once you’ve done that search for <strong>Rendering</strong> in the top bar, select Viewport and enable Transparent Background</p>
+  <%= guide_step_shot "transparent-background", "Project Settings searched for Rendering, with Viewport selected and Transparent Background on." %>
+  <p>And finally search for <strong>Per Pixel</strong>, select Window and enable Per Pixel Transparency</p>
+  <%= guide_step_shot "per-pixel-transparency", "Project Settings searched for per Pixel, with Window selected and Per Pixel Transparency, Allowed, on." %>
+  <p>You’ll see a pop up at the bottom prompting to save &amp; restart. Click the button and wait for Godot to restart</p>
+  <%= guide_step_shot "save-and-restart", "The bar at the bottom of Project Settings: Changed settings will be applied to the editor after restarting, and a Save & Restart button." %>
+</section>

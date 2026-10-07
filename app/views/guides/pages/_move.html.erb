@@ -1,0 +1,49 @@
+<%# The step to make it move: walk, then pick the pet's Hackatime project,
+    keep it on screen, and bounce. The pick step has a heading of its own. %>
+<section aria-labelledby="movement">
+  <h2 id="movement">Movement</h2>
+  <%= guide_code "movement" %>
+  <p><code>_physics_process</code> runs about 60 times a second. Each time it runs, we:</p>
+  <ol>
+    <li>get the window's current position,</li>
+    <li>nudge it in our <code>direction</code> by <code>speed</code> pixels per second, and</li>
+    <li>put the window at the new position.</li>
+  </ol>
+  <p><code>delta</code> is the time since the last frame. Multiplying by it keeps the speed the same no matter how fast your computer is.</p>
+  <p><code>direction = Vector2(1, 0)</code> means "go right". <code>Vector2(0, 1)</code> would be "go down".</p>
+  <p>Press <%= guide_keys :play %> to test it out!</p>
+  <%= guide_os_note %>
+  <%= guide_step_shot "embedded-game", "The Godot editor with the script open and the game running in a small window inside the editor, the crow on a checkerboard, and the Output panel printing (5.0, 0.0) over and over." %>
+  <p>and you will see it do…. nothing</p>
+  <p>This is because Godot embeds your project by default, and the DisplayServer doesn’t work when it’s embedded.</p>
+  <%= guide_step_shot "embed-game-off", "The embedded game's three dot menu, with Embed Game on Next Play turned off." %>
+  <p>under the 3 dot menu on the right of the embedded player, disable ‘Embed Game on Next Play’</p>
+  <p>Press <%= guide_keys :play %> again to try it, and you should see it move! It will walk straight off your screen though, which is what we’ll fix now.</p>
+</section>
+
+<section aria-labelledby="pick-project">
+  <h2 id="pick-project">Pick your pet's project</h2>
+  <%# By now the participant has coded in Godot, so Hackatime lists the project. %>
+  <%= turbo_frame_tag "pick-step", src: guide_check_path(frame: "pick-step"), class: "guide-steps" %>
+</section>
+
+<section aria-labelledby="on-screen">
+  <h2 id="on-screen">Keep it on screen</h2>
+  <p>To stop your pet from leaving you, we need to know how big the screen is and how big the window is. Add these variables under the others:</p>
+  <%= guide_code "screen-vars" %>
+  <p><code>window_size</code> is 200×200 because that's what we set in Project Settings earlier.</p>
+  <p>Godot’s <code>_ready()</code> method runs when the game starts, we don’t know the user’s screen size until the game starts so we’ll set <code>screen_size</code> on <code>_ready()</code></p>
+  <p>Add this code to capture the user’s screen size</p>
+  <%= guide_code "screen-ready" %>
+  <p>Now we can use <code>clamp</code> to stop the position going past the edges. Add these two lines in <code>_physics_process</code></p>
+  <%= guide_code "screen-clamp" %>
+  <p>Play it, and your pet should now stop at the edge of the screen!</p>
+</section>
+
+<section aria-labelledby="bounce">
+  <h2 id="bounce">Bounce off the edges</h2>
+  <p>Just having it stop is boring, so let's make it turn around instead! Add this code to <code>_physics_process</code></p>
+  <%= guide_code "bounce" %>
+  <p>If the pet hits the left or right edge, we flip its horizontal direction. If it hits the top or bottom, we flip its vertical direction. Multiplying by -1 turns 1 into -1 and -1 into 1.</p>
+  <p>Click play and you should see it move back and forth!</p>
+</section>

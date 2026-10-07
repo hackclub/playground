@@ -1,0 +1,15 @@
+<% content_for :title, "delete #{@project.name}" %>
+<%# Delete asks first, on a page of its own, in a window like the pet's card
+    on my pets. Keeping the pet goes back to its edit page. A shipped pet
+    never gets here: it cannot be deleted. %>
+<p><%= link_to "← my pets", pet_card_path(@project) %></p>
+<section class="pet-window page-window" aria-labelledby="delete-title">
+  <div class="pet-titlebar"><h2 class="pet-title" id="delete-title">delete <%= @project.name %>?</h2></div>
+  <div class="pet-pane page-pane">
+    <p>are you sure? <%= @project.name %> will be gone forever.</p>
+    <div class="row">
+      <%= button_to "delete it", project_path(@project), method: :delete, class: "btn danger primary", form: { class: "inline" } %>
+      <%= link_to "keep it", edit_project_path(@project), class: "btn" %>
+    </div>
+  </div>
+</section>

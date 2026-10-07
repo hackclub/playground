@@ -1,0 +1,103 @@
+<% content_for :title, "my pets" %>
+<%# Every pet the participant has, made with the guide or not, each a
+    window in the old desktop's chrome holding all there is about the pet:
+    its name in the title bar, with the active pet marked once there are
+    two or more, its screenshots or a place for them, its
+    state, its hours, its links and Hackatime projects, its ships with their
+    reviews, and one main thing to do next. A pet has no page of its own:
+    /projects/:id comes to its card here. The last tile makes a new pet.
+    With no pet, one window says what a pet is and offers two ways to start.
+    The open tab already names the page, so its heading is for screen
+    readers only. %>
+<div class="pets-page">
+  <h1 class="visually-hidden">my pets</h1>
+
+  <% if @projects.any? %>
+    <% active = active_pet if @projects.many? %>
+    <ul class="pet-list">
+      <% @projects.each do |project| %>
+        <% pet_hours = Hours.new(current_user, ships: project.ships, projects: [ project ]) %>
+        <% stages = { approved: pet_hours.approved_seconds, pending: pet_hours.pending_seconds, unshipped: pet_hours.unshipped_seconds }.select { |_, seconds| seconds.positive? } %>
+        <li class="pet-window" id="pet-<%= project.id %>">
+          <div class="pet-titlebar">
+            <h2 class="pet-title"><%= project.name %></h2>
+            <%# With two pets or more, the active pet, the one the guide acts
+                on, says so, and each other pet can be made active. %>
+            <span class="pet-marks">
+              <% if active %>
+                <% if project == active %>
+                  <span class="pet-mark">active<span class="visually-hidden"> pet, the one the guide acts on</span></span>
+                <% else %>
+                  <%= button_to "make active", active_pet_path, method: :patch, params: { pet_id: project.id, from: "pets" },
+                                class: "pet-make-active", form: { class: "inline" }, aria: { label: "make #{project.name} your active pet" } %>
+                <% end %>
+              <% end %>
+            </span>
+          </div>
+          <div class="pet-pane">
+            <% if project.screenshots.any? %>
+              <div class="pet-shots"><%= render "screenshots", urls: project.screenshot_urls, name: project.name %></div>
+            <% else %>
+              <%= link_to edit_project_path(project), class: "pet-shots pet-shots-empty", aria: { label: "add a screenshot of #{project.name}" } do %>
+                <span class="pet-initial" aria-hidden="true"><%= project.name.strip.first %></span>
+                <span class="pet-shots-note">no screenshot yet · add one</span>
+              <% end %>
+            <% end %>
+            <div class="pet-body">
+              <p class="pet-state"><%= state_badge(project.state) %></p>
+              <% if project.description.present? %><p class="pet-description"><%= project.description %></p><% end %>
+              <p class="pet-hours">
+                <% if project.tracked_seconds.zero? && stages.empty? %>no hours yet
+                <% else %>tracked <strong><%= hours(project.tracked_seconds) %></strong><% stages.each do |stage, seconds| %> · <span><span class="key <%= stage %>"></span><%= hours(seconds) %> <%= stage %></span><% end %><% end %>
+              </p>
+              <% if project.code_url.present? || project.playable_url.present? %>
+                <p class="pet-links">
+                  <%= safe_join([ (link_to("code ↗", project.code_url, target: "_blank", rel: "noopener") if project.code_url.present?),
+                                  (link_to("shipped link ↗", project.playable_url, target: "_blank", rel: "noopener") if project.playable_url.present?) ].compact, " · ") %>
+                </p>
+              <% end %>
+              <p class="pet-hackatime">
+                <% if project.hackatime_projects.any? %>Hackatime: <%= project.hackatime_projects.join(", ") %>
+                <% else %>no Hackatime project linked, so no hours count yet. <%= link_to "link one", edit_project_path(project) %><% end %>
+              </p>
+              <% if project.ships.any? %>
+                <ul class="pet-ships" aria-label="ships of <%= project.name %>">
+                  <% project.ships.reverse_each do |ship| %>
+                    <li>
+                      <strong>#<%= ship.number %></strong> <%= state_badge(ship.state) %>
+                      <span class="muted"><%= local_date(ship.created_at) %> · claimed <%= hours(ship.claimed_seconds) %><% if ship.approved? %> · approved <strong><%= hours(ship.approved_seconds) %></strong><% end %></span>
+                      <% if ship.review_feedback.present? && !ship.pending? %><blockquote><%= ship.review_feedback %></blockquote><% end %>
+                    </li>
+                  <% end %>
+                </ul>
+              <% end %>
+              <%# One main thing to do: ship, or ship again. While a ship waits
+                  for review there is nothing to do but wait. %>
+              <p class="pet-actions">
+                <% if project.pending_ship? %>
+                  <span class="pet-waiting">in review</span>
+                <% else %>
+                  <%= link_to({ "draft" => "ship it", "changes_needed" => "fix and ship" }.fetch(project.state, "ship again"), ship_project_path(project),
+                              class: "btn primary small", aria: { label: "ship #{project.name}" }) %>
+                <% end %>
+                <%= link_to "edit", edit_project_path(project), aria: { label: "edit #{project.name}" } %>
+              </p>
+            </div>
+          </div>
+        </li>
+      <% end %>
+      <li class="pet-new"><%= link_to new_project_path do %><span class="pet-new-plus" aria-hidden="true">+</span> new pet<% end %></li>
+    </ul>
+  <% else %>
+    <section class="pet-window pets-empty" aria-labelledby="no-pets-title">
+      <div class="pet-titlebar"><h2 class="pet-title" id="no-pets-title">no pets yet</h2></div>
+      <div class="pet-pane pet-body">
+        <p>a pet is the desktop pet you build, in any language or engine. add it here and link its Hackatime project, so its hours count toward prizes.</p>
+        <p class="pet-actions">
+          <%= link_to "+ new pet", new_project_path, class: "btn primary" %>
+          <span>or <%= link_to "follow the guide", guide_path %> to make one in Godot</span>
+        </p>
+      </div>
+    </section>
+  <% end %>
+</div>

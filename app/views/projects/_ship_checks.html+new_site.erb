@@ -1,0 +1,44 @@
+<%# ship.exe's list: only what blocks shipping or warns, each with its fix, and
+    a tip on a step that could be unclear.
+    After each save it comes back and morphs in place, and the fields keep what
+    was typed. The ship button shows once nothing blocks. The guide's Ship it
+    step holds the same list (ship_in_guide?). There its own step has the
+    requirements line, and each save, check, and ship goes back to the guide. %>
+<div id="ship-checks" data-controller="ship-checks" data-ship-checks-url-value="<%= checks_project_path(@project, **ship_from) %>"
+     data-action="change->ship-checks#save submit->ship-checks#submit turbo:before-morph-attribute->ship-checks#keep turbo:before-morph-element->ship-checks#hold screenshot-upload:changed->ship-checks#refresh">
+  <% if @alert %><p class="banner alert"><%= @alert %></p><% end %>
+  <%# On the desktop the link opens requirements.txt, and in a tab its page. %>
+  <% unless ship_in_guide? %><p class="requirements-note">read the <%= link_to "submission requirements", requirements_path %> before you ship.</p><% end %>
+  <% if @checklist.items.any? %>
+    <ul class="checks">
+      <% @checklist.items.each do |item| %>
+        <li id="ship-check-<%= item.key %>" class="<%= item.ok ? "ok" : item.blocker ? "todo" : "warn" %>" data-check="<%= item.key %>">
+          <%# The tip's mark stays on the line of the label's last word. %>
+          <% *words, last = item.label.split(" ") %>
+          <span class="icon"><%= item.ok ? "✓" : "!" %></span> <%= words.join(" ") %>
+          <span class="label-end"><%= last %><% if item.tip %>
+            <span class="tip" data-controller="tip" data-action="pointerenter->tip#enter pointerleave->tip#leave"><button
+                    type="button" class="tip-mark" aria-label="more about this" aria-describedby="ship-tip-<%= item.key %>"
+                    data-tip-target="mark" data-action="click->tip#show focus->tip#show blur->tip#hide">i</button><span
+                    class="tip-text" role="tooltip" id="ship-tip-<%= item.key %>" data-tip-target="text" hidden><%= ship_tip(item) %></span></span><% end %></span>
+          <% if item.key == "hackatime_link" && !item.ok %><%= hackatime_button "link it again", class: "linkish", params: ({ origin: GuidePage.href("ship") } if ship_in_guide?) %><% end %>
+          <% if item.key == "eligible" && !item.ok && ship_in_guide? %><%= link_to "verify it ↗", HackClubAuth.portal_url("verify", guide_page_url(GuidePage.holding("ship"), anchor: "ship")), target: "_blank", rel: "noopener" %><% end %>
+          <% if item.field %><%= render "projects/ship_fix", item: %><% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+  <div class="row">
+    <% if @checklist.passed? %>
+      <%= button_to "ship #{hours(@project.unshipped_seconds)}", ship_project_path(@project), params: ship_from, class: "btn primary",
+            data: { turbo_confirm: "ship #{@project.name}? have you read the submission requirements? a reviewer checks your hours next." } %>
+      <span class="muted" role="status"><%= "all set! everything checks out." if @checklist.gate.warnings.empty? %></span>
+    <% else %>
+      <button class="btn" disabled>ship</button>
+      <span class="muted" role="status">fix these first</span>
+    <% end %>
+  </div>
+  <% if current_user.hackatime_unlinked %>
+    <%= form_tag hackatime_oauth_path, id: "hackatime-relink", target: "_top", data: { turbo: false }, hidden: true do %><% if ship_in_guide? %><%= hidden_field_tag :origin, GuidePage.href("ship"), id: nil %><% end %><% end %>
+  <% end %>
+</div>

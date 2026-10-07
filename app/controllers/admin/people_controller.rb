@@ -23,5 +23,15 @@ module Admin
       @hours = @user.hours
       @events = AuditEvent.where(subject: [ @user, *@ships, *@redemptions ]).includes(:actor).order(created_at: :desc).limit(30)
     end
+
+    # Turns the new site, without the desktop, on or off for one user
+    # (NewSite). Only an admin can, here, and the person's history records who.
+    def new_site
+      user = User.find(params[:id])
+      on = params[:on] == "1"
+      user.update!(new_site: on)
+      AuditEvent.record(current_user, user, on ? "new_site.on" : "new_site.off")
+      redirect_to admin_person_path(user), notice: "the new site is #{on ? "on" : "off"} for #{user.display_name}."
+    end
   end
 end

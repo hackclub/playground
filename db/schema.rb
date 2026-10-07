@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_07_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -313,6 +313,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
     t.string "hca_id", null: false
     t.text "hca_refresh_token"
     t.string "last_name"
+    t.boolean "new_site", default: false, null: false
     t.datetime "no_time_nudge_at"
     t.integer "session_version", default: 0, null: false
     t.string "slack_id"

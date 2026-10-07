@@ -1,0 +1,44 @@
+<%# The step to animate and drag: its animations, a rest now and then, and
+    picking it up. %>
+<section aria-labelledby="animations">
+  <h2 id="animations">Animations</h2>
+  <p>Currently it looks a little strange, it just slides left and right. We need to use those animations we made earlier!</p>
+  <p>To do this we need our code to speak to the AnimatedSprite2D node, create a variable that references it like this</p>
+  <%= guide_code "sprite-var" %>
+  <p>Add this to <code>_ready()</code> to start the animation when the game starts</p>
+  <%= guide_code "sprite-play" %>
+  <p>And add this line to flip the sprite when it touches a wall so it’s walking in the correct direction.</p>
+  <%= guide_code "sprite-flip" %>
+</section>
+
+<section aria-labelledby="break">
+  <h2 id="break">Let it take a break</h2>
+  <p>Sometimes when the pet bumps into a wall, it should stop and chill for a moment. We need two new variables, one to say whether it's resting and one to count down how long for:</p>
+  <%= guide_code "idle-vars" %>
+  <p>Add a function that gives the pet a 30% chance of resting and picks a random resting animation</p>
+  <%= guide_code "idle-maybe" %>
+  <p><code>randf_range(1.0, 3.0)</code> means it rests for 1 to 3 seconds. <code>randi() % 3</code> gives a random 0, 1 or 2, which we use to choose an animation.</p>
+  <p>Call <code>maybe_idle()</code> whenever the pet bounces. Update your bounce code from “Bounce off the edges” so it looks like this:</p>
+  <%= guide_code "idle-bounce" %>
+  <p>While it's resting, the pet shouldn't move. Add this at the very top of <code>_physics_process</code></p>
+  <%= guide_code "idle-rest" %>
+</section>
+
+<section aria-labelledby="drag">
+  <h2 id="drag">Pick it up and drag it around</h2>
+  <p>This is what the Area2D and CollisionShape2D are for: they detect when you click on the pet. Get a reference to the Area2D with a new <code>@onready</code> line</p>
+  <%= guide_code "drag-area" %>
+  <p>Add two variables for dragging</p>
+  <%= guide_code "drag-vars" %>
+  <p><code>drag_offset</code> remembers where on the pet you grabbed it, so the pet doesn't jump so its corner snaps to your mouse.</p>
+  <p>Add a function that runs when you click on the Area2D:</p>
+  <%= guide_code "drag-input" %>
+  <p>When you press the left mouse button, dragging starts and we remember the offset. When you let go, dragging stops and the pet wanders off in a new direction.</p>
+  <p>Connect this function to the Area2D's <code>input_event</code> signal, so Godot calls it on a click. Add this to <code>_ready()</code>:</p>
+  <%= guide_code "drag-connect" %>
+  <p>Finally, make the window follow the mouse while you're dragging. Add this at the very top of <code>_physics_process()</code></p>
+  <%= guide_code "drag-follow" %>
+  <p>This goes first because dragging should win over everything else. If you're holding the pet, it shouldn't be resting or walking.</p>
+  <p>Don't forget to commit!</p>
+  <%= guide_code "git-done" %>
+</section>

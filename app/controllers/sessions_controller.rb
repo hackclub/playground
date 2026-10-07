@@ -55,9 +55,11 @@ class SessionsController < ApplicationController
   # Development only: log in as a fake participant or admin, so the whole
   # flow can be driven without OAuth apps. Not routed in production. Like a
   # real login it goes on to (fake) Hackatime. deny=1 declines that step.
+  # A newbie's fake Hackatime has no projects until the new site's guide
+  # sends heartbeats for one.
   def dev
     raise ActionController::RoutingError, "not found" unless FakeServices.on?
-    kind = params[:as].presence_in(%w[participant unverified admin froppii red]) || "participant"
+    kind = params[:as].presence_in(%w[participant newbie unverified admin froppii red]) || "participant"
     user = User.find_or_create_by!(hca_id: "ident!dev-#{kind}") do |u|
       u.email = "#{kind}@example.com"
       u.first_name = kind.capitalize
@@ -67,7 +69,8 @@ class SessionsController < ApplicationController
       u.admin = kind.in?(%w[admin froppii])
     end
     sign_in(user)
-    redirect_to params[:admin] ? admin_root_path : after_login_path(user, deny: params[:deny].presence)
+    back = guide_return(params[:origin]) if NewSite.for?(user)
+    redirect_to back || (params[:admin] ? admin_root_path : after_login_path(user, deny: params[:deny].presence))
   end
 
   private
@@ -87,15 +90,19 @@ class SessionsController < ApplicationController
     user.hca_refresh_token = auth.credentials.refresh_token if auth.credentials.refresh_token
     user.save!
     SlackInviteJob.perform_later(user.id) if user.slack_id.present? && user.slack_invited_at.nil?
+    # On the new site, a login begun at a guide step goes back to it. The
+    # guide links Hackatime at its own step, so the login skips that one.
+    back = guide_return(request.env["omniauth.origin"]) if NewSite.for?(user)
     reset_session
     sign_in(user)
-    redirect_to after_login_path(user)
+    redirect_to back || after_login_path(user)
   end
 
   def hackatime(auth)
     return redirect_to login_path, alert: "log in first" unless current_user
     current_user.update!(hackatime_access_token: auth.credentials.token)
-    redirect_to root_path(open: "goal")
+    back = guide_return(request.env["omniauth.origin"]) if new_site?
+    redirect_to back || root_path(open: "goal")
   end
 
   # The desktop with ship.exe open, or first the Hackatime step when there

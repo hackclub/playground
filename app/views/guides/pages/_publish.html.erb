@@ -1,0 +1,50 @@
+<%# The step to publish and ship: make it your own, put it on itch.io, and
+    ship it. Shipping comes last. %>
+<section aria-labelledby="your-own">
+  <h2 id="your-own">Make it your own!</h2>
+  <p>your project will be rejected if you just follow this guide and change nothing. Make the project your own! Experiment, and do something entirely different.</p>
+  <p>There are so many things you can do, and this guide is here to show you the ropes so you can do something for yourself.</p>
+  <p>If you need ideas or help, ask in <a href="https://hackclub.slack.com/archives/C0ASBTMS82H" target="_blank" rel="noopener">#Playground</a> we’ll be glad to help!</p>
+</section>
+
+<section aria-labelledby="publish">
+  <h2 id="publish">Export your pet and put it on itch.io</h2>
+  <p>To publish your pet, we need to export your project as a downloadable app and put it on a distribution platform such as itch.io!</p>
+  <p>The first step is to install Godot's export templates. Open <strong>Editor &gt; Manage Export Templates…</strong></p>
+  <%= guide_step_shot "export-templates", "Godot's Editor menu, open, with Manage Export Templates… highlighted." %>
+  <p>We're exporting for desktop, so select Desktop. When you have the platform you want to publish to selected, click <strong>Install Selected Templates</strong>.</p>
+  <%= guide_step_video "install-templates", "Screen recording: in the Export Templates window, choosing Desktop and clicking Install Selected Templates." %>
+  <p>They should then install and show up under the Installed Templates menu.</p>
+  <%= guide_step_shot "installed-templates", "Godot's Installed Templates list, with the Windows and Linux templates in it." %>
+  <p>You can now export your project! Open the export menu under <strong>Project &gt; Export…</strong></p>
+  <%= guide_step_shot "export-button", "Godot's Project menu, open, with Export… highlighted." %>
+  <p>To export for Windows, in the Export window click <strong>Add… &gt; Windows Desktop</strong>.</p>
+  <%= guide_step_shot "add-windows", "The Add… list in Godot's Export window: Android, iOS, Linux, macOS, visionOS, Web, and Windows Desktop, which is highlighted." %>
+  <p>Turn on <strong>Embed PCK</strong> so the project is only one file.</p>
+  <%= guide_step_shot "embed-pck", "The Windows Desktop preset in Godot's Export window, with Embed PCK turned on under Binary Format." %>
+  <p>And then click <strong>Export Project…</strong></p>
+  <%= guide_step_shot "export-project-1", "The Export Project… button at the bottom of Godot's Export window." %>
+  <%= guide_step_shot "export-project-2", "Godot's save window for the export, with Export With Debug off, and Cancel and Save buttons." %>
+  <p>Export to your Downloads, or somewhere else temporary, because you don't want this in your project folder.</p>
+
+  <h3 id="it-s-time-to-upload-your-project-to-itch">It's time to upload your project to itch.io!</h3>
+  <ol>
+    <li>Sign in or create an account on itch.io.</li>
+    <li>Open the creator dashboard at <a href="https://itch.io/dashboard" target="_blank" rel="noopener">itch.io/dashboard</a></li>
+    <li>And create a new project.</li>
+  </ol>
+  <%= guide_step_shot "itch-new-project", "The Create new project button on itch.io's creator dashboard." %>
+  <p>Fill it out!!!! Add a cover image, a tagline, a name and screenshots for the world to see.</p>
+  <%= guide_step_shot "itch-fill-out", "itch.io's new project page, filled out with the title Crow pet, a tagline, a cover image of a crow over a green hill, and an Add screenshots button." %>
+  <p>Scroll down and upload the playable files.</p>
+  <%= guide_step_video "itch-upload", "Screen recording: on itch.io's project page, scrolling down to Uploads and uploading crowpet.exe, with a progress bar." %>
+  <p>And then set the visibility to public.</p>
+  <%= guide_step_shot "itch-visibility", "itch.io's Visibility and access setting, with Public selected." %>
+</section>
+
+<section aria-labelledby="ship">
+  <h2 id="ship">Ship it</h2>
+  <p>Shipping sends your pet and its hours to a reviewer. Once they approve the hours, you redeem your prizes.</p>
+  <%= render "guide_steps/ship_step", lazy: true %>
+  <p class="muted">by shipping, you confirm your pet meets the <%= link_to "submission requirements ↗", requirements_path, target: "_blank", rel: "noopener" %></p>
+</section>

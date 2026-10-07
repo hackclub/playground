@@ -1,0 +1,49 @@
+<%# The meter standing up, as Armand drew it: the bar on the right fills
+    from the bottom, with a tick at each goal and the goal's prize left of
+    its tick. Each stage is its own stretch of the bar, approved at the
+    bottom, then pending, then unshipped, and says its name and hours on
+    hover or focus. The bar ends at the last goal and is full past it. %>
+<% hours = @hub.hours %>
+<% scale = hours.scale_seconds.to_f %>
+<%# A point's share of the bar, 0 to 1. The stylesheet puts each stage's
+    ends, tick, and prize on whole pixels. %>
+<% share = ->(seconds) { (seconds / scale).clamp(0, 1).round(4) } %>
+<% from = 0 %>
+<%# Darkens the prizes' pale blue lines for contrast. A gamma curve keeps
+    white white, and blue darkens least, so the lines stay blue. %>
+<svg class="visually-hidden" aria-hidden="true" focusable="false"><filter id="vmeter-ink" color-interpolation-filters="sRGB"><feComponentTransfer>
+  <feFuncR type="gamma" exponent="3.2"/><feFuncG type="gamma" exponent="3"/><feFuncB type="gamma" exponent="1.8"/>
+</feComponentTransfer></filter></svg>
+<div class="vmeter">
+  <div class="vmeter-bar" role="group" aria-label="your hours" <%= tag.attributes(data: { tip: "no hours yet" }) if hours.total_seconds.zero? %>>
+    <% { approved: hours.approved_seconds, pending: hours.pending_seconds, unshipped: hours.unshipped_seconds }.each do |stage, seconds| %>
+      <% next if seconds <= 0 || from >= scale %>
+      <% to = [ from + seconds, scale ].min %>
+      <%= tag.span class: "vseg #{stage}", tabindex: 0, style: "--from: #{share.(from)}; --to: #{share.(to)}",
+                   data: { tip: "#{stage} · #{hours(seconds)}" }, aria: { label: "#{stage}, #{hours(seconds)}" } %>
+      <% from = to %>
+    <% end %>
+    <% Goal.all.each do |goal| %>
+      <%= tag.span class: token_list("vmeter-tick", reached: hours.approved_seconds >= goal.seconds), style: "--at: #{share.(goal.seconds)}" %>
+    <% end %>
+  </div>
+  <ol class="vmeter-goals">
+    <% Goal.all.each do |goal| %>
+      <% redeemed = @hub.redemptions[goal.key] %>
+      <% state = hours.goal_state(goal) %>
+      <%= tag.li class: token_list(reached: state == :redeemable), style: "--at: #{share.(goal.seconds)}" do %>
+        <span><strong><%= goal.name %></strong>
+          <span class="muted"><%= goal.hours %>h ·
+            <% if redeemed %><%= redeemed.status == "fulfilled" ? "shipped to you!" : "redeemed · #{redeemed.status.tr("_", " ")}" %>
+            <% elsif state == :redeemable && current_user.eligible? && !current_user.banned? %><%= link_to "redeem", new_redemption_path(goal_key: goal.key) %>
+            <% elsif state == :redeemable %>verify to redeem
+            <% elsif state == :in_review %>in review
+            <% elsif state == :ship_to_redeem %><%= goal_progress(hours, goal) %> · ship to redeem
+            <% else %><%= goal_progress(hours, goal) %>
+            <% end %>
+          </span></span>
+        <%= image_tag goal.image, alt: "" %>
+      <% end %>
+    <% end %>
+  </ol>
+</div>

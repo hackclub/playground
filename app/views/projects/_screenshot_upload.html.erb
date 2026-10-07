@@ -14,7 +14,7 @@
   <div class="shots-grid" data-screenshot-upload-target="grid">
     <ol class="shots" aria-label="screenshots, in order" data-screenshot-upload-target="list">
       <% project.screenshots.each.with_index(1) do |shot, number| %>
-        <%= render "screenshot_thumb", shot:, hint:, label: "screenshot #{number} of #{project.screenshots.size}#{", the cover" if number == 1}",
+        <%= render "projects/screenshot_thumb", shot:, hint:, label: "screenshot #{number} of #{project.screenshots.size}#{", the cover" if number == 1}",
                                        cover: number == 1 %>
       <% end %>
     </ol>
@@ -31,7 +31,7 @@
     <% end %>
   </div>
   <p id="<%= hint %>" class="visually-hidden">arrow keys move it, enter replaces it, delete removes it.</p>
-  <template data-screenshot-upload-target="template"><%= render "screenshot_thumb", shot: {}, hint:, label: "", cover: false %></template>
+  <template data-screenshot-upload-target="template"><%= render "projects/screenshot_thumb", shot: {}, hint:, label: "", cover: false %></template>
   <input type="file" multiple accept="<%= ScreenshotLimits::INPUT_TYPES.join(",") %>" hidden
          data-screenshot-upload-target="input" data-action="change->screenshot-upload#chosen">
   <p class="upload-status" data-screenshot-upload-target="status" aria-live="polite"></p>

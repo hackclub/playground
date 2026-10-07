@@ -72,3 +72,27 @@ class ActionDispatch::IntegrationTest
     User.find_by!(hca_id: "ident!dev-#{kind}")
   end
 end
+
+# Tests of the new site (NewSite). In them every development login signs in
+# a user with the new site on, and signed-out visitors get the new site too,
+# as they will once it opens to everyone. The gate itself has its own tests.
+module NewSiteTests
+  extend ActiveSupport::Concern
+  KINDS = %w[participant newbie unverified admin froppii red].freeze
+
+  included do
+    setup do
+      NewSite.for_visitors = true
+      KINDS.each { NewSiteTests.dev_user(it) }
+    end
+    teardown { NewSite.for_visitors = false }
+  end
+
+  # The user the development login signs in as, made first with the new site
+  # on. The login finds it, so it keeps the flag.
+  def self.dev_user(kind)
+    User.create!(hca_id: "ident!dev-#{kind}", email: "#{kind}@example.com", first_name: kind.capitalize, last_name: "Dev",
+                 verification_status: kind == "unverified" ? "needs_submission" : "verified", ysws_eligible: kind != "unverified",
+                 admin: kind.in?(%w[admin froppii]), new_site: true)
+  end
+end

@@ -13,6 +13,29 @@ Rails.application.routes.draw do
     end
   end
   resource :trash, only: :update, controller: "trash"
+
+  # The new site's own addresses, for a user with the new site on
+  # (NewSite). For anyone else they do not exist.
+  constraints(->(request) { NewSite.request?(request) }) do
+    # The guide's steps that act on the site, each a frame inside the guide.
+    scope "guide", controller: "guide_steps", as: "guide" do
+      get "check", action: :check
+      get "side", action: :side
+      get "ship", action: :ship
+      post "link", action: :link
+    end
+    # Each step of the guide at its own address, such as /guide/move. /guide
+    # shows the first. A name that is no step's is not found.
+    get "guide/:step" => "guides#show", as: :guide_page, constraints: { step: /[a-z]+/ }
+    # The pet the guide acts on, which the participant sets from the guide
+    # and from my pets.
+    resource :active_pet, only: :update
+    # A pet's ship page, and its delete page, which asks first.
+    resources :projects, only: [] do
+      get :ship, on: :member, action: :checks
+      get :delete, on: :member
+    end
+  end
   resources :redemptions, only: %i[new create]
 
   get "auth/:provider/callback" => "sessions#create"
@@ -24,6 +47,7 @@ Rails.application.routes.draw do
   if Rails.env.local?
     get "dev/login" => "sessions#dev"
     post "dev/hackatime" => "dev#hackatime"
+    post "dev/heartbeat" => "dev#heartbeat"
   end
 
   namespace :admin do
@@ -44,7 +68,9 @@ Rails.application.routes.draw do
         post :verdict
       end
     end
-    resources :people, only: [ :index, :show ]
+    resources :people, only: [ :index, :show ] do
+      patch :new_site, on: :member
+    end
     get "stats" => "stats#show"
     post "claims/heartbeat" => "claims#heartbeat"
   end

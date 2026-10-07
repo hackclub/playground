@@ -1,0 +1,37 @@
+<% turbo_exempts_page_from_preview %>
+<%# Inside the redeem window on the desktop there is no way back: it is a window of its own. %>
+<p class="dashboard-link"><%= link_to "← guide", guide_path %></p>
+<section class="panel">
+  <h2>redeem the <%= @goal.name %></h2>
+  <p class="muted">where should we send it? this is filled in from your Hack Club account. change anything you like: the name and address here are only used for this parcel.</p>
+
+  <% if @addresses.size > 1 %>
+    <p>start from:
+      <% @addresses.each do |a| %>
+        <%= link_to [a["line_1"], a["city"]].compact_blank.join(", "), new_redemption_path(goal_key: @goal.key, address: a["id"]),
+              class: ("badge badge-approved" if a["id"] == @chosen_id) %>
+      <% end %>
+    </p>
+  <% end %>
+
+  <%= form_with scope: :shipping, url: redemptions_path(goal_key: @goal.key), class: "stack shipping" do |f| %>
+    <% if @details.errors.any? %><p class="banner alert"><%= @details.errors.full_messages.to_sentence %></p><% end %>
+    <div class="row2">
+      <label>first name on the parcel <%= f.text_field :first_name, value: @details.first_name, required: true, maxlength: 120, autocomplete: "shipping given-name" %></label>
+      <label>last name <%= f.text_field :last_name, value: @details.last_name, maxlength: 120, autocomplete: "shipping family-name" %></label>
+    </div>
+    <label>address <%= f.text_field :line_1, value: @details.line_1, required: true, maxlength: 120, autocomplete: "shipping address-line1" %></label>
+    <label>apartment, suite, etc. <span class="muted">optional</span> <%= f.text_field :line_2, value: @details.line_2, maxlength: 120, autocomplete: "shipping address-line2" %></label>
+    <div class="row3">
+      <label>city <%= f.text_field :city, value: @details.city, required: true, maxlength: 120, autocomplete: "shipping address-level2" %></label>
+      <label>state / province <%= f.text_field :state, value: @details.state, maxlength: 120, autocomplete: "shipping address-level1" %></label>
+      <label>postal code <%= f.text_field :postal_code, value: @details.postal_code, maxlength: 120, autocomplete: "shipping postal-code" %></label>
+    </div>
+    <label>country <%= f.text_field :country, value: @details.country, required: true, maxlength: 120, autocomplete: "shipping country" %></label>
+    <label>phone <span class="muted">carriers sometimes need it</span> <%= f.telephone_field :phone_number, value: @details.phone_number, maxlength: 30, autocomplete: "shipping tel" %></label>
+    <div class="row">
+      <%= f.submit "redeem #{@goal.name}", class: "btn primary" %>
+      <%= link_to "cancel", guide_path, class: "btn" %>
+    </div>
+  <% end %>
+</section>

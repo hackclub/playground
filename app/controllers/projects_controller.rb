@@ -1,22 +1,37 @@
 class ProjectsController < ApplicationController
   layout "app"
   before_action :require_login
-  before_action :set_project, only: %i[show edit update destroy checks trash ship]
+  before_action :require_new_site, only: :delete
+  before_action :set_project, only: %i[show edit update destroy delete checks trash ship]
 
   # The desktop's icons for the participant's pets, which it asks for again
-  # after a page in one of its windows adds, renames, or deletes one.
+  # after a page in one of its windows adds, renames, or deletes one. On the
+  # new site (NewSite) the page is my pets, under the top bar's "my pets"
+  # tab: every pet, each with its state and hours.
   def index
     respond_to do |format|
       format.json { render json: current_user.projects.order(:id).map(&:desktop_icon) }
-      format.html { redirect_to dashboard_path }
+      format.html { new_site? ? list_pets : redirect_to(dashboard_path) }
     end
   end
 
-  def show = TrackedTime.refresh(@project)
+  # On the new site a pet has no page of its own: its card on my pets shows
+  # everything, so an old link to the pet goes there, and a message stays.
+  def show
+    return forward_to_card if new_site?
+    TrackedTime.refresh(@project)
+  end
+
+  # The new site's delete asks first, on a page of its own. A shipped pet
+  # cannot be deleted.
+  def delete
+    redirect_to edit_project_path(@project), alert: "a shipped pet cannot be deleted" if @project.ships.any?
+  end
 
   # A pet dragged into the desktop's trash: the delete popups, alone on a
-  # clear page that the desktop lays over itself.
-  def trash = render(layout: "popups")
+  # clear page that the desktop lays over itself. The new site has no
+  # desktop, so it asks on the delete page instead.
+  def trash = new_site? ? redirect_to(delete_project_path(@project)) : render(layout: "popups")
 
   # The ship popup's list, and its own page when opened in a new tab.
   def checks
@@ -31,8 +46,10 @@ class ProjectsController < ApplicationController
   def create
     @project = current_user.projects.new(project_params)
     if @project.save
+      # On the new site, a new pet is the one the guide acts on next.
+      remember_active_pet(@project) if new_site?
       TrackedTime.refresh(@project, force: true)
-      redirect_to @project
+      redirect_to pet_home
     else
       render :new, status: :unprocessable_entity
     end
@@ -49,7 +66,7 @@ class ProjectsController < ApplicationController
     if params[:checks]
       respond_to do |format|
         format.turbo_stream { render_checks(status: saved ? :ok : :unprocessable_entity) }
-        format.html { saved ? redirect_to(checks_project_path(@project)) : render_checks(status: :unprocessable_entity) }
+        format.html { saved ? redirect_to(checks_home) : render_checks(status: :unprocessable_entity) }
       end
     elsif request.format.json?
       if saved
@@ -58,7 +75,7 @@ class ProjectsController < ApplicationController
         render json: { error: @project.errors.full_messages.to_sentence }, status: :unprocessable_entity
       end
     elsif saved
-      redirect_to @project
+      redirect_to pet_home
     else
       load_hackatime
       render :edit, status: :unprocessable_entity
@@ -69,23 +86,29 @@ class ProjectsController < ApplicationController
   def destroy
     if @project.ships.any?
       respond_to do |format|
-        format.html { redirect_to @project, alert: "a shipped pet cannot be deleted" }
+        format.html { redirect_to pet_home, alert: "a shipped pet cannot be deleted" }
         format.json { head :unprocessable_entity }
       end
       return
     end
     @project.destroy!
     respond_to do |format|
-      format.html { redirect_to dashboard_path }
+      format.html { redirect_to new_site? ? projects_path : dashboard_path }
       format.json { head :no_content }
     end
   end
 
   # Ship re-checks on fresh data. When that finds a blocker, the popup shows
-  # it above the list, and the list says how to fix it.
+  # it above the list, and the list says how to fix it. From the new site's
+  # Ship it step in the guide, the step turns in place to the pet's review,
+  # and without JavaScript the guide opens at the step.
   def ship
     Shipper.ship!(@project)
-    redirect_to @project, notice: "shipped! your hours are pending review."
+    # The guide stays on the pet that shipped, rather than moving on to
+    # another pet that never shipped.
+    remember_active_pet(@project) if new_site?
+    return render_shipped_in_guide if from_guide? && request.format.turbo_stream?
+    redirect_to (from_guide? ? GuidePage.href("ship") : pet_home), notice: "shipped! your hours are pending review."
   rescue Shipper::Blocked => e
     respond_to do |format|
       format.turbo_stream do
@@ -93,13 +116,38 @@ class ProjectsController < ApplicationController
         TrackedTime.refresh(@project)
         render_checks(status: :unprocessable_entity)
       end
-      format.html { redirect_to checks_project_path(@project), alert: "not yet: #{e.message}" }
+      format.html { redirect_to checks_home, alert: "not yet: #{e.message}" }
     end
   end
 
   private
 
   def set_project = @project = current_user.projects.find(params[:id])
+
+  # Where the pet's own page is: on the new site, its card on my pets.
+  def pet_home = new_site? ? helpers.pet_card_path(@project) : @project
+
+  def list_pets
+    TrackedTime.refresh_all(current_user)
+    @projects = current_user.projects.includes(:ships).order(updated_at: :desc)
+  end
+
+  def forward_to_card
+    flash.keep
+    redirect_to helpers.pet_card_path(@project)
+  end
+
+  # On the new site, the ship list in the guide's Ship it step sends
+  # from=guide, and goes back there. Otherwise it goes back to its own page.
+  def from_guide? = new_site? && params[:from] == "guide"
+  def checks_home = from_guide? ? GuidePage.href("ship") : checks_project_path(@project)
+
+  # The guide's Ship it step, now the pet's review. It is marked just done,
+  # so the next step and the hours beside the guide ask again.
+  def render_shipped_in_guide
+    @ship_pet = @project
+    render turbo_stream: turbo_stream.replace("ship-step", partial: "guide_steps/ship_step", locals: { just_shipped: true })
+  end
 
   # A failed save leaves the typed values and errors on @project for the
   # fields, and the checks judge what is saved. The picker's Hackatime list

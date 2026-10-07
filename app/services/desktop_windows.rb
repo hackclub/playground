@@ -26,9 +26,11 @@ module DesktopWindows
 
   # Pages no desktop window shows. The desktop itself and the login's later
   # steps load in the top window. The trash's delete popups have a frame of
-  # their own. The pet list is JSON for the desktop, not a page.
+  # their own. The pet list is JSON for the desktop, not a page. The new
+  # site (NewSite) has no desktop: its guide's frames and its delete page
+  # show in no window.
   ELSEWHERE = %w[landing#show sessions#create sessions#failure sessions#hackatime_step sessions#dev
-                 projects#trash projects#index].freeze
+                 projects#trash projects#index guide_steps#check guide_steps#side guide_steps#ship projects#delete].freeze
 
   # Each page's path for landing.js, as the router writes it: /projects/:id/edit.
   def self.pages

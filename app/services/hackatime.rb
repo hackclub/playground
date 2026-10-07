@@ -76,10 +76,14 @@ class Hackatime
     end
 
     # Each project is one stretch of coding, total_seconds long, that ends at
-    # its most recent heartbeat. Only the part inside the window counts.
+    # its most recent heartbeat. Only the part inside the window counts. On
+    # the new site (NewSite), a participant also gets the projects its guide
+    # sent fake heartbeats for, and a newbie gets only those.
     def catalog
       seed = @user.id.to_i % 10 # keeps fake totals stable as database ids grow
-      [
+      sent = NewSite.for?(@user) ? FakeHeartbeats.projects(@user) : []
+      return sent if @user.hca_id == "ident!dev-newbie"
+      sent + [
         Project.new(name: "rock-pet", total_seconds: 3 * 3600 + 20 * 60 + seed * 60, most_recent_heartbeat: 5.minutes.ago),
         Project.new(name: "rock-pet-art", total_seconds: 50 * 60, most_recent_heartbeat: 2.hours.ago),
         Project.new(name: "frog-widget", total_seconds: 7 * 3600 + 5 * 60, most_recent_heartbeat: 3.days.ago),

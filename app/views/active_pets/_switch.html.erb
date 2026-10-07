@@ -1,0 +1,28 @@
+<%# The active pet switch: a quiet line that names the pet a part of the
+    site acts on, and opens a short list of the participant's pets to set
+    another one active. It shows only to a participant with two pets or
+    more. Locals: pet, the pet the part acts on now, or nil when it would
+    make a new one; frame, the id of the Turbo frame it sits in, which the
+    pick draws again in place; origin, where the pick goes back to without
+    scripts; just_set, true right after a pick, so the frame tells the
+    others (active_pet_controller.js). Escape closes the list. %>
+<% pets = current_user.projects.order(:created_at).to_a %>
+<% if pets.size > 1 %>
+  <details class="pet-switch" data-controller="active-pet" data-action="keydown.esc->active-pet#close"
+           data-active-pet-just-set-value="<%= local_assigns[:just_set].present? %>">
+    <summary>for <strong><%= pet&.name || "a new pet" %></strong><span class="visually-hidden">, your active pet</span> · <span class="pet-switch-change">change</span></summary>
+    <ul class="pet-switch-menu" aria-label="set your active pet">
+      <% pets.each do |option| %>
+        <li>
+          <% if option == pet %>
+            <span class="pet-switch-current" aria-current="true"><%= option.name %><span class="visually-hidden">, active</span></span>
+          <% else %>
+            <%= button_to option.name, active_pet_path, method: :patch,
+                          params: { pet_id: option.id, origin: local_assigns[:origin] }.compact,
+                          form: { data: { turbo_frame: local_assigns[:frame] }.compact } %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </details>
+<% end %>

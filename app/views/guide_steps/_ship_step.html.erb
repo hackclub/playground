@@ -1,0 +1,46 @@
+<%# The ship step: the pet's ship list itself, the one on its ship checklist
+    page, so the participant fills in each field and ships here. Its pet is
+    the guide's pet, or with none, the pet that shipped last
+    (GuidePet.to_ship). Before the pet has a Hackatime project, the step
+    points back to the pick step. While a ship waits on its review, it says
+    so, and right after a ship from here it turns to that in place. The list
+    asks GitHub and itch.io, so on the guide's page it loads after the page,
+    in its frame. It asks again when a step above it is done, since that may
+    make the pet. With two pets or more, it names the active pet, and
+    switches it. %>
+<% pet = @ship_pet %>
+<% state = if !current_user then :sign_in elsif !pet || pet.hackatime_projects.empty? then :pick elsif pet.pending_ship? then :review else :form end %>
+<% if state == :form && local_assigns[:lazy] %>
+  <%# The back button loads the list again, rather than an old copy of it. %>
+  <% turbo_exempts_page_from_cache %>
+  <%= turbo_frame_tag "ship-step", src: guide_ship_path, target: "_top", class: "guide-steps" do %>
+    <p class="muted">checking <%= pet.name %>…</p>
+  <% end %>
+<% else %>
+<%= turbo_frame_tag "ship-step", target: "_top", class: "guide-steps", data: { src: guide_ship_path } do %>
+<div data-controller="guide-step">
+  <% if state != :sign_in %>
+    <%= render "active_pets/switch", pet:, frame: "ship-step", origin: GuidePage.href("ship-step"), just_set: @just_set %>
+  <% end %>
+  <% case state %>
+  <% when :sign_in %>
+    <%= render layout: "guide_steps/step", locals: { title: "ship your pet" } do %>
+      <p>sign in to ship your pet.</p>
+      <%= render "guide_steps/sign_in", at: "ship-step" %>
+    <% end %>
+  <% when :pick %>
+    <%= render layout: "guide_steps/step", locals: { title: "ship your pet", waiting: true } do %>
+      <p class="muted">first <%= link_to "pick your pet's Hackatime project", GuidePage.href("pick-project") %>, after Movement.</p>
+    <% end %>
+  <% when :review %>
+    <%= render layout: "guide_steps/step", locals: { title: "#{pet.name} is in review", just_done: local_assigns[:just_shipped] } do %>
+      <p>a reviewer checks its hours next. keep building: you can ship again once it's reviewed.</p>
+    <% end %>
+  <% else %>
+    <%= render layout: "guide_steps/step", locals: { title: pet.ships.any? ? "ship #{pet.name} again" : "ship #{pet.name}" } do %>
+      <%= render "projects/ship_checks" %>
+    <% end %>
+  <% end %>
+</div>
+<% end %>
+<% end %>

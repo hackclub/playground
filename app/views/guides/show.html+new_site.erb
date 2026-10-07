@@ -1,0 +1,18 @@
+<% content_for :title, [ (@step.name unless @step == GuidePage.first), "Build a desktop pet in Godot" ].compact.join(" · ") %>
+<%= render "guides/old_links" %>
+<%# The guide, centered, one step at a time, with buttons under it to the
+    step before and the step after. On its left, the next step and the
+    guide's outline. On its right, a signed-in participant's hours. %>
+<div class="hub" data-controller="guide-pager">
+  <nav class="hub-left" aria-label="where to go">
+    <% if current_user %><%= render "guides/side_frame", part: "next" %><% end %>
+    <%= render "guides/outline" %>
+  </nav>
+  <div class="hub-main">
+    <%= render "guides/article" %>
+    <%= render "guides/pager" %>
+  </div>
+  <% if current_user %>
+    <aside class="hub-right" aria-label="your hours"><%= render "guides/side_frame", part: "side" %></aside>
+  <% end %>
+</div>

@@ -1,0 +1,465 @@
+/* The new site, without the desktop (NewSite). Only its layout,
+   layouts/app.html+new_site.erb, loads this file, after playground.css.
+   A rule here that restyles a selector playground.css also styles for the
+   desktop site is scoped under .new-site, the new layout's body class, so
+   the desktop site keeps its look. The other rules style classes that only
+   the new site's markup uses. */
+
+/* A group of fields has no box of its own: its legend reads like a
+   label, and what it holds, such as the screenshot grid, is the only box. */
+.new-site fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.new-site fieldset > legend { margin: 0 0 2px; padding: 0; }
+
+/* The guide shows one step at a time. Under its header, every step, each
+   a tab with its number, the one that shows filled blue, to go to any of
+   them. Under the guide, a button to the step before on the left, and to
+   the step after on the right. The tabs' corners are a little uneven, like
+   the top bar's. The one long guide's overview box and its two columns go. */
+.new-site .guide-contents { margin: 14px 0 0; padding: 0; border: 0; }
+.new-site .guide-contents ol { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; columns: auto; column-gap: normal; }
+.new-site .guide-contents li { margin: 0; }
+.new-site .guide-contents a { display: inline-flex; align-items: baseline; gap: 6px; padding: 2px 10px; border: 2px solid var(--line); border-radius: 9px 12px 10px 8px; background: var(--paper); color: var(--blue); font-size: 0.9rem; line-height: 1.5; text-decoration: none; }
+.new-site .guide-contents a:hover { border-color: var(--blue); }
+.new-site .guide-contents a[aria-current] { border-color: var(--blue); background: var(--blue); color: white; }
+.guide-contents-number { color: var(--muted); }
+.new-site .guide-contents a[aria-current] .guide-contents-number { color: inherit; }
+.guide-pager { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 0; }
+.guide-pager .btn { max-width: 100%; padding: 8px 16px; font-size: 1.05rem; }
+.guide-pager .guide-next { margin-left: auto; text-align: right; }
+/* A guide step that acts on the site: no box and no square, just the step's
+   words and buttons at the left edge of the guide text. A step that waits on
+   another is faded. */
+.guide-steps { display: block; }
+.guide-do { margin: 14px 0 18px; }
+.guide-do-body { min-width: 0; }
+/* The sign in step has no box: its square sits beside the button, centred on it. */
+.guide-do-bare { display: grid; justify-content: start; align-items: center; gap: 8px 12px; margin: 12px 0 18px; }
+.guide-do-body > :last-child { margin-bottom: 0; }
+.guide .guide-do-title { margin: 3px 0 6px; font-weight: bold; }
+.guide-do.waiting .guide-do-title { border-color: var(--line); color: var(--muted); }
+.guide-do-form { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; }
+.guide-do-form input[type=text] { flex: 1 1 12rem; width: auto; min-width: 0; }
+.guide-do-name { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.guide .guide-do-name code { padding: 2px 8px; font-size: 1em; }
+.guide .guide-do-seen { padding: 0; list-style: none; }
+/* While a step waits on Hackatime, a square beside its words breathes. */
+.guide-do-waiting::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 8px; background: var(--blue); vertical-align: 1px; animation: guide-do-wait 1.6s ease-in-out infinite; }
+@keyframes guide-do-wait { 50% { opacity: 0.2; } }
+.guide-do-help summary { color: var(--blue); cursor: pointer; }
+.guide-do-dev { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: -6px 0 16px; padding: 6px 10px; border: 1px dashed var(--line); font-size: 0.85em; }
+.guide-do-body .guide-do-dev { margin: 10px 0 0; }
+.guide-do-dev input[type=text] { flex: 1 1 10rem; width: auto; min-width: 0; padding: 2px 6px; }
+@media (prefers-reduced-motion: reduce) {
+  .guide-do-waiting::before { animation: none; }
+}
+/* A click on a recording pauses it or plays it (video_click_controller.js). */
+.new-site .guide-video video { cursor: pointer; }
+.new-site .guide-video video:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+/* The note under a step that differs by computer (os_note_controller.js):
+   small, muted, with the computer it shows and a button for each other one. */
+.os-note { margin: -8px 0 12px; color: var(--muted); font-size: 0.8rem; }
+.os-note[hidden] { display: none; }
+.os-note .linkish { font-size: inherit; }
+.guide[data-os-current="macos"] .os-note button[value="macos"],
+.guide[data-os-current="windows"] .os-note button[value="windows"],
+.guide[data-os-current="linux"] .os-note button[value="linux"] { display: none; }
+
+/* With nothing to say, the upload status takes no room under the grid, and
+   stays a live region. */
+.new-site .upload-status:empty { min-height: 0; margin: 0; }
+/* The screenshot grid runs the full width, like the fields around it. Wide
+   cells are 16:10, near a desktop screenshot's shape, so two rows stay
+   short. Narrow cells are 4:3, so the add cell's icon and label still fit. */
+.new-site .shots-grid { max-width: none; }
+.new-site .shot-cell { aspect-ratio: 16 / 10; }
+@media (max-width: 560px) { .new-site .shot-cell { aspect-ratio: 4 / 3; } }
+/* The ship button and its line come after the last step of the ship list.
+   In ship.exe they stick to the bottom of the popup, which scrolls. On a
+   page, or in the guide's Ship it step, they would stick to the bottom of
+   the window and cover the steps under them. */
+.new-site #ship-checks > .row { position: static; }
+
+/* The hub, with no desktop. Every page has the top bar and the footer,
+   except inside one of the old desktop's windows. A page's content sits in
+   one column. The hub is wider: the guide, and beside it the participant's
+   next step, hours, and pets, which stay in view while the guide scrolls. */
+/* The top bar has no box. It stands on a strip of the landing's sky, edge
+   to edge: the top of the picture, blue with clouds, and no hill. The sky
+   is a layer fixed to the window, behind the page. The top bar scrolls away
+   with the page, and the sheet under the line, which is opaque, slides up
+   over the sky. The layer is half the window tall, and never shorter than
+   240px, past the tallest strip: enough for the strip and for a pull past
+   the top on a Mac or a phone, and short of the bottom, so a pull past the
+   end shows the page's colour. iOS ignores a fixed
+   background, so the layer is an element of its own.
+   The logo stands on the sky. Beside it, the two tabs stand on a blue line
+   under the strip.
+   The open tab is the page's colour in a blue outline, with no line under
+   it, so it opens onto the page. The other tab sits back, lower and white.
+   Each tab's corners are a little uneven, as if cut by hand. The account
+   and help are small links stacked on the right, each on white, so they
+   read over sky and cloud alike. What stands on the line lines up with
+   the hub's outer columns.
+   The picture is 1512 by 982, and its hill starts about 60% of the way
+   down. It is at least 1100px wide, so a phone still shows clouds, and
+   starts 100 of its pixels down, past the cloud in its top left corner, so
+   the logo stands on clear blue. The strip is under 150px tall, so it
+   shows only sky, far above the hill. */
+.topbar {
+  display: grid; grid-template-columns: auto auto 1fr auto; grid-template-areas: "home tabs . links";
+  align-items: end; column-gap: 24px;
+  margin: -16px -16px 0; padding: 10px max(16px, calc((100% - 1376px) / 2 + 16px)) 0;
+  border-bottom: 2px solid var(--blue);
+}
+body.app:not(.in-window):has(> .topbar)::before {
+  content: ""; position: fixed; z-index: -1; top: 0; left: 0; right: 0; height: max(50vh, 240px);
+  background: var(--blue) url("/landing/background.png") no-repeat;
+  background-size: max(100%, 1100px) auto;
+  background-position: left top calc(-100 / 1512 * max(100vw, 1100px));
+}
+/* The logo's picture has a clear margin round the drawing, about a tenth
+   of its height on each side. The negative margins take it back, so the
+   drawing alone sets the bar's height: 84px of drawing on a wide screen.
+   A dark rim and a soft shadow, like the outline and shadow of the
+   landing's headings, stand its white owl off the sky. */
+.topbar-home { grid-area: home; align-self: center; padding: 4px 0 10px; }
+.topbar-home img {
+  --logo: 105px; display: block; height: var(--logo); width: auto;
+  margin: calc(var(--logo) * -0.105) calc(var(--logo) * -0.235) calc(var(--logo) * -0.094) calc(var(--logo) * -0.243);
+  filter: drop-shadow(0 0 1px rgb(0 0 0 / 0.9)) drop-shadow(2px 3px 4px rgb(0 0 0 / 0.45));
+}
+.topbar-tabs { grid-area: tabs; display: flex; align-items: flex-end; gap: 6px; margin-bottom: -2px; }
+.topbar-tab {
+  margin-bottom: 2px; padding: 5px 16px 4px; border: 2px solid var(--line); border-bottom: 0;
+  border-radius: 9px 13px 0 0 / 11px 7px 0 0; background: var(--paper); color: var(--blue);
+  font-size: 1.05rem; line-height: 1.4; text-decoration: none; white-space: nowrap;
+}
+.topbar-tab + .topbar-tab { border-radius: 13px 8px 0 0 / 8px 12px 0 0; }
+.topbar-tab:hover { background: var(--wash); color: var(--ink); }
+.topbar-tab[aria-current] { margin-bottom: 0; padding: 8px 22px 10px; border-color: var(--blue); background: var(--wash); color: var(--ink); font-size: 1.2rem; }
+.topbar-tab:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+/* The links stand one above the other at the right, each on white and the
+   same size: admin, for an admin only, then the account, then help. */
+.topbar-links { grid-area: links; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; padding-bottom: 10px; font-size: 0.9rem; }
+.topbar-links > a, .topbar-links .linkish { display: inline-block; padding: 1px 8px; background: var(--paper); border-radius: 6px 9px 7px 8px; text-align: right; }
+/* On a phone the links stand right of the logo, and the tabs go under both.
+   The links are a little smaller there, so "help in #playground" keeps to
+   one line at 390px. On a narrower phone it wraps inside its white. */
+@media (max-width: 640px) {
+  .topbar { grid-template-columns: auto 1fr; grid-template-areas: "home links" "tabs tabs"; column-gap: 10px; }
+  .topbar-home img { --logo: 87px; }
+  .topbar-links { align-self: center; padding-bottom: 8px; font-size: 0.8rem; }
+  .topbar-links > a, .topbar-links .linkish { padding: 1px 6px; }
+}
+.footbar { max-width: 1180px; margin: 20px auto 0; padding: 10px 14px; text-align: center; font-size: 0.9em; }
+.footbar p { margin: 0 0 4px; }
+.in-window .topbar, .in-window .footbar { display: none; }
+.page { max-width: 1180px; margin: 0 auto; }
+/* The footer ends every page. On a short page it sits at the bottom of the
+   window, and the page does not scroll: the page is a column at least as
+   tall as the window, padding included, and the sheet under the top bar
+   takes what is left, with the content growing in it. On a long page the
+   footer follows the content. dvh follows a phone's toolbars, and vh
+   stands in where dvh is unknown. The footer's own padding is the space
+   below it.
+   The sheet runs edge to edge in the page's colour, from the top bar's
+   line to the bottom, so it covers the sky as it scrolls over it. Its top
+   padding is the 18px gap under the line.
+   In the column, margins no longer fold together across the content's
+   edges, so the content's first top margin and last bottom margin go, and
+   the gaps stay 18px under the line and the footer's 20px. */
+body.app:not(.in-window):has(> .sheet) { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; padding-bottom: 0; }
+body.app:not(.in-window) > .sheet { flex: 1 0 auto; display: flex; flex-direction: column; margin: 0 -16px; padding: 0 16px; }
+body.app:not(.in-window) > .topbar + .sheet { padding-top: 18px; background: var(--wash); }
+body.app:not(.in-window) > .sheet > .page { flex: 1 0 auto; width: 100%; }
+body.app:not(.in-window) > .sheet > .footbar { width: 100%; }
+body.app:not(.in-window) > .sheet > .page > :first-child { margin-top: 0; }
+body.app:not(.in-window) > .sheet > .page > :last-child { margin-bottom: 0; }
+.page > .panel, .page > p { max-width: 760px; margin-left: auto; margin-right: auto; }
+.page > .panel { margin-bottom: 14px; }
+
+/* My pets: each pet is a window in the old desktop's chrome, as on the
+   landing: a 4px blue frame, a 20px title bar with the pet's name in white,
+   and the white pane under a 2px blue rule. The windows sit in a grid,
+   three across on a wide screen and one on a phone, and a dashed tile for
+   a new pet comes last. A window holds all there is about its pet, as the
+   pet has no page of its own. Its screenshots sit on top, set in the
+   white like a picture in the landing's examples window, whole and
+   centred in one 16 by 10 spot, the carousel's arrows and dots on it. A
+   pet with none has a pale place for one with its first letter. Under
+   them: the state as a coloured dot and a word, the hours by stage with
+   the meter's colour keys, the links, the Hackatime projects, the ships
+   with their reviews, and one main action. Each window is as tall as what
+   it holds. The title bar's right end holds the pet's marks, if it has
+   any. A link to one pet lands on its window, which
+   gets a ring. */
+.pets-page { max-width: 1000px; margin: 0 auto; }
+.pet-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); align-items: start; gap: 22px; margin: 0; padding: 0; list-style: none; }
+.pet-window { display: flex; flex-direction: column; min-width: 0; border: 4px solid var(--blue); background: var(--blue); box-shadow: 0 6px 18px rgb(20 45 90 / 0.18); scroll-margin-top: 16px; }
+.pet-window:target { outline: 3px solid var(--amber); outline-offset: 3px; }
+.pet-titlebar { display: flex; align-items: center; gap: 6px; height: 20px; color: white; }
+.pet-title { flex: 1; min-width: 0; margin: 0; padding: 0 4px; overflow: hidden; font-size: 18px; line-height: 20px; white-space: nowrap; text-overflow: ellipsis; }
+.pet-marks { display: flex; flex: none; gap: 4px; margin-right: 2px; }
+.pet-marks:empty { display: none; }
+.pet-mark { padding: 0 6px; border-radius: 8px; background: white; color: var(--blue); font-size: 0.75rem; line-height: 16px; }
+.pet-make-active { padding: 0; border: 0; background: none; color: white; font: inherit; font-size: 0.75rem; line-height: 16px; text-decoration: underline; opacity: 0.85; cursor: pointer; }
+.pet-make-active:hover, .pet-make-active:focus-visible { opacity: 1; }
+.pet-make-active:focus-visible { outline: 2px solid white; outline-offset: 1px; }
+.pet-pane { flex: 1; display: flex; flex-direction: column; border-top: 2px solid var(--blue); background: var(--paper); color: var(--ink); }
+.pet-shots { position: relative; display: block; margin: 8px 8px 0; aspect-ratio: 16 / 10; background: #dbe6f5; }
+.pet-shots > .shot, .pet-shots .carousel .shot { width: 100%; height: 100%; max-height: none; margin: 0; border: 0; object-fit: contain; }
+.pet-shots > .shot { display: block; }
+.pet-shots .carousel { position: absolute; inset: 0; width: auto; margin: 0; }
+.pet-shots .carousel .slides { height: 100%; }
+.pet-shots-empty { display: grid; place-content: center; justify-items: center; gap: 4px; color: var(--blue); text-decoration: none; }
+.pet-initial { font-size: 3.4rem; line-height: 1; opacity: 0.5; }
+.pet-shots-note { font-size: 0.8rem; }
+.pet-shots-empty:hover .pet-shots-note, .pet-shots-empty:focus-visible .pet-shots-note { text-decoration: underline; }
+.pet-body { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 12px 14px 14px; }
+.pet-body > p { margin: 0; }
+.pet-state .badge, .pet-ships .badge { padding: 0; border: 0; font-size: 0.85rem; }
+.pet-state .badge::before, .pet-ships .badge::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: currentColor; vertical-align: 1px; }
+.pet-description { font-size: 0.95rem; overflow-wrap: anywhere; }
+.pet-hours { font-size: 0.9rem; }
+.pet-hours .key { width: 11px; height: 11px; margin-right: 4px; vertical-align: 0; }
+.pet-links { font-size: 0.85rem; }
+.pet-hackatime { color: var(--muted); font-size: 0.8rem; overflow-wrap: anywhere; }
+.pet-ships { margin: 0; padding: 0; list-style: none; font-size: 0.85rem; }
+.pet-ships li { padding: 4px 0; border-top: 1px dashed var(--line); }
+.pet-ships blockquote { font-size: 0.85rem; }
+.pet-body > .pet-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding-top: 4px; }
+.pet-waiting { color: var(--amber); font-size: 0.9rem; }
+.pet-new a { display: grid; place-content: center; justify-items: center; min-height: 200px; border: 2px dashed var(--blue); color: var(--blue); text-decoration: none; font-size: 1.1rem; }
+.pet-new a:hover, .pet-new a:focus-visible { background: var(--paper); }
+.pet-new-plus { font-size: 2.6rem; line-height: 1; }
+.pets-empty { max-width: 560px; margin: 0 auto; }
+.pets-empty .pet-body { gap: 12px; padding: 16px 18px 18px; }
+@media (max-width: 560px) {
+  .pet-shots { aspect-ratio: 16 / 9; }
+  .pet-new a { min-height: 96px; }
+}
+/* A pet's own pages, new, edit, ship, and delete, are each one window like
+   its card, as wide as the guide. Delete sits at the end of the form's
+   buttons, apart from save and cancel. In the old desktop's windows the
+   page already has a window round it, so the chrome goes. */
+.page-window { max-width: 760px; margin: 0 auto 14px; }
+.page-pane { padding: 16px 18px 18px; }
+.page-pane > :first-child { margin-top: 0; }
+.page-pane > :last-child { margin-bottom: 0; }
+.form-buttons .form-delete { margin-left: auto; }
+.in-window .page-window { border: 0; background: none; box-shadow: none; }
+.in-window .page-window > .pet-titlebar { display: none; }
+.in-window .page-window > .pet-pane { border: 0; }
+.in-window .page-pane { padding: 0; }
+
+/* The guide stays in the middle of the page. On its left, the next step
+   and the outline. On its right, the participant's hours. Both
+   stay in view while the guide scrolls. Where the sides are too narrow for
+   both, everything beside the guide shares its left, and the outline gives
+   way to the guide's own list of steps. On a narrow screen it all goes on top. */
+.page:has(.hub), .page:has(.home-sky) { max-width: none; }
+.hub { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.hub-signed-out { max-width: 760px; margin: 0 auto; }
+.hub-left, .hub-right { min-width: 0; }
+.hub-outline { display: none; }
+@media (max-width: 979px) { .hub-left { order: -2; } .hub-right { order: -1; } }
+@media (min-width: 980px) and (max-width: 1359px) {
+  .hub:not(.hub-signed-out) { grid-template-columns: minmax(250px, 300px) minmax(0, 760px); justify-content: center; column-gap: 28px; align-items: start; }
+  .hub-left { grid-column: 1; grid-row: 1; }
+  .hub-right { grid-column: 1; grid-row: 2; }
+  .hub:not(.hub-signed-out) .hub-main { grid-column: 2; grid-row: 1 / span 3; }
+}
+@media (min-width: 1360px) {
+  .hub:not(.hub-signed-out) { grid-template-columns: minmax(0, 1fr) minmax(0, 760px) minmax(0, 1fr); column-gap: 28px; align-items: start; }
+  .hub-left, .hub-right { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; width: min(100%, 280px); }
+  .hub-left { grid-column: 1; grid-row: 1; justify-self: end; }
+  .hub-right { grid-column: 3; grid-row: 1; justify-self: start; }
+  .hub:not(.hub-signed-out) .hub-main { grid-column: 2; grid-row: 1; }
+  .hub-outline { display: block; }
+  /* There the outline takes over from the guide's own list of steps. */
+  .hub:not(.hub-signed-out) .guide-contents { display: none; }
+}
+#hub-next:has(.side-next:not([hidden])) + .hub-outline { margin-top: 18px; }
+/* The outline lists the steps, each with its number in a ring. The step
+   that shows has its number filled blue and its name dark, the others
+   faded. Under it, that step's sections on a line, the one being read
+   marked blue. */
+.hub-outline ol { margin: 0; padding: 0; list-style: none; line-height: 1.35; }
+.hub-outline a { color: var(--muted); text-decoration: none; }
+.hub-outline a:hover { color: var(--ink); }
+.outline-step > a { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.95rem; }
+.outline-step > a[aria-current] { color: var(--ink); }
+/* The number's box has equal sides, a whole number of pixels at the usual
+   zooms. At other zooms the browser can round one side up and the other
+   down, so a border with a 50% radius turns oval. The ring is drawn instead
+   as a gradient whose radius is half the shorter side, a circle in any box. */
+.outline-number { --ring: var(--line); --fill: var(--paper); flex: none; box-sizing: border-box; display: grid; place-items: center; width: 1.25rem; height: 1.25rem; padding: 0; border-radius: 50%; background: radial-gradient(circle closest-side, var(--fill) calc(100% - 2.75px), var(--ring) calc(100% - 2px), var(--ring) calc(100% - 0.75px), transparent 100%); font-size: 0.75rem; line-height: 1; }
+.outline-step > a[aria-current] .outline-number { --ring: var(--blue); --fill: var(--blue); color: white; }
+.outline-step > ol { margin: 2px 0 8px 10px; border-left: 2px solid var(--line); font-size: 0.85rem; }
+.outline-step > ol a { display: block; margin-left: -2px; padding: 4px 8px 4px 12px; border-left: 2px solid transparent; }
+.outline-step > ol a.current { border-left-color: var(--blue); color: var(--blue); }
+.hub-outline .outline-h3 a { padding-left: 26px; }
+.hub .guide { max-width: none; scroll-margin-top: 12px; }
+.side-card { margin: 0 0 12px; padding: 12px 14px; border: 2px solid var(--blue); background: var(--paper); }
+.side-card h2, .side-hours h2 { font-size: 1.05rem; }
+.side-hours { margin: 0 0 12px; }
+.side-card > :last-child { margin-bottom: 0; }
+.side-next { background: var(--blue); color: white; }
+.side-next[hidden] { display: none; }
+.side-next .btn.primary { background: white; color: var(--blue); border-color: white; }
+.side-label { margin: 0 0 2px; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.85; }
+
+/* The active pet switch: a quiet line naming the pet, which opens a short
+   list of the participant's pets to set another one active. */
+.pet-switch { position: relative; margin: 0 0 6px; font-size: 0.85rem; line-height: 1.4; color: var(--muted); }
+.pet-switch summary { display: inline; list-style: none; cursor: pointer; }
+.pet-switch summary::-webkit-details-marker { display: none; }
+.pet-switch summary::marker { content: ""; }
+.pet-switch > summary::before, .pet-switch[open] > summary::before { content: none; }
+.pet-switch summary strong { font-weight: inherit; color: var(--ink); overflow-wrap: anywhere; }
+.pet-switch-change { color: var(--blue); text-decoration: underline; }
+.pet-switch summary:hover .pet-switch-change { text-decoration-thickness: 2px; }
+.pet-switch summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.pet-switch .pet-switch-menu { position: absolute; z-index: 5; top: calc(100% + 4px); left: 0; min-width: 11rem; max-width: min(20rem, calc(100vw - 32px)); margin: 0; padding: 4px; list-style: none; border: 2px solid var(--line); background: var(--paper); box-shadow: 0 4px 12px rgba(43, 58, 77, 0.12); }
+.pet-switch-menu li { margin: 0; }
+.pet-switch-menu form.button_to { display: block; }
+.pet-switch-menu button, .pet-switch-current { display: block; width: 100%; padding: 4px 8px; border: 0; background: none; font: inherit; text-align: left; overflow-wrap: anywhere; }
+.pet-switch-menu button { color: var(--blue); cursor: pointer; }
+.pet-switch-menu button:hover, .pet-switch-menu button:focus-visible { background: var(--wash); outline: none; text-decoration: underline; }
+.pet-switch-current { color: var(--ink); }
+.pet-switch-current::after { content: " \2713"; color: var(--green); }
+/* On the blue next step card, the line is white like the card's words. */
+.side-next .pet-switch { color: rgba(255, 255, 255, 0.85); }
+.side-next .pet-switch summary strong, .side-next .pet-switch-change { color: white; }
+.side-next .pet-switch summary:focus-visible { outline-color: white; }
+
+/* The Hackatime step's list to pick from: a project coding now stands out. */
+.guide .guide-do-pick { margin: 8px 0; padding: 0; list-style: none; }
+.guide-do-pick li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 10px; padding: 6px 8px; border: 1px solid var(--line); margin: 0 0 6px; }
+.guide-do-pick li.now { border: 2px solid var(--green); }
+.guide-do-pick li > span { min-width: 0; }
+/* The ship step's list: a tick for what the pet has, a square for what it needs. */
+.guide .guide-do-checks { margin: 6px 0 10px; padding: 0; list-style: none; }
+.guide-do-checks li { position: relative; padding-left: 24px; margin: 3px 0; }
+.guide-do-checks li::before { content: ""; position: absolute; left: 2px; top: 0.45em; width: 12px; height: 12px; border: 2px solid var(--line); }
+.guide-do-checks li.done { color: var(--muted); }
+.guide-do-checks li.done::before { border-color: var(--green); background: var(--green); }
+
+/* The landing, laid out as Armand drew it. The sky of the old desktop runs
+   edge to edge behind the logo, the example pets, and the prizes. */
+body.home-page { padding-top: 0; }
+.home-sky { position: relative; isolation: isolate; margin: 0 -16px; padding: 14px 16px 6px; text-align: center; }
+/* The sky and hill fill the first screen, and fade into the page only
+   below the fold. */
+.home-sky::before { content: ""; position: absolute; z-index: -1; top: 0; left: 0; right: 0; height: calc(100vh + 180px);
+  background: linear-gradient(to bottom, transparent calc(100% - 180px), var(--wash)), url("/landing/background.png") center bottom / cover no-repeat; }
+.home-flag { position: absolute; top: 14px; left: 0; width: clamp(96px, 16vw, 170px); }
+.home-flag img { display: block; width: 100%; height: auto; }
+.home-sponsor { position: absolute; top: 8px; right: 12px; margin: 0; padding: 2px 8px; background: rgba(255, 255, 255, 0.85); font-size: 0.9em; }
+.home-logo { margin: 26px auto 4px; }
+.home-logo img { display: block; width: min(420px, 78%); height: auto; margin: 0 auto; }
+/* White letters with a black outline, inside and out, as the desktop's
+   tagline, and a drop shadow. */
+.home-say { margin: 14px 0 10px; color: white; -webkit-text-stroke: 0.047em black; text-shadow: 0.0625em 0.094em 0.125em rgba(0, 0, 0, 0.45); font-size: clamp(1.4rem, 3.4vw, 2rem); }
+/* Each box is a window in the old desktop's chrome, as in landing.css: a
+   4px blue frame, a 20px title bar with the window's file name in white on
+   the left and the X on the right, and the white content under a 2px blue
+   rule. The bar is only a picture, so the X keeps the plain pointer and
+   does not change on hover. A soft shadow lifts each window off the sky. */
+.home-window { position: relative; max-width: 760px; margin: 0 auto; border: 4px solid var(--blue); background: var(--blue); box-shadow: 0 8px 22px rgb(20 45 90 / 0.3); }
+.home-titlebar { display: flex; align-items: center; height: 20px; color: white; cursor: default; user-select: none; -webkit-user-select: none; }
+.home-title { min-width: 0; overflow: hidden; padding: 0 4px; font-size: 18px; line-height: 20px; white-space: nowrap; text-overflow: ellipsis; }
+.home-x { flex: none; display: grid; place-items: center; width: 16px; height: 16px; margin: 0 2px 0 auto; border: 2px solid white; font: bold 12px/1 "Chelsea Market", system-ui, sans-serif; }
+.home-pane { margin: 0; padding: 20px 22px 22px; border-top: 2px solid var(--blue); background: var(--paper); color: var(--ink); }
+@media (max-width: 560px) { .home-pane { padding: 16px 14px 18px; } }
+/* A heading under a window keeps clear of the window's shadow. */
+.home-window + .home-say { margin-top: 24px; }
+/* The example pets sit in their window like pictures in a folder. Each
+   name fits on one line where four pets share a row at full width. */
+.home-examples { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 8px; list-style: none; }
+@media (min-width: 640px) { .home-examples { grid-template-columns: repeat(4, 1fr); } }
+.home-examples a { display: block; color: var(--ink); text-decoration: none; font-size: 0.7rem; }
+.home-examples a:hover span, .home-examples a:focus-visible span { color: var(--blue); text-decoration: underline; }
+.home-examples img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--ink); }
+.home-examples span { display: block; padding: 4px 0 0; }
+.home-goals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 4px 0 10px; padding: 0; list-style: none; }
+.home-goals p { min-height: 3.2em; margin: 0 0 6px; font-size: 0.9rem; }
+.home-goals img { display: block; width: 100%; max-width: 160px; height: 100px; object-fit: contain; margin: 0 auto; }
+.home-requirements { margin: 4px 0 0; color: var(--muted); font-size: 0.85rem; }
+/* The windows after the sky sit in front of it, where the sky runs on
+   below, since a window is positioned. The gap between two windows is
+   28px, the sky's 6px bottom padding included. */
+.home-now { margin-top: 22px; text-align: center; }
+.home-now h2 { text-align: center; font-size: 1.6rem; }
+/* The four steps in a row, each its square over its words, with a line
+   from one square to the next. Two by two on a narrow screen. */
+.home-steps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px 12px; margin: 14px 0 20px; padding: 0; list-style: none; font-size: 1.1rem; line-height: 1.3; }
+@media (min-width: 640px) { .home-steps { grid-template-columns: repeat(4, 1fr); } }
+.home-steps li { position: relative; display: grid; justify-items: center; align-content: start; gap: 8px; }
+@media (min-width: 640px) { .home-steps li:not(:last-child)::after { content: ""; position: absolute; top: 13px; left: calc(50% + 20px); width: calc(100% - 28px); height: 2px; background: var(--line); } }
+.home-steps .step-node { border-color: var(--blue); color: var(--blue); }
+.home-steps li:first-child .step-node { background: var(--blue); color: white; }
+.home-go { display: inline-block; }
+.home-faq { margin-top: 28px; }
+.home-faq h2 { text-align: center; font-size: 1.6rem; }
+.home-faq details { border-top: 1px solid var(--ink); }
+.home-faq details:last-child { border-bottom: 1px solid var(--ink); }
+.home-faq summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 4px; font-size: 1.1rem; font-weight: bold; text-align: left; cursor: pointer; list-style: none; }
+.home-faq summary::-webkit-details-marker { display: none; }
+.home-faq details > summary::before, .home-faq details[open] > summary::before { content: none; }
+.home-faq summary::after { content: "+"; flex: none; color: var(--blue); font-size: 1.4rem; line-height: 1; }
+.home-faq details[open] summary::after { content: "\2212"; }
+.home-faq summary:hover { color: var(--blue); }
+.home-faq summary:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.home-faq details p { margin: 0; padding: 0 4px 14px; }
+
+/* The meter standing up right of the guide: the prizes on the left, each
+   beside its tick, and a thin bar on the right, filling from the bottom. A
+   stage of the bar says its name and hours on hover or focus, and a strip
+   wider than the bar answers the pointer.
+   A tick is a line as thick as the bar's border. It crosses the bar and
+   runs a stub left, toward its prize. The last goal's tick lies on the
+   bar's top border, so the two are one line, as on the flat meter. --at is
+   a goal's share of the bar, 0 to 1. Ticks and prizes sit on whole pixels,
+   so no tick blurs at its edges. Nothing reaches right of the bar, so the
+   column beside the guide never scrolls sideways. */
+.vmeter { --vmeter-width: 14px; --vmeter-border: 2px; --vmeter-stub: 8px; position: relative; height: 300px; margin: 10px 0 26px; }
+.vmeter-bar { position: absolute; top: 0; bottom: 0; right: 0; width: var(--vmeter-width); border: var(--vmeter-border) solid var(--ink); background: var(--paper); }
+/* A stage runs from --from to --to, shares of the bar's inside, and its
+   ends sit on whole pixels, so no pale seam shows between two stages. */
+.vseg {
+  position: absolute; left: 0; right: 0; outline: none;
+  bottom: calc(var(--from) * 100%); top: calc(100% - var(--to) * 100%);
+  bottom: round(var(--from) * 100%, 1px); top: calc(100% - round(var(--to) * 100%, 1px)); }
+.vseg::before { content: ""; position: absolute; top: 0; bottom: 0; left: -10px; right: calc(-1 * var(--vmeter-border)); }
+.vseg.approved { background: var(--blue); }
+/* The flat meter's hatching turned upright, so its strokes run on without a seam. */
+.vseg.pending { background: #9bb8e0 url("/meter/pending-up.svg") 0 100% / 100% auto repeat-y; }
+.vseg.unshipped { background: #dbe6f5; }
+/* A hovered stage darkens a little. A focused stage also gets an ink ring. */
+.vseg:hover, .vseg:focus-visible { box-shadow: inset 0 0 0 999px rgb(43 58 77 / 0.18); }
+.vseg:focus-visible { box-shadow: inset 0 0 0 2px var(--ink), inset 0 0 0 999px rgb(43 58 77 / 0.18); }
+.vseg:hover::after, .vseg:focus-visible::after, .vmeter-bar[data-tip]:hover::after {
+  content: attr(data-tip); position: absolute; z-index: 3; right: calc(100% + 10px); top: 50%; transform: translateY(-50%);
+  padding: 2px 8px; background: var(--ink); color: white; font-size: 0.8rem; white-space: nowrap; pointer-events: none; }
+/* A tick's box is the bar's inside, so it reaches out over the border.
+   At --at 1 its top is the bar's top, and at 0 its bottom is the bar's bottom.
+   Its left and right alone set its width, and nothing moves it after. */
+.vmeter-tick {
+  position: absolute; left: calc(-1 * (var(--vmeter-border) + var(--vmeter-stub))); right: calc(-1 * var(--vmeter-border)); width: auto; height: var(--vmeter-border); transform: none;
+  bottom: calc(var(--at) * (100% + var(--vmeter-border)) - var(--vmeter-border));
+  bottom: calc(round(var(--at) * (100% + var(--vmeter-border)), 1px) - var(--vmeter-border));
+  background: var(--ink); pointer-events: none; }
+.vmeter-tick.reached { background: var(--green); }
+.vmeter-goals { position: absolute; top: 0; bottom: 0; left: 0; right: calc(var(--vmeter-width) + var(--vmeter-stub) + 8px); margin: 0; padding: 0; list-style: none; pointer-events: none; }
+/* A prize hangs from its tick: the tick runs through the middle of the
+   prize's first line, so the top prize lines up with the top of the bar. */
+.vmeter-goals li {
+  position: absolute; left: 0; right: 0; display: grid; grid-template-columns: 1fr 44px; gap: 8px; align-items: start; text-align: right; transform: translateY(calc(100% - 0.5lh)); font-size: 0.9rem; line-height: 1.25;
+  bottom: calc(var(--at) * (100% - var(--vmeter-border)) + var(--vmeter-border) / 2);
+  bottom: calc(round(var(--at) * (100% - var(--vmeter-border)), 1px) + var(--vmeter-border) / 2); }
+.vmeter-goals a { pointer-events: auto; }
+.vmeter-goals img { width: 44px; height: 40px; object-fit: contain; filter: url(#vmeter-ink); }
+.vmeter-goals .muted { color: #4b5b6e; }
+.vmeter-goals li > span > * { display: block; }
+.vmeter-goals li.reached strong { color: var(--green); }

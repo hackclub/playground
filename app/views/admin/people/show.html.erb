@@ -4,6 +4,11 @@
     <p><%= @user.email %> · <%= @user.eligible? ? "✓ verified, eligible" : "✗ #{@user.verification_status || "unverified"}" %>
       · Hackatime trust <%= @user.hackatime_trust_level || "unknown" %>
       <% if @user.banned? %> · <span class="badge badge-banned">banned</span> <%= @user.ban_reason %><% end %></p>
+    <%# The new site, without the desktop, is off for everyone until an admin
+        turns it on here, one person at a time. %>
+    <div class="new-site-flag">new site: <strong><%= @user.new_site? ? "on" : "off" %></strong>
+      <%= button_to @user.new_site? ? "turn it off" : "turn the new site on", new_site_admin_person_path(@user),
+                    method: :patch, params: { on: @user.new_site? ? "0" : "1" }, form: { class: "inline" }, class: "btn small" %></div>
   </div>
 </header>
 

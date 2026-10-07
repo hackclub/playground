@@ -1,0 +1,7 @@
+<%# The parts beside the guide that change as the participant goes, each in
+    a frame of its own, so a done guide step can ask for them again
+    (guide_step_controller.js). Their links leave the frame. %>
+<% part = local_assigns.fetch(:part, "side") %>
+<%= turbo_frame_tag "hub-#{part}", target: "_top", data: { src: guide_side_path(part:) } do %>
+  <%= render "guides/#{part}" %>
+<% end %>

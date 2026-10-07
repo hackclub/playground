@@ -1,0 +1,15 @@
+<%# Right of the guide, for a signed-in participant: their hours toward the
+    goals. It shows state only. The pets have their own page, under the top
+    bar's "my pets" tab. The next step card, left of the guide, is the one
+    thing that asks, and it points into the guide, where each thing to do lives. %>
+
+<% if current_user.banned? %><p class="banner alert">this account is banned from playground.</p><% end %>
+<% if current_user.hackatime_red? %><p class="banner alert">Hackatime has banned this account, so its hours cannot count.</p><% end %>
+
+<section class="side-hours" aria-labelledby="hours-title">
+  <h2 id="hours-title" class="visually-hidden">your hours</h2>
+  <% unless ProgramWindow.current.started? %>
+    <p class="muted">time counts from <%= program_time(ProgramWindow.current.starts_at) %>.</p>
+  <% end %>
+  <%= render "guides/vertical_meter" %>
+</section>

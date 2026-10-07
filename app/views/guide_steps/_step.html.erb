@@ -1,0 +1,9 @@
+<%# One guide step that acts on the site. A step that waits on another is
+    faded. %>
+<% state = local_assigns[:done] ? "done" : ("waiting" if local_assigns[:waiting]) %>
+<%= tag.div class: token_list("guide-do", state, "just-done": local_assigns[:just_done]) do %>
+  <div class="guide-do-body">
+    <% if title %><p class="guide-do-title"><%= title %><% if state == "done" %><span class="visually-hidden">, done</span><% end %></p><% end %>
+    <%= yield %>
+  </div>
+<% end %>

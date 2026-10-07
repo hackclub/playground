@@ -1,0 +1,20 @@
+<%# Every page's top: the logo, which goes home, and two tabs, the guide and
+    the participant's pets. The open tab opens onto the page under it. The
+    account and help stand on the right. Signed out, "my pets" goes to the login. %>
+<% tab = topbar_tab %>
+<header class="topbar">
+  <%= link_to root_path, class: "topbar-home" do %><%= image_tag "landing/logo.png", alt: "playground" %><% end %>
+  <nav class="topbar-tabs" aria-label="site">
+    <%= topbar_tab_link "guide", guide_path, tab == :guide %>
+    <%= topbar_tab_link "my pets", current_user ? projects_path : login_path, tab == :pets %>
+  </nav>
+  <nav class="topbar-links" aria-label="account and help">
+    <% if current_user %>
+      <% if current_user.acts_as_admin? %><%= link_to "admin", admin_root_path, class: "topbar-admin" %><% end %>
+      <%= button_to "sign out", logout_path, method: :delete, form: { class: "inline" }, class: "linkish" %>
+    <% else %>
+      <%= link_to "sign in", login_path %>
+    <% end %>
+    <a href="https://hackclub.slack.com/archives/C0ASBTMS82H" target="_blank" rel="noopener">help in #playground</a>
+  </nav>
+</header>

@@ -1,0 +1,13 @@
+<%# The login, from a guide step. It leaves for Hack Club and comes back to
+    the step it began at, on its page of the guide. %>
+<% origin = GuidePage.href(at) %>
+<% if Rails.application.credentials.dig(:hack_club, :client_id) %>
+  <%= button_to "sign in with Hack Club for free", "/auth/hack_club", params: { origin: }, data: { turbo: false }, class: "btn primary big" %>
+<% end %>
+<% if FakeServices.on? %>
+  <div class="guide-do-dev muted">development logins:
+    <% %w[newbie participant].each do |kind| %>
+      <%= button_to kind, dev_login_path, method: :get, params: { as: kind, origin: }, data: { turbo: false }, form: { class: "inline" }, class: "linkish" %>
+    <% end %>
+  </div>
+<% end %>

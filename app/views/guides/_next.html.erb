@@ -1,0 +1,13 @@
+<%# Left of the guide, above its outline: the one thing a signed-in
+    participant should do next. %>
+<%# It hides while its part of the guide is on screen (next_step_controller.js).
+    A step about one pet names it, and with two pets or more, switches it. %>
+<section class="side-card side-next" aria-labelledby="next-title" data-controller="next-step">
+  <p class="side-label">your next step</p>
+  <h2 id="next-title"><%= @hub.next_step.title %></h2>
+  <% if @hub.next_step.pet %>
+    <%= render "active_pets/switch", pet: @hub.next_step.pet, frame: "hub-next", origin: (@step && "#{@step.path}#hub-next"), just_set: @just_set %>
+  <% end %>
+  <p><%= @hub.next_step.detail %></p>
+  <%= link_to @hub.next_step.action, @hub.next_step.href, class: "btn primary", data: { next_step_target: "link" } %>
+</section>

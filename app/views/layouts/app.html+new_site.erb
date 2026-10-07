@@ -1,0 +1,41 @@
+<%# The new site's layout (NewSite), in place of layouts/app.html.erb for a
+    user with the new site on. Its stylesheet and its own scripts load only
+    here. Both stylesheets carry Turbo's reload mark and the desktop site's
+    layouts carry none, so a visit from one site to the other loads in full,
+    and no stylesheet of one stays on a page of the other. %>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= [ content_for(:title), "playground" ].compact_blank.join(" · ") %></title>
+    <%= render "shared/icons" %>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%# A link preview is fetched logged out, so only a page seen logged out,
+        such as the login, carries its tags. A page behind the login has none. %>
+    <%= render "shared/link_preview", **(@link_preview || {}) unless current_user %>
+    <%= stylesheet_link_tag "playground", "new_site", "data-turbo-track": "reload" %>
+    <%= render "shared/plausible" %>
+    <%= javascript_importmap_tags %>
+    <%= new_site_controllers_tag %>
+    <%# A page with fields to type in keeps out of Turbo's preview, the cached
+        copy it shows while the page loads, since typing into the copy is lost
+        when the page arrives. %>
+    <%= yield :head %>
+  </head>
+  <body class="<%= token_list("app", "new-site", yield(:body_class)) %>">
+    <script>if (window.top !== window.self) document.body.classList.add("in-window")</script>
+    <%= render "shared/topbar" unless content_for?(:no_topbar) %>
+    <%# The content and the footer, as one sheet that scrolls over the sky
+        behind the top bar. %>
+    <div class="sheet">
+      <main class="page">
+        <% if notice %><p class="flash notice"><%= notice %></p><% end %>
+        <% if alert %><p class="flash alert"><%= alert %></p><% end %>
+        <%= yield %>
+      </main>
+      <%= render "shared/footbar" %>
+    </div>
+  </body>
+</html>

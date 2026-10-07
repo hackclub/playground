@@ -1,0 +1,104 @@
+<%# Where the plugin goes in: link Hackatime. After Movement, once the
+    participant has coded: pick the pet's project from what Hackatime sees.
+    Each sits under a heading of its own, so a step's title shows only when
+    it says more than the heading: the project to pick, or the step done.
+    Hackatime may list the pet twice, under its Godot name and, once the
+    folder is a git repository, under the folder's name, so the pick step
+    offers a second project coding now. It asks again while it waits,
+    and less often once the pet counts. A link inside leaves the frame.
+    With two pets or more, the pick step names the active pet it links to,
+    and switches it. %>
+<% ready = current_user&.hackatime_connected? && !current_user.hackatime_unlinked %>
+<% counted = @linked.present? %>
+<% every = if @frame != "pick-step" || !ready || @error then 0 elsif counted then 30 else 10 end %>
+<%= turbo_frame_tag @frame do %>
+  <div data-controller="guide-step" data-guide-step-every-value="<%= every %>">
+    <% if @frame == "pick-step" && current_user %>
+      <%= render "active_pets/switch", pet: @pet, frame: @frame, origin: GuidePage.href(@frame), just_set: @just_set %>
+    <% end %>
+    <% if @frame == "hackatime-step" %>
+      <% if !current_user %>
+        <%= render layout: "guide_steps/step", locals: { title: nil } do %>
+          <p>sign in to connect Hackatime.</p>
+          <%= render "guide_steps/sign_in", at: "connect-hackatime" %>
+        <% end %>
+      <% elsif current_user.hackatime_unlinked %>
+        <%= render layout: "guide_steps/step", locals: { title: "connect Hackatime again" } do %>
+          <p class="banner alert"><%= Hackatime::UNLINKED %></p>
+          <%= hackatime_button "connect Hackatime", class: "btn primary", params: { origin: GuidePage.href("hackatime-step") } %>
+        <% end %>
+      <% elsif !current_user.hackatime_connected? %>
+        <%= render layout: "guide_steps/step", locals: { title: nil } do %>
+          <p>Hackatime is Hack Club's coding time tracker. connect it, so playground can count the hours you spend on your pet.</p>
+          <%= hackatime_button "connect Hackatime", class: "btn primary", params: { origin: GuidePage.href("hackatime-step") } %>
+        <% end %>
+      <% else %>
+        <%= render layout: "guide_steps/step", locals: { title: "Hackatime is connected", done: true } do %>
+          <p class="muted">once you've coded the movement, you'll pick your pet's project right after it.</p>
+          <% if current_user.hackatime_red? %><p class="banner alert">Hackatime has banned this account, so its hours cannot count.</p><% end %>
+        <% end %>
+      <% end %>
+    <% elsif !current_user %>
+      <%= render layout: "guide_steps/step", locals: { title: nil } do %>
+        <p>sign in to pick your pet's project.</p>
+        <%= render "guide_steps/sign_in", at: "pick-project" %>
+      <% end %>
+    <% elsif !ready %>
+      <%= render layout: "guide_steps/step", locals: { title: nil } do %>
+        <p>connect Hackatime to pick your pet's project.</p>
+        <%= hackatime_button "connect Hackatime", class: "btn primary", params: { origin: GuidePage.href("pick-project") } %>
+      <% end %>
+    <% elsif counted %>
+      <%= render layout: "guide_steps/step", locals: { title: "Hackatime counts #{@pet.name}", done: true, just_done: @just_linked.present? } do %>
+        <ul class="guide-do-seen">
+          <% @linked.each do |project| %><li><code><%= project.name %></code> · <%= hours(project.total_seconds) %> so far</li><% end %>
+        </ul>
+        <% if (also = @coding_now.first) %>
+          <p>Hackatime also sees <code><%= also.name %></code> coding right now. it may be the same pet, under its folder's name.</p>
+          <%= button_to "yes, #{also.name} is #{@pet.name} too", guide_link_path, params: { name: also.name, frame: @frame }, class: "btn small" %>
+        <% else %>
+          <p class="muted">your hours count from here on. <%= link_to "rename #{@pet.name}", edit_project_path(@pet), data: { turbo_frame: "_top" } %></p>
+        <% end %>
+      <% end %>
+    <% elsif @others.any? %>
+      <%= render layout: "guide_steps/step", locals: { title: "which one is your pet?" } do %>
+        <p>Hackatime sees these projects. pick your pet. it may show twice, under its Godot name and its folder's name: pick one, then add the other.</p>
+        <ul class="guide-do-pick">
+          <% @others.each do |project| %>
+            <li class="<%= "now" if @coding_now.include?(project) %>">
+              <span><code><%= project.name %></code>
+                <span class="muted"><%= hours(project.total_seconds) %> ·
+                  <%= @coding_now.include?(project) ? "coding now" : "last active #{time_ago_in_words(project.most_recent_heartbeat)} ago" %></span></span>
+              <%= button_to "this is my pet", guide_link_path, params: { name: project.name, frame: @frame }, class: "btn small#{" primary" if project == @coding_now.first}" %>
+            </li>
+          <% end %>
+        </ul>
+        <p class="muted">don't see it? press <%= guide_keys :play %> in Godot, or type a few lines. this list checks every 10 seconds.</p>
+      <% end %>
+    <% else %>
+      <%= render layout: "guide_steps/step", locals: { title: nil } do %>
+        <p class="guide-do-waiting">waiting for Hackatime. it lists your project a minute or two after you code in Godot. this checks every 10 seconds.</p>
+        <details class="guide-do-help">
+          <summary>nothing after a few minutes?</summary>
+          <ul>
+            <li>the plugin is enabled: Project › Project Settings › Plugins.</li>
+            <li>Hackatime is set up on this computer: <a href="https://hackatime.hackclub.com/docs/getting-started/quick-start" target="_blank" rel="noopener">Hackatime's quick start</a>.</li>
+          </ul>
+        </details>
+      <% end %>
+    <% end %>
+
+    <% if @error %>
+      <p class="banner alert">could not reach Hackatime: <%= @error %></p>
+    <% end %>
+
+    <% if FakeServices.on? && ready && @frame == "pick-step" %>
+      <%= form_with url: dev_heartbeat_path, class: "guide-do-dev" do |f| %>
+        <%= hidden_field_tag :frame, @frame %>
+        <span class="muted">dev: Godot sends heartbeats as</span>
+        <%= text_field_tag :name, counted ? @pet.name.parameterize : "My very cool pet", aria: { label: "fake Hackatime project name" } %>
+        <%= f.submit "send", class: "btn small" %>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
