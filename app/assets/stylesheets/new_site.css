@@ -229,14 +229,24 @@ body.app:not(.in-window) > .sheet > .page > :last-child { margin-bottom: 0; }
 .pet-ships blockquote { font-size: 0.85rem; }
 .pet-body > .pet-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding-top: 4px; }
 .pet-waiting { color: var(--amber); font-size: 0.9rem; }
-.pet-new a { display: grid; place-content: center; justify-items: center; min-height: 200px; border: 2px dashed var(--blue); color: var(--blue); text-decoration: none; font-size: 1.1rem; }
-.pet-new a:hover, .pet-new a:focus-visible { background: var(--paper); }
-.pet-new-plus { font-size: 2.6rem; line-height: 1; }
+/* The new pet tile is a pet's window in shape: the same frame and title
+   bar, a place for a picture with a big plus in a dashed outline, and a
+   body as tall as a short pet's, with what to press. It stretches to the
+   tallest window in its row. */
+.pet-new { display: flex; align-self: stretch; }
+.pet-new-window { flex: 1; color: var(--ink); text-decoration: none; transition: box-shadow 0.15s; }
+.pet-new-window:hover { box-shadow: 0 8px 24px rgb(20 45 90 / 0.32); }
+.pet-new-window:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+.pet-new-well { display: grid; place-items: center; outline: 2px dashed var(--blue); outline-offset: -8px; }
+.pet-new-plus { color: var(--blue); font-size: 4.5rem; line-height: 1; transition: transform 0.15s; }
+.pet-new-window:hover .pet-new-plus, .pet-new-window:focus-visible .pet-new-plus { transform: scale(1.12); }
+.pet-new-body { min-height: 145px; justify-content: center; align-items: center; text-align: center; }
+.pet-new-note { color: var(--muted); font-size: 0.85rem; }
+@media (prefers-reduced-motion: reduce) { .pet-new-window, .pet-new-plus { transition: none; } }
 .pets-empty { max-width: 560px; margin: 0 auto; }
 .pets-empty .pet-body { gap: 12px; padding: 16px 18px 18px; }
 @media (max-width: 560px) {
   .pet-shots { aspect-ratio: 16 / 9; }
-  .pet-new a { min-height: 96px; }
 }
 /* A pet's own pages, new, edit, ship, and delete, are each one window like
    its card, as wide as the guide. Delete sits at the end of the form's

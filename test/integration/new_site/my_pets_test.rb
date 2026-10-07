@@ -29,7 +29,14 @@ class NewSiteMyPetsTest < ActionDispatch::IntegrationTest
     assert_select "h1.visually-hidden", "my pets"
     assert_select ".pet-list > li.pet-window", 3
     assert_select ".pet-title", text: "not mine", count: 0
-    assert_select ".pet-list > li.pet-new:last-child a[href=?]", new_project_path, /new pet/
+    # The last tile makes a new pet: one link, shaped like a pet's window.
+    assert_select ".pet-list > li.pet-new:last-child", 1 do
+      assert_select "a", 1
+      assert_select "a.pet-window.pet-new-window[href=?][aria-label=?]", new_project_path, "new pet" do
+        assert_select ".pet-titlebar .pet-title", "new pet"
+        assert_select ".pet-pane .pet-new-well .pet-new-plus", "+"
+      end
+    end
     # Nothing links to a page of the pet's own.
     [ rock, goose, fluffy ].each { assert_select "a[href=?]", project_path(it), 0 }
 

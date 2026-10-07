@@ -5,7 +5,8 @@
     two or more, its screenshots or a place for them, its
     state, its hours, its links and Hackatime projects, its ships with their
     reviews, and one main thing to do next. A pet has no page of its own:
-    /projects/:id comes to its card here. The last tile makes a new pet.
+    /projects/:id comes to its card here. The last tile makes a new pet,
+    in the shape of a pet's window.
     With no pet, one window says what a pet is and offers two ways to start.
     The open tab already names the page, so its heading is for screen
     readers only. %>
@@ -86,7 +87,21 @@
           </div>
         </li>
       <% end %>
-      <li class="pet-new"><%= link_to new_project_path do %><span class="pet-new-plus" aria-hidden="true">+</span> new pet<% end %></li>
+      <%# The last tile makes a new pet. It is one link, shaped like a pet's
+          window: a title bar, a place for a picture with a big plus, and a
+          body with what to press. %>
+      <li class="pet-new">
+        <%= link_to new_project_path, class: "pet-window pet-new-window", aria: { label: "new pet" } do %>
+          <span class="pet-titlebar"><span class="pet-title">new pet</span></span>
+          <span class="pet-pane">
+            <span class="pet-shots pet-new-well" aria-hidden="true"><span class="pet-new-plus">+</span></span>
+            <span class="pet-body pet-new-body" aria-hidden="true">
+              <span class="pet-new-note">a new desktop pet, in any language or engine</span>
+              <span class="btn primary small">+ new pet</span>
+            </span>
+          </span>
+        <% end %>
+      </li>
     </ul>
   <% else %>
     <section class="pet-window pets-empty" aria-labelledby="no-pets-title">
