@@ -3,9 +3,9 @@
     step has no button back, and the last none on. %>
 <nav class="guide-pager" aria-label="the step before and the step after">
   <% if (back = @step.previous) %>
-    <%= link_to guide_page_path(back), class: "btn guide-prev", rel: "prev", data: { action: "guide-pager#go" } do %><span aria-hidden="true">←</span> <span class="visually-hidden">previous step:</span> <%= back.name %><% end %>
+    <%= link_to guide_step_path(back), class: "btn guide-prev", rel: "prev", data: { action: "guide-pager#go" } do %><span aria-hidden="true">←</span> <span class="visually-hidden">previous step:</span> <%= guide_step_name(back) %><% end %>
   <% end %>
   <% if (on = @step.following) %>
-    <%= link_to guide_page_path(on), class: "btn primary guide-next", rel: "next", data: { action: "guide-pager#go" } do %><span class="visually-hidden">next step:</span> <%= on.name %> <span aria-hidden="true">→</span><% end %>
+    <%= link_to guide_step_path(on), class: "btn primary guide-next", rel: "next", data: { action: "guide-pager#go" } do %><span class="visually-hidden">next step:</span> <%= guide_step_name(on) %> <span aria-hidden="true">→</span><% end %>
   <% end %>
 </nav>

@@ -1,0 +1,23 @@
+<%# On the guide's bare address, /guide, /stardance, or /clubs, the guide
+    opens at the step this browser read last (guide_place_controller.js),
+    before the first step draws: the page stays hidden while it goes, and
+    shows again if it does not go. Only an address of one of this guide's
+    steps counts. A link to a step, or to a part of one, opens where it
+    says, and so does a page with a message to show. %>
+<% if params[:step].nil? && flash.empty? %>
+  <% content_for :head do %>
+    <meta name="turbo-cache-control" content="no-preview">
+    <script>
+      (() => {
+        if (location.hash) return
+        let place = null
+        try { place = JSON.parse(localStorage.getItem(<%= raw json_escape(guide_place_key.to_json) %>)) } catch {}
+        const paths = <%= raw json_escape(GuidePage.all.drop(1).map { guide_step_path(it) }.to_json) %>
+        if (!place || !paths.includes(place.path)) return
+        document.documentElement.style.visibility = "hidden"
+        setTimeout(() => { document.documentElement.style.visibility = "" }, 3000)
+        location.replace(place.path + location.search)
+      })()
+    </script>
+  <% end %>
+<% end %>

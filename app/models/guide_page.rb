@@ -12,19 +12,26 @@ class GuidePage < Data.define(:slug, :name, :anchors)
   def self.find(slug) = STEPS.find { it.slug == slug }
   def self.holding(anchor) = STEPS.find { it.anchors.include?(anchor) }
 
-  # A link to an anchor on the step that holds it: /guide/move#pick-project.
+  # A link to an anchor on the step that holds it: /guide/scene#pick-project.
   def self.href(anchor) = "#{holding(anchor).path}##{anchor}"
 
   # Every anchor and the address of the step that holds it.
   def self.anchor_paths = STEPS.flat_map { |step| step.anchors.map { [ it, step.path ] } }.to_h
 
+  # Parts that moved, by their old anchor and the anchor of the part that
+  # took their place. A link or a login that names the old part goes on to
+  # the new one. Hackatime is connected at the pick step now, not in Set up.
+  MOVED = { "connect-hackatime" => "pick-project", "hackatime-step" => "pick-step" }.freeze
+
   # Where a login or a Hackatime link begun at a step goes back to: that
   # step, at that anchor. A way back from before the steps, /guide#<anchor>,
   # goes to the step that holds the anchor, or to /guide when no step does.
-  # Any other address gives nil, so it cannot steer a login.
+  # One to a part that moved goes to the part that took its place. Any other
+  # address gives nil, so it cannot steer a login.
   def self.way_back(value)
     slug, anchor = value.to_s.match(%r{\A/guide(?:/([a-z]{1,20}))?#([a-z0-9-]{1,40})\z})&.captures
     return unless anchor
+    return href(MOVED[anchor]) if MOVED.key?(anchor)
     return (holding(anchor) ? href(anchor) : "/guide##{anchor}") unless slug
     "#{find(slug).path}##{anchor}" if find(slug)
   end
@@ -37,10 +44,10 @@ class GuidePage < Data.define(:slug, :name, :anchors)
 
   STEPS = [
     new(slug: "setup", name: "Set up",
-        anchors: %w[sign-in-title sign-in setup-godot hackatime connect-hackatime hackatime-step github sync commands in-godot in-the-terminal]),
-    new(slug: "scene", name: "Build the scene", anchors: %w[start transparent]),
+        anchors: %w[sign-in-title sign-in setup-godot hackatime github sync commands in-godot in-the-terminal]),
+    new(slug: "scene", name: "Build the scene", anchors: %w[start transparent pick-project pick-step]),
     new(slug: "art", name: "Art and script", anchors: %w[pretty script]),
-    new(slug: "move", name: "Make it move", anchors: %w[movement pick-project pick-step on-screen bounce]),
+    new(slug: "move", name: "Make it move", anchors: %w[movement on-screen bounce]),
     new(slug: "animate", name: "Animate and drag", anchors: %w[animations break drag]),
     new(slug: "publish", name: "Publish and ship", anchors: %w[your-own publish it-s-time-to-upload-your-project-to-itch ship ship-step])
   ].freeze

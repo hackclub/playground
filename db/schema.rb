@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_07_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_07_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -48,6 +48,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_200000) do
     t.index ["user_id", "hour"], name: "index_coding_hours_on_user_id_and_hour", unique: true
     t.check_constraint "hour = date_trunc('hour'::text, hour)", name: "coding_hours_hour_is_whole"
     t.check_constraint "seconds >= 0 AND seconds <= 3600", name: "coding_hours_seconds_fit_the_hour"
+  end
+
+  create_table "guide_reader_days", force: :cascade do |t|
+    t.date "day", null: false
+    t.string "guide", null: false
+    t.integer "readers", default: 0, null: false
+    t.index ["day", "guide"], name: "index_guide_reader_days_on_day_and_guide", unique: true
   end
 
   create_table "nps_responses", force: :cascade do |t|

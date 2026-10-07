@@ -32,9 +32,14 @@ class ProgramStats
   Signups = Data.define(:days, :before)
   # A day of the window. A day after today has no figures yet.
   CodingDay = Data.define(:date, :seconds, :people, :signups, :counted)
-  # A day so far and who was active on it, most time first.
-  ActiveDay = Data.define(:date, :people, :today) do
+  # A day so far and who was active on it, most time first, with how many
+  # browsers read Stardance's or the clubs' guide long enough that day
+  # (GuideReaderDay), by guide: { "stardance" => 12 }. Readers have no
+  # account, so they are a count, not people.
+  ActiveDay = Data.define(:date, :people, :today, :readers) do
     def count = people.size
+    def reader_count = readers.values.sum
+    def total = count + reader_count
   end
   # A participant active on a day, and why: seconds by kind of activity,
   # as { coded: 1200 }. Hackatime time is the only kind so far. Another
@@ -260,14 +265,18 @@ class ProgramStats
   end
 
   # The window's days up to today, each with who was active on it. Active
-  # is stricter than the coding days' people, who count with any time.
+  # is stricter than the coding days' people, who count with any time. Each
+  # day also counts the side guides' readers, who have no account.
   def active_days
     @active_days ||= begin
       coded = @coding.per_day_and_user(at_least: ACTIVE_CODING_SECONDS)
       users = @people.to_h { [ it.id, it.user ] }
-      coding_days.select(&:counted).map do |day|
+      days = coding_days.select(&:counted)
+      readers = GuideReaderDay.per_day(days.map(&:date))
+      days.map do |day|
         people = coded.fetch(day.date, []).filter_map { |id, seconds| Active.new(user: users[id], reasons: { coded: seconds }) if users[id] }
-        ActiveDay.new(date: day.date, people: people.sort_by { [ -it.seconds, it.user.id ] }, today: day.date == today)
+        ActiveDay.new(date: day.date, people: people.sort_by { [ -it.seconds, it.user.id ] }, today: day.date == today,
+                      readers: readers.fetch(day.date, {}))
       end
     end
   end

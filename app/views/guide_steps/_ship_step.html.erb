@@ -30,7 +30,7 @@
     <% end %>
   <% when :pick %>
     <%= render layout: "guide_steps/step", locals: { title: "ship your pet", waiting: true } do %>
-      <p class="muted">first <%= link_to "pick your pet's Hackatime project", GuidePage.href("pick-project") %>, after Movement.</p>
+      <p class="muted">first <%= link_to "pick your pet's Hackatime project", GuidePage.href("pick-project") %>, at the end of Build the scene.</p>
     <% end %>
   <% when :review %>
     <%= render layout: "guide_steps/step", locals: { title: "#{pet.name} is in review", just_done: local_assigns[:just_shipped] } do %>

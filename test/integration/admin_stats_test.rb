@@ -133,6 +133,51 @@ class AdminStatsTest < ActionDispatch::IntegrationTest
     assert_select ".dau-list a[href=?]", admin_person_path(@admin), 0
   end
 
+  test "a: Stardance and Clubs readers stack on each day's bar, with a legend, and each day's list counts them" do
+    GuideReaderDay.create!(day: Date.new(2026, 9, 29), guide: "stardance", readers: 12)
+    GuideReaderDay.create!(day: Date.new(2026, 9, 29), guide: "clubs", readers: 3)
+    GuideReaderDay.create!(day: Date.new(2026, 9, 30), guide: "clubs", readers: 2)
+    # Before the window opened, readers do not show.
+    GuideReaderDay.create!(day: Date.new(2026, 9, 27), guide: "stardance", readers: 40)
+    days = ProgramStats.new.active_days
+    assert_equal [ {}, { "stardance" => 12, "clubs" => 3 }, { "clubs" => 2 } ], days.map(&:readers)
+    assert_equal [ 0, 15, 2 ], days.map(&:reader_count)
+    tuesday = days[1]
+    assert_equal tuesday.count + 15, tuesday.total
+    top = days.map(&:total).max
+
+    get admin_stats_path
+    assert_match "a Stardance or Clubs reader: 20 minutes or more in their guide that day, counted with no name.", text_of_page
+    assert_select ".dau-legend .key", 3
+    assert_select ".dau-legend", text: /playground participants\s+Stardance readers\s+Clubs readers/
+    assert_select "button.dau-day[data-date='2026-09-29'][aria-label=?]",
+                  "Tue September 29: #{tuesday.count} people active, 12 Stardance readers, 3 Clubs readers"
+    assert_select "button.dau-day[data-date='2026-09-29']" do |bar|
+      assert_select ".count", tuesday.total.to_s
+      # The clubs' readers on top, Stardance's under them, and the participants at the bottom.
+      assert_equal [ [ "fill dau-clubs", (3.0 / top).round(3) ], [ "fill dau-stardance", (12.0 / top).round(3) ], [ "fill", (tuesday.count.to_f / top).round(3) ] ],
+                   bar.css(".fill").map { [ it["class"], it["style"][/--h: ([\d.]+)/, 1].to_f ] }
+    end
+    assert_select "button.dau-day[data-date='2026-09-28'] .fill", 1
+    assert_select ".dau-list#active-2026-09-29 p.dau-readers", "and 12 Stardance readers, 3 Clubs readers (20+ min in the guide)"
+    assert_select ".dau-list#active-2026-09-30 p.dau-readers", "and 2 Clubs readers (20+ min in the guide)"
+    assert_select ".dau-list#active-2026-09-28 p.dau-readers", 0
+  end
+
+  test "a: a day with only guide readers charts them, and lists them without a table" do
+    travel_to Time.utc(2026, 10, 2, 16)
+    GuideReaderDay.create!(day: Date.new(2026, 10, 1), guide: "stardance", readers: 1)
+    get admin_stats_path
+    assert_select "button.dau-day[data-date='2026-10-01'][aria-label=?]", "Thu October 1: 0 people active, 1 Stardance reader"
+    assert_select "button.dau-day[data-date='2026-10-01'] .count", "1"
+    assert_select "button.dau-day[data-date='2026-10-01'] .fill.dau-stardance", 1
+    assert_select ".dau-list#active-2026-10-01" do
+      assert_select "table", 0
+      assert_select "p.muted", 0
+      assert_select "p.dau-readers", "1 Stardance reader (20+ min in the guide)"
+    end
+  end
+
   test "a: a day nobody was active has an empty bar and says so, and it is pressed when it is today" do
     travel_to Time.utc(2026, 10, 2, 16)
     get admin_stats_path

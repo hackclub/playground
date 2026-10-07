@@ -1,7 +1,9 @@
-<%# The step to set up: sign in, Godot with the Hackatime plugin, Hackatime
-    connected, the GitHub repository, and the commands to know. %>
+<%# The step to set up: sign in, Godot with the Hackatime plugin, the GitHub
+    repository, and the commands to know. Hackatime is connected later, at
+    the pick step, once the pet has hours to show. A side guide (SideGuide)
+    has no sign in, and a club's guide no Hackatime at all. %>
 <%# Signed in, there is nothing to do here. Sign out is in the top bar. %>
-<% unless current_user %>
+<% unless current_user || side_guide %>
   <section aria-labelledby="sign-in-title">
     <h2 id="sign-in-title">Sign in</h2>
     <%= render "guide_steps/sign_in_step" %>
@@ -14,24 +16,19 @@
   <p>Open Godot, click Create New Project, name your game, select the Compatibility renderer, for Project Path select a Game folder, and click Create.</p>
   <%= guide_step_video "new-project", "Screen recording: the Create New Project window, with the name My very cool pet, the Compatibility renderer picked, and Create clicked." %>
 
+  <% if guide_hackatime? %>
   <h3 id="hackatime">Install Godot Hackatime, and set up Hackatime on your machine</h3>
   <p>Open the Asset Store tab, search for Wakatime, and install “Godot Super Wakatime” by BartoszB</p>
   <%= guide_step_video "install-wakatime", "Screen recording: Godot's Asset Store tab, searching for wakatime and installing Godot Super Wakatime." %>
   <p>Then enable the plugin. Go to <strong>Project &gt; Project Settings &gt; Plugins</strong>, find “Godot Super Wakatime” in the list, and tick its Enabled checkbox.</p>
   <%= guide_step_shot "plugins-tab-enabled", "Godot's Project Settings window on the Plugins tab, with Godot Super-Wakatime listed and its Enabled checkbox ticked." %>
   <p>If needed, set up Hackatime according to the guide, here: <a href="https://hackatime.hackclub.com/docs/getting-started/quick-start" target="_blank" rel="noopener">https://hackatime.hackclub.com/docs/getting-started/quick-start</a></p>
-</section>
-
-<section aria-labelledby="connect-hackatime">
-  <h2 id="connect-hackatime">Connect Hackatime</h2>
-  <%# Hackatime's steps ask Hackatime again while they wait, in frames of their own. %>
-  <%= turbo_frame_tag "hackatime-step", src: guide_check_path(frame: "hackatime-step"), class: "guide-steps" %>
+  <% end %>
 </section>
 
 <section aria-labelledby="github">
   <h2 id="github">Make a GitHub Repository</h2>
   <p>GitHub is a website that allows anyone to share their code, and keep it safe.</p>
-  <p>Go to <a href="https://github.com" target="_blank" rel="noopener">github.com</a> and sign up if you don’t already have an account.</p>
   <p>open <a href="https://github.com/new" target="_blank" rel="noopener">https://github.com/new</a> to create a new repository, name it, make it public. Don’t add a license or gitignore as this will make the next step harder. You can add one later !</p>
   <%= guide_step_video "github-repo", "Screen recording: GitHub's new repository page, naming the repository My very cool pet, keeping it public, and creating it." %>
 </section>

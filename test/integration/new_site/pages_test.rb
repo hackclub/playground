@@ -42,11 +42,13 @@ class NewSitePagesTest < ActionDispatch::IntegrationTest
 
   test "the pages with fields keep out of Turbo's preview, and the others keep it" do
     project = log_in("participant").projects.create!(name: "rock")
-    [ new_project_path, edit_project_path(project), ship_project_path(project), checks_project_path(project) ].each do |path|
+    # And the guide's bare address, which may open at the step this browser
+    # read last, so it shows no copy of the first step meanwhile.
+    [ new_project_path, edit_project_path(project), ship_project_path(project), checks_project_path(project), guide_path ].each do |path|
       get path
       assert_select NO_PREVIEW, 1, path
     end
-    [ projects_path, delete_project_path(project), guide_path ].each do |path|
+    [ projects_path, delete_project_path(project), guide_page_path("setup"), guide_page_path("move") ].each do |path|
       get path
       assert_select NO_PREVIEW, 0, path
     end

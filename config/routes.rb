@@ -6,6 +6,12 @@ Rails.application.routes.draw do
   get "requirements" => "requirements#show"
   # nps.exe's form, and its answers.
   resource :nps, only: %i[show create], controller: "nps_responses"
+  # The guide for readers who come from Stardance or from a club, open to
+  # everyone, with nothing that needs an account (SideGuide): /stardance,
+  # /stardance/move, /clubs.
+  get ":guide(/:step)" => "side_guides#show", as: :side_guide, constraints: { guide: /stardance|clubs/, step: /[a-z]+/ }
+  # A browser that read one of them long enough on a day says so, once.
+  post "guide_readers" => "guide_readers#create", as: :guide_readers
   resources :projects do
     get :checks, on: :member
     get :trash, on: :member

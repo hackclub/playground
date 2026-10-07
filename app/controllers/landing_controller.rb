@@ -4,8 +4,13 @@
 class LandingController < ApplicationController
   layout -> { new_site? ? "app" : "landing" }
 
-  # A signed-in participant's pets are icons on the desktop.
+  # A signed-in participant's pets are icons on the desktop. A browser that
+  # opened Stardance's or the clubs' guide (SideGuide) goes back to it,
+  # signed out. A signed-in participant has an account, so this site's
+  # landing is theirs.
   def show
+    side = !current_user && SideGuide.find(cookies[SideGuide::COOKIE])
+    return redirect_to(side_guide_path(side)) if side
     return new_site_landing if new_site?
     @pets = current_user&.projects&.order(:id)&.map(&:desktop_icon)
   end

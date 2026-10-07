@@ -354,6 +354,12 @@ h2.inline { display: inline; }
 .dau-day:hover .well { background: var(--wash); }
 .dau-day[aria-pressed=true] .well { background: #dbe6f5; }
 .dau-day[aria-pressed=true] .fill { background: var(--ink); }
+/* Readers of Stardance's and the clubs' guides stack on a day's
+   participants, a colour a guide, the same when the day is pressed. */
+.dau-day .fill.dau-stardance, .key.dau-stardance { background: var(--amber); }
+.dau-day .fill.dau-clubs, .key.dau-clubs { background: var(--green); }
+.key.dau-coded { background: var(--blue); }
+.dau-readers { margin: 6px 0 0; }
 .dau-day[aria-pressed=true] .day-label { background: var(--ink); color: var(--paper); }
 .dau-day:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
 .dau-list .list { max-width: 560px; }

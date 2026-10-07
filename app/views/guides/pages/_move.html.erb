@@ -1,5 +1,4 @@
-<%# The step to make it move: walk, then pick the pet's Hackatime project,
-    keep it on screen, and bounce. The pick step has a heading of its own. %>
+<%# The step to make it move: walk, keep it on screen, and bounce. %>
 <section aria-labelledby="movement">
   <h2 id="movement">Movement</h2>
   <%= guide_code "movement" %>
@@ -19,12 +18,6 @@
   <%= guide_step_shot "embed-game-off", "The embedded game's three dot menu, with Embed Game on Next Play turned off." %>
   <p>under the 3 dot menu on the right of the embedded player, disable ‘Embed Game on Next Play’</p>
   <p>Press <%= guide_keys :play %> again to try it, and you should see it move! It will walk straight off your screen though, which is what we’ll fix now.</p>
-</section>
-
-<section aria-labelledby="pick-project">
-  <h2 id="pick-project">Pick your pet's project</h2>
-  <%# By now the participant has coded in Godot, so Hackatime lists the project. %>
-  <%= turbo_frame_tag "pick-step", src: guide_check_path(frame: "pick-step"), class: "guide-steps" %>
 </section>
 
 <section aria-labelledby="on-screen">

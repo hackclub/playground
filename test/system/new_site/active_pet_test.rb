@@ -18,10 +18,11 @@ class NewSiteActivePetSystemTest < ApplicationSystemTestCase
   teardown { ActionController::Base.allow_forgery_protection = false }
 
   test "a pick from the pick step switches it in place, and the next step card follows" do
-    visit "/guide/move#pick-step"
+    visit "/guide/scene#pick-step"
     assert_selector "#pick-step .pet-switch summary strong", text: "pebble"
-    # The card hides while its part of the guide, here the pick step, is on screen.
-    assert_selector "#hub-next #next-title", visible: :all, exact_text: "pick your pet's project"
+    # The card hides while its part of the guide, here the pick step, is on
+    # screen. pebble has no Hackatime project, so the card goes to the pick.
+    assert_equal "link pebble to Hackatime", find("#hub-next #next-title", visible: :all).text(:all)
     page.execute_script("document.documentElement.dataset.stillHere = ''")
 
     find("#pick-step .pet-switch summary").click

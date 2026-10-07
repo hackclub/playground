@@ -1,7 +1,8 @@
 <%# The guide, the hub's main column, one step at a time (GuidePage). Its
     steps that act on the site sit where the participant does that thing:
     sign in first, Hackatime where the plugin goes in, the pet's project
-    after Movement, and ship at the end. %>
+    at the end of Build the scene, and ship at the end. A side guide (SideGuide) has none
+    of them. %>
 <article class="guide panel" id="guide" data-controller="os-note">
   <header>
     <%# Shown only inside guide.txt's window, for reading it full size. %>
@@ -13,7 +14,7 @@
     <% end %>
     <%# The step that shows is marked in the list below, or in the outline
         beside the guide. A screen reader hears it here too. %>
-    <p class="visually-hidden">step <%= @step.number %> of <%= GuidePage.all.size %>: <%= @step.name %></p>
+    <p class="visually-hidden">step <%= @step.number %> of <%= GuidePage.all.size %>: <%= guide_step_name(@step) %></p>
   </header>
 
   <%# Every step, to go to any of them. Where the outline beside the guide
@@ -21,7 +22,7 @@
   <nav class="guide-contents" aria-label="the guide's steps">
     <ol>
       <% GuidePage.all.each do |step| %>
-        <li><%= link_to guide_page_path(step), aria: { current: ("page" if step == @step) }, data: { action: "guide-pager#go" } do %><span class="guide-contents-number"><%= step.number %></span> <%= step.name %><% end %></li>
+        <li><%= link_to guide_step_path(step), aria: { current: ("page" if step == @step) }, data: { action: "guide-pager#go" } do %><span class="guide-contents-number"><%= step.number %></span> <%= guide_step_name(step) %><% end %></li>
       <% end %>
     </ol>
   </nav>

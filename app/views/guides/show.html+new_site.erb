@@ -1,9 +1,12 @@
 <% content_for :title, [ (@step.name unless @step == GuidePage.first), "Build a desktop pet in Godot" ].compact.join(" · ") %>
 <%= render "guides/old_links" %>
+<%= render "guides/reopen" %>
 <%# The guide, centered, one step at a time, with buttons under it to the
     step before and the step after. On its left, the next step and the
     guide's outline. On its right, a signed-in participant's hours. %>
-<div class="hub" data-controller="guide-pager">
+<div class="hub" data-controller="guide-pager guide-place"
+     data-guide-place-key-value="<%= guide_place_key %>" data-guide-place-steps-value="<%= GuidePage.all.map(&:slug).to_json %>"
+     data-guide-place-step-value="<%= @step.slug %>" data-guide-place-path-value="<%= guide_step_path(@step) %>">
   <nav class="hub-left" aria-label="where to go">
     <% if current_user %><%= render "guides/side_frame", part: "next" %><% end %>
     <%= render "guides/outline" %>

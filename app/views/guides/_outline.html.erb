@@ -5,7 +5,7 @@
   <ol>
     <% GuidePage.all.each do |step| %>
       <li class="outline-step">
-        <%= link_to guide_page_path(step), aria: { current: ("page" if step == @step) }, data: { action: "guide-pager#go" } do %><span class="outline-number"><%= step.number %></span> <%= step.name %><% end %>
+        <%= link_to guide_step_path(step), aria: { current: ("page" if step == @step) }, data: { action: "guide-pager#go" } do %><span class="outline-number"><%= step.number %></span> <%= guide_step_name(step) %><% end %>
         <% if step == @step %><ol data-outline-target="sections"></ol><% end %>
       </li>
     <% end %>

@@ -2,12 +2,16 @@
     an email, a Slack post, or the old desktop's guide window, names a part
     by its anchor. A browser never sends the anchor, so this script sends the
     reader on to the step that holds it, at that part, before the step shown
-    here draws. An anchor on this step, or one no step holds, stays. %>
+    here draws. A part that moved (GuidePage::MOVED) sends the reader on to
+    the part that took its place. An anchor on this step, or one no step
+    holds, stays. %>
 <script>
   (() => {
     const steps = <%= raw json_escape(GuidePage.anchor_paths.to_json) %>
-    const anchor = decodeURIComponent(location.hash.slice(1))
+    const moved = <%= raw json_escape(GuidePage::MOVED.to_json) %>
+    const asked = decodeURIComponent(location.hash.slice(1))
+    const anchor = Object.hasOwn(moved, asked) ? moved[asked] : asked
     const step = Object.hasOwn(steps, anchor) && steps[anchor]
-    if (step && step !== <%= raw json_escape(@step.path.to_json) %>) location.replace(step + location.hash)
+    if (step && (step !== <%= raw json_escape(@step.path.to_json) %> || anchor !== asked)) location.replace(`${step}#${anchor}`)
   })()
 </script>

@@ -39,6 +39,12 @@ module StatsHelper
   ACTIVE_BECAUSE = { coded: "coded" }.freeze
   def active_because(person) = person.reasons.map { |kind, seconds| "#{ACTIVE_BECAUSE.fetch(kind)} #{hours(seconds)}" }.join(", ")
 
+  # A day's readers of Stardance's and the clubs' guides, as "12 Stardance
+  # readers, 3 Clubs readers", or nil on a day with none.
+  def guide_readers(day)
+    SideGuide.all.filter_map { |guide| (read = day.readers[guide.slug].to_i).positive? && pluralize(read, "#{guide.name} reader") }.join(", ").presence
+  end
+
   # A bar in the meter's approved fill and ink outline.
   def bar(fraction) = tag.div(tag.span(style: "width: #{(100 * fraction.to_f).round(1)}%"), class: "bar")
 

@@ -1,0 +1,37 @@
+<%# The side guides' layout (SideGuidesController): the new site's look for
+    everyone, with no flag. It loads the new site's stylesheet and scripts,
+    as layouts/app.html+new_site.erb does, and both stylesheets carry
+    Turbo's reload mark, so a visit to a page of the desktop site loads in
+    full. Its top bar holds only the logo, which goes back to this guide,
+    and help. %>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= [ content_for(:title), "playground" ].compact_blank.join(" · ") %></title>
+    <%= render "shared/icons" %>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= render "shared/link_preview", **(@link_preview || {}) %>
+    <%= stylesheet_link_tag "playground", "new_site", "data-turbo-track": "reload" %>
+    <%= render "shared/plausible" %>
+    <%= javascript_importmap_tags %>
+    <%= new_site_controllers_tag %>
+    <%= yield :head %>
+  </head>
+  <body class="app new-site side-guide">
+    <header class="topbar">
+      <%= link_to side_guide_path(side_guide), class: "topbar-home" do %><%= image_tag "landing/logo.png", alt: "playground, back to the guide" %><% end %>
+      <nav class="topbar-links" aria-label="help">
+        <a href="https://hackclub.slack.com/archives/C0ASBTMS82H" target="_blank" rel="noopener">help in #playground</a>
+      </nav>
+    </header>
+    <div class="sheet">
+      <main class="page">
+        <%= yield %>
+      </main>
+      <%= render "shared/footbar" %>
+    </div>
+  </body>
+</html>

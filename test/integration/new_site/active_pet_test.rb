@@ -34,12 +34,12 @@ class NewSiteActivePetTest < ActionDispatch::IntegrationTest
     pebble = @user.projects.create!(name: "pebble")
     # Unset, the guide is about the newest pet that never shipped.
     assert_equal %w[pebble pebble pebble], switch_names
-    assert_select "#hub-next #next-title", "pick your pet's project"
+    assert_select "#hub-next #next-title", "link pebble to Hackatime"
     get guide_check_path(frame: "pick-step")
     assert_select ".pet-switch .pet-switch-current[aria-current=true]", /\Apebble/
     assert_select ".pet-switch form[action=?][data-turbo-frame=pick-step] button", active_pet_path, "rock"
     assert_select ".pet-switch form input[name=pet_id][value=?]", @rock.id.to_s
-    assert_select ".pet-switch form input[name=origin][value=?]", "/guide/move#pick-step"
+    assert_select ".pet-switch form input[name=origin][value=?]", "/guide/scene#pick-step"
 
     # From the pick step: it draws its frame again, which tells the others.
     patch active_pet_path, params: { pet_id: @rock.id }, headers: { "Turbo-Frame" => "pick-step" }
@@ -56,7 +56,7 @@ class NewSiteActivePetTest < ActionDispatch::IntegrationTest
     assert_redirected_to guide_ship_path
     follow_redirect!
     assert_select "turbo-frame#ship-step .pet-switch[data-active-pet-just-set-value=true] summary strong", "pebble"
-    assert_select "#ship-step a[href=?]", "/guide/move#pick-project"
+    assert_select "#ship-step a[href=?]", "/guide/scene#pick-project"
     patch active_pet_path, params: { pet_id: @rock.id }, headers: { "Turbo-Frame" => "hub-next" }
     assert_redirected_to guide_side_path(part: "next")
     follow_redirect!
@@ -66,8 +66,8 @@ class NewSiteActivePetTest < ActionDispatch::IntegrationTest
 
   test "without scripts, a switch goes back to its part of the guide, and only to the guide" do
     @user.projects.create!(name: "pebble")
-    patch active_pet_path, params: { pet_id: @rock.id, origin: "/guide/move#pick-step" }
-    assert_redirected_to "/guide/move#pick-step"
+    patch active_pet_path, params: { pet_id: @rock.id, origin: "/guide/scene#pick-step" }
+    assert_redirected_to "/guide/scene#pick-step"
     assert_nil flash[:active_pet_set]
     patch active_pet_path, params: { pet_id: @rock.id, origin: "https://example.com/#pick-step" }
     assert_redirected_to guide_path

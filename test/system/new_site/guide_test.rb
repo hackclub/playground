@@ -116,14 +116,23 @@ class NewSiteGuideSystemTest < ApplicationSystemTestCase
   end
 
   test "an old link to the one long page lands on the step that holds its anchor, at that anchor" do
-    { "movement" => "/guide/move", "pick-step" => "/guide/move", "pick-project" => "/guide/move", "transparent" => "/guide/scene", "drag" => "/guide/animate" }.each do |anchor, path|
+    { "movement" => "/guide/move", "transparent" => "/guide/scene", "drag" => "/guide/animate" }.each do |anchor, path|
       visit "/guide##{anchor}"
       assert_selector "article.guide ##{anchor}"
       assert_equal "#{path}##{anchor}", page.evaluate_script("location.pathname + location.hash")
       assert_near_top "##{anchor}"
     end
-    # The ship step is near the bottom of the last step, so it shows, as far
-    # down as the page scrolls.
+    # Connect Hackatime moved to the pick step, so a link to it lands there.
+    visit "/guide/setup#connect-hackatime"
+    assert_selector "article.guide #pick-project"
+    assert_equal "/guide/scene#pick-project", page.evaluate_script("location.pathname + location.hash")
+    # The pick step ends Build the scene, and the ship step is near the
+    # bottom of the last step, so each shows, as far down as the page scrolls.
+    %w[pick-project pick-step].each do |anchor|
+      visit "/guide##{anchor}"
+      assert_equal "/guide/scene##{anchor}", page.evaluate_script("location.pathname + location.hash")
+      assert page.evaluate_script("(r => r.top >= 0 && r.top < innerHeight)(document.getElementById(arguments[0]).getBoundingClientRect())", anchor)
+    end
     visit "/guide#ship-step"
     assert_equal "/guide/publish#ship-step", page.evaluate_script("location.pathname + location.hash")
     assert page.evaluate_script("(r => r.top >= 0 && r.top < innerHeight)(document.getElementById('ship-step').getBoundingClientRect())")
@@ -204,9 +213,9 @@ class NewSiteGuideSystemTest < ApplicationSystemTestCase
     assert_selector ".hub-outline ol ol a.current", exact_text: "Important commands"
     assert_equal "#commands", page.evaluate_script("location.hash")
     # A link to a part marks its section, as the next step card's does.
-    visit "/guide/move#pick-project"
+    visit "/guide/scene#pick-project"
     assert_selector ".hub-outline ol ol a.current", exact_text: "Pick your pet's project"
-    visit "/guide/move#pick-step"
+    visit "/guide/scene#pick-step"
     assert_selector ".hub-outline ol ol a.current", exact_text: "Pick your pet's project"
   end
 

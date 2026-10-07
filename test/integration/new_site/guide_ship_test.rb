@@ -21,11 +21,11 @@ class NewSiteGuideShipTest < ActionDispatch::IntegrationTest
   test "with no pet, or a pet with no Hackatime project, the step points back to the pick step" do
     @project.destroy!
     get guide_ship_path
-    assert_select "#ship-step a[href=?]", "/guide/move#pick-project", "pick your pet's Hackatime project"
+    assert_select "#ship-step a[href=?]", "/guide/scene#pick-project", "pick your pet's Hackatime project"
     assert_select "#ship-checks", 0
     @user.projects.create!(name: "pebble")
     get guide_ship_path
-    assert_select "#ship-step a[href=?]", "/guide/move#pick-project"
+    assert_select "#ship-step a[href=?]", "/guide/scene#pick-project"
     assert_select "#ship-checks", 0
   end
 

@@ -61,13 +61,41 @@ class NewSiteGateTest < ActionDispatch::IntegrationTest
     paths = Rails.application.routes.routes.select { it.verb == "GET" && it.defaults[:controller] }
                  .map { it.path.spec.to_s.delete_suffix("(.:format)") }
                  .reject { it.start_with?("/rails/", "/admin", "/dev/", "/assets", "/cable", "/up") }
-                 .map { it.gsub(":id", pet.id.to_s).gsub(":step", "move").gsub(":provider", "hack_club") }.uniq
+                 .map { it.gsub(":id", pet.id.to_s).gsub(":step", "move").gsub(":provider", "hack_club").gsub(":guide", "stardance").delete("()") }.uniq
+    # Stardance's and the clubs' guides (SideGuide) are open to everyone.
+    side_guides = paths.select { it.start_with?("/stardance") }
+    assert_equal [ "/stardance/move" ], side_guides
+    paths -= side_guides
     assert_operator paths.size, :>, 15
     [ nil, user ].each do |who|
       sign_in_as(who) if who
+      cookies.delete(SideGuide::COOKIE.to_s)
+      # Twice, so a page that changes on its first visit, as the Hackatime
+      # step after a login does, has settled.
+      bodies = 2.times.map do
+        paths.to_h do |path|
+          get path
+          assert_desktop_site "#{who ? "participant" : "visitor"} #{path}"
+          [ path, page_as_served ]
+        end
+      end.last
+
+      # Every one shows the side guide, with no account, and no flag.
+      SideGuide.all.each do |guide|
+        get side_guide_path(guide, "move")
+        assert_select "body.new-site.side-guide .hub-outline", 1
+        assert_select ".topbar-tabs, #pick-step", 0
+      end
+
+      # Having opened one, every page of the desktop site is the same to the
+      # byte, but / for a visitor, which goes back to the guide.
       paths.each do |path|
         get path
-        assert_desktop_site "#{who ? "participant" : "visitor"} #{path}"
+        if path == "/" && !who
+          assert_redirected_to side_guide_path("clubs")
+        else
+          assert_equal bodies[path], page_as_served, "#{who ? "participant" : "visitor"} #{path} after a side guide"
+        end
       end
     end
   end
@@ -191,6 +219,17 @@ class NewSiteGateTest < ActionDispatch::IntegrationTest
     GuidePage.all.map { [ :get, guide_page_path(it) ] } +
       [ [ :get, guide_check_path ], [ :get, guide_side_path ], [ :get, guide_ship_path ], [ :post, guide_link_path ],
         [ :patch, active_pet_path ], [ :get, "/projects/#{pet.id}/ship" ], [ :get, delete_project_path(pet) ] ]
+  end
+
+  # What a request served, to compare: a page's HTML, or a not found's
+  # status, since its debug page names the test's line.
+  def page_as_served = response.status == 404 ? 404 : [ response.status, without_tokens(response.body) ]
+
+  # A page's HTML without its CSRF tokens, which change on every request,
+  # and without a flash message, which the request before it left.
+  def without_tokens(body)
+    body.gsub(/(name="csrf-token" content=")[^"]+/, '\\1').gsub(/(name="authenticity_token" value=")[^"]+/, '\\1')
+        .gsub(%r{<p class="flash \w+">[^<]*</p>}, "")
   end
 
   def assert_desktop_site(message)

@@ -1,7 +1,7 @@
-# The guide's Hackatime steps, each a frame inside the guide: link Hackatime
-# where the plugin goes in, and, once the participant has coded, pick the
-# pet's project from Hackatime's list, which asks Hackatime again while it
-# waits. Picking a project makes the pet when there is none.
+# The guide's Hackatime step, a frame inside the guide: once the participant
+# has coded, pick the pet's project from Hackatime's list, which asks
+# Hackatime again while it waits, connecting Hackatime first if it is not
+# yet. Picking a project makes the pet when there is none.
 #
 # The guide's pet is the one the participant set active, or with none, the
 # newest pet that never shipped (GuidePet).
@@ -10,7 +10,7 @@ class GuideStepsController < ApplicationController
   CODING_NOW = 10.minutes
   # The list shows this many projects, most recent first.
   LISTED = 8
-  FRAMES = %w[hackatime-step pick-step].freeze
+  FRAMES = %w[pick-step].freeze
 
   before_action :require_new_site
   before_action :require_login, only: %i[link side ship]

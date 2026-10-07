@@ -1,0 +1,21 @@
+<% content_for :title, [ (guide_step_name(@step) unless @step == GuidePage.first), "Build a desktop pet in Godot" ].compact.join(" · ") %>
+<%= render "guides/reopen" %>
+<%# The guide, centered, one step at a time, with buttons under it to the
+    step before and the step after, and its outline on the left. Nothing
+    else sits beside it. While the tab shows, it counts this browser's
+    reading time for the day (guide_reading_controller.js), and it keeps the
+    reader's place in this guide (guide_place_controller.js). %>
+<div class="hub side-guide-hub" data-controller="guide-pager guide-reading guide-place"
+     data-guide-place-key-value="<%= guide_place_key %>" data-guide-place-steps-value="<%= GuidePage.all.map(&:slug).to_json %>"
+     data-guide-place-step-value="<%= @step.slug %>" data-guide-place-path-value="<%= guide_step_path(@step) %>"
+     data-guide-reading-guide-value="<%= side_guide.slug %>"
+     data-guide-reading-seconds-value="<%= SideGuide.reading_seconds %>"
+     data-guide-reading-url-value="<%= guide_readers_path %>">
+  <nav class="hub-left" aria-label="where to go">
+    <%= render "guides/outline" %>
+  </nav>
+  <div class="hub-main">
+    <%= render "guides/article" %>
+    <%= render "guides/pager" %>
+  </div>
+</div>

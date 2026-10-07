@@ -26,6 +26,7 @@
   <p>to do this we need to adjust the project’s settings.</p>
   <p>Click Project &gt; Project Settings…</p>
   <%= guide_step_shot "project-settings-menu", "Godot's Project menu, with Project Settings… at the top." %>
+  <p>make sure the <strong>Advanced Settings</strong> toggle in the top right of Project Settings is on, or some of the settings below won’t show up.</p>
   <p>under the Window tab on the left of the Project Settings menu we want to change a couple settings.</p>
   <p>set Viewport Width to 200, and Viewport Height to 200. Just enough for your pet!</p>
   <p>make sure</p>
@@ -36,10 +37,19 @@
   </ul>
   <p>are on</p>
   <%= guide_step_shot "window-settings", "Project Settings at Display, Window: Viewport Width and Viewport Height are 200, and Borderless, Always on Top, and Transparent are on." %>
+  <p>Then search for <strong>Per Pixel</strong>, select Window and enable Per Pixel Transparency</p>
+  <%= guide_step_shot "per-pixel-transparency", "Project Settings searched for per Pixel, with Window selected and Per Pixel Transparency, Allowed, on." %>
   <p>once you’ve done that search for <strong>Rendering</strong> in the top bar, select Viewport and enable Transparent Background</p>
   <%= guide_step_shot "transparent-background", "Project Settings searched for Rendering, with Viewport selected and Transparent Background on." %>
-  <p>And finally search for <strong>Per Pixel</strong>, select Window and enable Per Pixel Transparency</p>
-  <%= guide_step_shot "per-pixel-transparency", "Project Settings searched for per Pixel, with Window selected and Per Pixel Transparency, Allowed, on." %>
   <p>You’ll see a pop up at the bottom prompting to save &amp; restart. Click the button and wait for Godot to restart</p>
   <%= guide_step_shot "save-and-restart", "The bar at the bottom of Project Settings: Changed settings will be applied to the editor after restarting, and a Save & Restart button." %>
 </section>
+
+<% unless side_guide %>
+<section aria-labelledby="pick-project">
+  <h2 id="pick-project">Pick your pet's project</h2>
+  <%# By now the participant has built a scene in Godot, whose clicks and saves
+      Godot's Hackatime plugin sends, so Hackatime lists the project. %>
+  <%= turbo_frame_tag "pick-step", src: guide_check_path(frame: "pick-step"), class: "guide-steps" %>
+</section>
+<% end %>

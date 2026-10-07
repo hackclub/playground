@@ -33,19 +33,25 @@
   <% days = @stats.active_days %>
   <% if days.empty? %>
     <p class="muted">the program window hasn't opened yet.</p>
-  <% elsif days.sum(&:count).zero? %>
+  <% elsif days.sum(&:total).zero? %>
     <p class="muted">nobody has been active since the window opened.</p>
   <% else %>
-    <% top = days.map(&:count).max %>
+    <% top = days.map(&:total).max %>
     <% chosen = days.find(&:today) || days.last %>
-    <p class="muted">active: at least <%= pluralize(ProgramStats::ACTIVE_CODING_SECONDS / 60, "minute") %> in Hackatime that day. pick a day to see who was active. the arrow keys move along the days.</p>
+    <% readers = days.any? { it.reader_count.positive? } %>
+    <p class="muted">active: at least <%= pluralize(ProgramStats::ACTIVE_CODING_SECONDS / 60, "minute") %> in Hackatime that day.<% if readers %> a Stardance or Clubs reader: <%= SideGuide.reading_seconds / 60 %> minutes or more in their guide that day, counted with no name.<% end %> pick a day to see who was active. the arrow keys move along the days.</p>
+    <% if readers %>
+      <%# Readers stack on the participants in each day's bar, a colour a guide. %>
+      <p class="legend dau-legend"><span><span class="key dau-coded"></span> playground participants</span>
+        <% SideGuide.all.each do |guide| %><span><span class="key dau-<%= guide.slug %>"></span> <%= guide.name %> readers</span><% end %></p>
+    <% end %>
     <div class="dau-scroll" data-active-days-target="scroller">
       <div class="dau" role="toolbar" aria-label="people active each day">
         <% days.each do |day| %>
-          <% about = "#{day.date.strftime("%a %B %-d")}: #{pluralize(day.count, "person", plural: "people")} active" %>
+          <% about = [ "#{day.date.strftime("%a %B %-d")}: #{pluralize(day.count, "person", plural: "people")} active", guide_readers(day) ].compact.join(", ") %>
           <%= tag.button type: "button", class: "dau-day", title: about, aria: { label: about, pressed: day.date == chosen.date, controls: "active-#{day.date.iso8601}" },
                          tabindex: day.date == chosen.date ? 0 : -1, data: { active_days_target: "day", date: day.date.iso8601, action: "active-days#pick keydown->active-days#key" } do %>
-            <span class="well"><% if day.count.positive? %><span class="count"><%= day.count %></span><span class="fill" style="--h: <%= (day.count.to_f / top).round(3) %>"></span><% end %></span>
+            <span class="well"><% if day.total.positive? %><span class="count"><%= day.total %></span><% SideGuide.all.reverse_each do |guide| %><% if (read = day.readers[guide.slug].to_i).positive? %><span class="fill dau-<%= guide.slug %>" style="--h: <%= (read.to_f / top).round(3) %>"></span><% end %><% end %><% if day.count.positive? %><span class="fill" style="--h: <%= (day.count.to_f / top).round(3) %>"></span><% end %><% end %></span>
             <span class="day-label"><%= day.date.day %></span>
           <% end %>
         <% end %>
@@ -55,15 +61,20 @@
     <% days.each do |day| %>
       <%= tag.div class: "dau-list", id: "active-#{day.date.iso8601}", hidden: day.date != chosen.date, data: { active_days_target: "list", date: day.date.iso8601 } do %>
         <h3><%= "today, " if day.today %><%= day.date.strftime("%A %B %-d") %>: <%= pluralize(day.count, "person", plural: "people") %> active</h3>
-        <% if day.people.empty? %>
+        <% if day.total.zero? %>
           <p class="muted">nobody was active on this day.</p>
         <% else %>
-          <table class="list">
-            <tr><th>person</th><th>active because</th></tr>
-            <% day.people.each do |person| %>
-              <tr><td><%= link_to person.user.display_name, admin_person_path(person.user) %></td><td><%= active_because(person) %></td></tr>
-            <% end %>
-          </table>
+          <% if day.people.any? %>
+            <table class="list">
+              <tr><th>person</th><th>active because</th></tr>
+              <% day.people.each do |person| %>
+                <tr><td><%= link_to person.user.display_name, admin_person_path(person.user) %></td><td><%= active_because(person) %></td></tr>
+              <% end %>
+            </table>
+          <% end %>
+          <% if (read = guide_readers(day)) %>
+            <p class="dau-readers"><%= "and " if day.people.any? %><%= read %> (<%= SideGuide.reading_seconds / 60 %>+ min in the guide)</p>
+          <% end %>
         <% end %>
       <% end %>
     <% end %>

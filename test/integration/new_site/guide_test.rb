@@ -8,7 +8,6 @@ class NewSiteGuideTest < ActionDispatch::IntegrationTest
   include NewSiteTests
   STEPS = {
     "setup-godot" => "Set up Godot",
-    "connect-hackatime" => "Connect Hackatime",
     "hackatime" => "Install Godot Hackatime, and set up Hackatime on your machine",
     "github" => "Make a GitHub Repository",
     "sync" => "Sync your Godot project with the GitHub repo you just made",
@@ -30,14 +29,22 @@ class NewSiteGuideTest < ActionDispatch::IntegrationTest
   SNIPPETS = Rails.root.join("app/views/guides/snippets")
   # Each step's sections, in order: the anchor of each h2.
   SECTIONS = {
-    "setup" => %w[sign-in-title setup-godot connect-hackatime github sync commands],
-    "scene" => %w[start transparent],
+    "setup" => %w[sign-in-title setup-godot github sync commands],
+    "scene" => %w[start transparent pick-project],
     "art" => %w[pretty script],
-    "move" => %w[movement pick-project on-screen bounce],
+    "move" => %w[movement on-screen bounce],
     "animate" => %w[animations break drag],
     "publish" => %w[your-own publish ship]
   }.freeze
   NAMES = [ "Set up", "Build the scene", "Art and script", "Make it move", "Animate and drag", "Publish and ship" ].freeze
+  # The scene's transparency settings in order, each screenshot beside its
+  # step: the Advanced Settings toggle first, so every setting shows, then
+  # the Window tab's settings, Per Pixel Transparency with them, then
+  # Rendering's.
+  SCENE_SETTINGS = [ "Click Project > Project Settings…", "project-settings-menu", "make sure the Advanced Settings toggle",
+                     "under the Window tab", "set Viewport Width", "make sure", "are on", "window-settings",
+                     "Then search for Per Pixel", "per-pixel-transparency", "once you’ve done that search for Rendering",
+                     "transparent-background", "You’ll see a pop up", "save-and-restart" ].freeze
 
   test "the guide shows every section on its step, with its recordings, screenshots, and code" do
     seen = []
@@ -160,11 +167,25 @@ class NewSiteGuideTest < ActionDispatch::IntegrationTest
     script = css_select(".page > script").first.text
     assert_includes script, %("movement":"/guide/move")
     assert_includes script, %("ship-step":"/guide/publish")
-    assert_includes script, %("connect-hackatime":"/guide/setup")
+    # The parts that moved go on to the part that took their place.
+    assert_includes script, %("connect-hackatime":"pick-project")
+    assert_includes script, %("hackatime-step":"pick-step")
+    assert_not_includes script, %("connect-hackatime":"/guide/setup")
     assert_includes script, %(!== "/guide/setup")
-    assert_includes script, "location.replace(step + location.hash)"
+    assert_includes script, "location.replace(`${step}#${anchor}`)"
     get "/guide/move"
     assert_includes css_select(".page > script").first.text, %(!== "/guide/move")
+  end
+
+  test "Set up has no Hackatime to connect, GitHub starts at its new repository page, and the Window tab's settings sit together" do
+    get "/guide/setup"
+    assert_select "#connect-hackatime, #hackatime-step, turbo-frame", 0
+    assert_select "#hackatime", "Install Godot Hackatime, and set up Hackatime on your machine"
+    assert_select "section[aria-labelledby=github] p", text: /sign up if you don/, count: 0
+    assert_select "section[aria-labelledby=github] p", /\Aopen https:\/\/github.com\/new to create a new repository/
+
+    get "/guide/scene"
+    assert_equal SCENE_SETTINGS, scene_settings
   end
 
   test "every recording, poster, and screenshot the guide names is served, and small" do
@@ -260,6 +281,15 @@ class NewSiteGuideTest < ActionDispatch::IntegrationTest
   end
 
   private
+
+  # The transparency section's steps and screenshots, in order: each step's
+  # first words, each screenshot's name.
+  def scene_settings
+    css_select("section[aria-labelledby=transparent] > p, section[aria-labelledby=transparent] > img").drop(2).map do |part|
+      next part["src"][%r{guide/([a-z-]+)-\w+\.webp}, 1] if part.name == "img"
+      SCENE_SETTINGS.find { part.text.strip.start_with?(it) } || part.text.strip
+    end
+  end
 
   # Runs the block on each step's page, signed out, so the sign in section
   # shows too, and gives back each result.
