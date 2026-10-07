@@ -34,6 +34,11 @@ module StatsHelper
     "#{change.positive? ? "up" : "down"} #{share(change.abs)} on the 7 days before (#{hours(before)})"
   end
 
+  # Why a person counts as active on a day, as "coded 20m", one phrase for
+  # each kind of activity they did that day.
+  ACTIVE_BECAUSE = { coded: "coded" }.freeze
+  def active_because(person) = person.reasons.map { |kind, seconds| "#{ACTIVE_BECAUSE.fetch(kind)} #{hours(seconds)}" }.join(", ")
+
   # A bar in the meter's approved fill and ink outline.
   def bar(fraction) = tag.div(tag.span(style: "width: #{(100 * fraction.to_f).round(1)}%"), class: "bar")
 

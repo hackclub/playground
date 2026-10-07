@@ -82,6 +82,102 @@ class AdminStatsTest < ActionDispatch::IntegrationTest
     assert_match "the oldest refresh is 3d 0h old, the median 1h 0m. 1 pet with Hackatime projects never refreshed.", text_of_page
   end
 
+  test "a: people active each day, with a minute or more in Hackatime, a bar a day up to today, today pressed" do
+    # eve's 50 seconds today are under a minute, so she is not active. dan's
+    # two half minutes on Tuesday add up to one, so he is. The coding days
+    # still count anyone with time.
+    code("eve", Time.utc(2026, 9, 30, 14), 50)
+    code("dan", Time.utc(2026, 9, 29, 14), 30)
+    code("dan", Time.utc(2026, 9, 29, 15), 30)
+    stats = ProgramStats.new
+    days = stats.active_days
+    assert_equal [ Date.new(2026, 9, 28), Date.new(2026, 9, 29), Date.new(2026, 9, 30) ], days.map(&:date)
+    assert_equal [ 3, 4, 2 ], days.map(&:count)
+    assert_equal [ 3, 4, 3 ], stats.coding_days.first(3).map(&:people)
+    assert_equal [ false, false, true ], days.map(&:today)
+    # hal's 11pm Monday hour is Monday's, and his midnight is Tuesday's. leo
+    # is banned and still counts, as the coding days count him.
+    assert_equal [ [ "hal", { coded: 3600 } ], [ "gus", { coded: 1800 } ], [ "ivy", { coded: 900 } ] ],
+                 days[0].people.map { [ it.user.display_name, it.reasons ] }
+    assert_equal [ %w[leo fay hal dan], [ 3000, 2400, 600, 60 ] ], days[1].people.map { [ it.user.display_name, it.seconds ] }.transpose
+    assert_equal [ %w[gus ann], [ 1200, 300 ] ], days[2].people.map { [ it.user.display_name, it.seconds ] }.transpose
+
+    get admin_stats_path
+    assert_select "section h2", text: "how many people are active each day?"
+    sections = css_select("section.panel h2").map(&:text)
+    assert_equal sections.index("how many hours, in which stage?") + 1, sections.index("how many people are active each day?")
+    assert_match "active: at least 1 minute in Hackatime that day.", text_of_page
+    assert_select ".dau button.dau-day", 3
+    assert_equal [ %w[2026-09-28 false -1], %w[2026-09-29 false -1], %w[2026-09-30 true 0] ],
+                 css_select(".dau button.dau-day").map { |day| %w[data-date aria-pressed tabindex].map { day[it] } }
+    assert_select "button.dau-day[aria-label=?][aria-controls='active-2026-09-28']", "Mon September 28: 3 people active", text: /3\s*28/
+    assert_select "button.dau-day[aria-label=?]", "Tue September 29: 4 people active", text: /4\s*29/
+    assert_select "button.dau-day[aria-label=?]", "Wed September 30: 2 people active", text: /2\s*30/
+    assert_select "button.dau-day .fill", 3
+    assert_match "September 28 to September 30, in US Eastern time.", text_of_page
+
+    assert_select ".dau-list", 3
+    assert_select ".dau-list[hidden]", 2
+    assert_select ".dau-list#active-2026-09-30:not([hidden])" do |list|
+      assert_select "h3", text: "today, Wednesday September 30: 2 people active"
+      assert_equal [ [ "gus", "coded 20m" ], [ "ann", "coded 5m" ] ], list.css("tr").map { |row| row.css("td").map { it.text.strip } }.reject(&:empty?)
+      assert_select "a[href=?]", admin_person_path(User.find_by!(display_name: "gus")), text: "gus"
+      assert_select "a[href=?]", admin_person_path(User.find_by!(display_name: "ann")), text: "ann"
+      assert_select "a", text: "eve", count: 0
+    end
+    assert_select ".dau-list#active-2026-09-29[hidden]" do |list|
+      assert_select "h3", text: "Tuesday September 29: 4 people active"
+      assert_equal %w[leo fay hal dan], list.css("td a").map(&:text)
+      assert_equal [ "coded 50m", "coded 40m", "coded 10m", "coded 1m" ], list.css("td:last-child").map(&:text)
+    end
+    assert_select ".dau-list a[href=?]", admin_person_path(@admin), 0
+  end
+
+  test "a: a day nobody was active has an empty bar and says so, and it is pressed when it is today" do
+    travel_to Time.utc(2026, 10, 2, 16)
+    get admin_stats_path
+    assert_equal [ %w[2026-09-28 false], %w[2026-09-29 false], %w[2026-09-30 false], %w[2026-10-01 false], %w[2026-10-02 true] ],
+                 css_select(".dau button.dau-day").map { |day| %w[data-date aria-pressed].map { day[it] } }
+    assert_select "button.dau-day[data-date='2026-10-01'][aria-label=?]", "Thu October 1: 0 people active"
+    assert_select "button.dau-day[data-date='2026-10-01'] .fill", 0
+    assert_select "button.dau-day[data-date='2026-10-01'] .count", 0
+    assert_select ".dau-list#active-2026-10-02:not([hidden])" do
+      assert_select "h3", text: "today, Friday October 2: 0 people active"
+      assert_select "p.muted", text: "nobody was active on this day."
+      assert_select "table", 0
+    end
+    assert_select ".dau-list#active-2026-10-01[hidden] p.muted", text: "nobody was active on this day."
+  end
+
+  test "a: a day with time only under a minute charts nobody active" do
+    travel_to Time.utc(2026, 10, 2, 16)
+    code("eve", Time.utc(2026, 10, 2, 14), 40)
+    code("fay", Time.utc(2026, 10, 2, 15), 59)
+    stats = ProgramStats.new
+    assert_equal [ 0, 2 ], [ stats.active_days.last.count, stats.coding_days.find { it.date == Date.new(2026, 10, 2) }.people ]
+    get admin_stats_path
+    assert_select "button.dau-day[data-date='2026-10-02'][aria-pressed=true][aria-label=?]", "Fri October 2: 0 people active"
+    assert_select "button.dau-day[data-date='2026-10-02'] .fill", 0
+    assert_select ".dau-list#active-2026-10-02:not([hidden]) p.muted", text: "nobody was active on this day."
+  end
+
+  test "a: after the window closes its last day is pressed" do
+    travel_to Time.utc(2026, 10, 12, 16)
+    get admin_stats_path
+    assert_select ".dau button.dau-day", 13
+    assert_select ".dau button.dau-day[aria-pressed=true]", 1
+    assert_select ".dau button.dau-day[aria-pressed=true][data-date='2026-10-10']"
+    assert_select ".dau-list:not([hidden])", 1
+    assert_select ".dau-list#active-2026-10-10:not([hidden]) h3", text: "Saturday October 10: 0 people active"
+  end
+
+  test "a: before the window opens there are no days to chart" do
+    travel_to Time.utc(2026, 9, 28, 3) # 11pm Eastern the day before
+    get admin_stats_path
+    assert_select ".dau", 0
+    assert_match "how many people are active each day? the program window hasn't opened yet.", text_of_page
+  end
+
   test "b: the funnel counts each step over everyone who passed the steps above" do
     steps = @stats.funnel.index_by(&:key)
     assert_equal [ 15, 14, 11, 10, 9, 9, 7, 6, 2, 2, 1 ], @stats.funnel.map { it.reached.count }
@@ -342,6 +438,8 @@ class AdminStatsTest < ActionDispatch::IntegrationTest
     assert_match "no pet with unshipped hours is waiting for its first ship.", text_of_page
     assert_select ".heat", 0
     assert_equal 2, text_of_page.scan("no coding time in the window yet.").size
+    assert_select ".dau", 0
+    assert_match "nobody has been active since the window opened.", text_of_page
   end
 
   private

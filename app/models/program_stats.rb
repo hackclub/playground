@@ -32,8 +32,22 @@ class ProgramStats
   Signups = Data.define(:days, :before)
   # A day of the window. A day after today has no figures yet.
   CodingDay = Data.define(:date, :seconds, :people, :signups, :counted)
+  # A day so far and who was active on it, most time first.
+  ActiveDay = Data.define(:date, :people, :today) do
+    def count = people.size
+  end
+  # A participant active on a day, and why: seconds by kind of activity,
+  # as { coded: 1200 }. Hackatime time is the only kind so far. Another
+  # kind adds its own key.
+  Active = Data.define(:user, :reasons) do
+    def seconds = reasons.values.sum
+  end
   Fetches = Data.define(:linked, :oldest, :median, :never)
   Momentum = Data.define(:last_7_days, :previous_7_days, :span, :coded, :projected, :to_first_code)
+
+  # A participant is active on an Eastern day with at least this much
+  # Hackatime time that day, summed over the day's hours.
+  ACTIVE_CODING_SECONDS = 60
 
   # What each offline ship check asks of a pet, for the unshipped pets table.
   PET_CONDITIONS = {
@@ -242,6 +256,19 @@ class ProgramStats
     @coding_days ||= begin
       signed = signups.days.to_h { [ it.date, it.group ] }
       @coding.per_day.map { |day| CodingDay.new(**day, signups: signed[day[:date]], counted: day[:date] <= today) }
+    end
+  end
+
+  # The window's days up to today, each with who was active on it. Active
+  # is stricter than the coding days' people, who count with any time.
+  def active_days
+    @active_days ||= begin
+      coded = @coding.per_day_and_user(at_least: ACTIVE_CODING_SECONDS)
+      users = @people.to_h { [ it.id, it.user ] }
+      coding_days.select(&:counted).map do |day|
+        people = coded.fetch(day.date, []).filter_map { |id, seconds| Active.new(user: users[id], reasons: { coded: seconds }) if users[id] }
+        ActiveDay.new(date: day.date, people: people.sort_by { [ -it.seconds, it.user.id ] }, today: day.date == today)
+      end
     end
   end
 

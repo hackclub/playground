@@ -29,6 +29,19 @@ class CodingHour < ApplicationRecord
     (first..last).map { |date| { date:, **found.fetch(date, { seconds: 0, people: 0 }) } }
   end
 
+  # Who coded at least at_least seconds on each Eastern day of the window,
+  # summed over the day's hours, and how long: { Date => [[user_id,
+  # seconds], ...] }, each day's most time first. A day with nobody is
+  # absent. With the default, anyone with time counts, as in per_day's
+  # people.
+  def self.per_day_and_user(window = ProgramWindow.current, at_least: 1)
+    day = Arel.sql("#{EASTERN}::date")
+    total = Arel.sql("SUM(seconds)")
+    in_window(window).group(day, :user_id).having("SUM(seconds) >= ?", at_least).order(day, total.desc, :user_id)
+                     .pluck(day, :user_id, total)
+                     .group_by(&:first).transform_values { |rows| rows.map { |_, user_id, seconds| [ user_id, seconds ] } }
+  end
+
   # Seconds by Eastern weekday and hour of the day, over the whole window:
   # grid[wday][hour], with wday 0 for Sunday as in Date#wday and hour 0 to
   # 23. Zeros included. The window holds some weekdays more often than

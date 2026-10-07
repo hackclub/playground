@@ -339,6 +339,25 @@ h2.inline { display: inline; }
 :is(.heat td, .heat-legend .cell).l2 { background: color-mix(in srgb, var(--blue) 33%, #dbe6f5); }
 :is(.heat td, .heat-legend .cell).l3 { background: color-mix(in srgb, var(--blue) 67%, #dbe6f5); }
 :is(.heat td, .heat-legend .cell).l4 { background: var(--blue); }
+/* People active each day: a bar per day, each a button, drawn as the bars
+   charts are. The pressed day's column is tinted, its bar is ink, and its
+   date turns into an ink tag, so the choice shows by shape as well as
+   colour. A bar keeps at least 22px, so a long window scrolls sideways on
+   a phone. */
+.dau-scroll { position: relative; overflow-x: auto; margin: 4px 0 2px; }
+.dau { display: flex; }
+.dau-day { flex: 1 0 22px; max-width: 80px; display: flex; flex-direction: column; padding: 0 0 2px; border: 0; background: none; color: var(--ink); font: inherit; font-size: 0.8rem; cursor: pointer; }
+.dau-day .well { height: 140px; display: flex; flex-direction: column; justify-content: flex-end; border-bottom: 2px solid var(--ink); }
+.dau-day .count { line-height: 1.4; }
+.dau-day .fill { flex: none; height: calc((100% - 1.4em) * var(--h)); margin: 0 3px; background: var(--blue); border: 1px solid var(--ink); border-bottom: 0; }
+.dau-day .day-label { margin: 2px auto 0; padding: 0 3px; color: var(--muted); line-height: 1.4; }
+.dau-day:hover .well { background: var(--wash); }
+.dau-day[aria-pressed=true] .well { background: #dbe6f5; }
+.dau-day[aria-pressed=true] .fill { background: var(--ink); }
+.dau-day[aria-pressed=true] .day-label { background: var(--ink); color: var(--paper); }
+.dau-day:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+.dau-list .list { max-width: 560px; }
+.dau-list .list td:last-child, .dau-list .list th:last-child { width: 9em; white-space: nowrap; }
 .goal-mark.end { transform: translateX(-100%); border-left: 0; border-right: 2px solid var(--ink); text-align: right; }
 /* A goal the approved hours have reached: its tick and label turn green,
    dark enough for small text (5.1:1 on white), and a check comes before the

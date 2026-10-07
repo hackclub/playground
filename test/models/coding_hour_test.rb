@@ -35,6 +35,31 @@ class CodingHourTest < ActiveSupport::TestCase
     assert_equal [ 300 ], CodingHour.where(user: @ada).per_day.last.values_at(:seconds), "works on a scope"
   end
 
+  test "per_day_and_user lists each Eastern day's people, most time first, as many as per_day counts" do
+    code(@ada, et("2026-09-25 16:00"), 3600) # before the window
+    code(@ada, et("2026-09-25 17:00"), 600)
+    code(@bo, et("2026-09-25 18:00"), 1200)
+    code(@ada, et("2026-09-25 23:00"), 300)
+    code(@ada, et("2026-09-26 21:00"), 900) # already the 27th in UTC
+    code(@bo, et("2026-10-12 09:00"), 3600) # after the window
+
+    by_day = CodingHour.per_day_and_user
+    assert_equal({ Date.new(2026, 9, 25) => [ [ @bo.id, 1200 ], [ @ada.id, 900 ] ], Date.new(2026, 9, 26) => [ [ @ada.id, 900 ] ] }, by_day)
+    CodingHour.per_day.each { |day| assert_equal day[:people], by_day.fetch(day[:date], []).size, day[:date] }
+    assert_equal({ Date.new(2026, 9, 25) => [ [ @bo.id, 1200 ] ] }, CodingHour.where(user: @bo).per_day_and_user, "works on a scope")
+  end
+
+  test "per_day_and_user with at_least leaves out a day's people under it, summed over the day's hours" do
+    code(@ada, et("2026-09-25 18:00"), 30)
+    code(@ada, et("2026-09-25 19:00"), 30) # a minute in all
+    code(@bo, et("2026-09-25 20:00"), 59)
+    code(@bo, et("2026-09-26 09:00"), 45)
+    code(@bo, et("2026-09-26 10:00"), 10)
+
+    assert_equal({ Date.new(2026, 9, 25) => [ [ @ada.id, 60 ] ] }, CodingHour.per_day_and_user(at_least: 60))
+    assert_equal [ 2, 1 ], CodingHour.per_day.first(2).map { it[:people] }, "per_day still counts any time"
+  end
+
   test "per_day and the grid follow the clocks going back" do
     code(@ada, Time.utc(2026, 11, 1, 3), 100)  # Sat 31 Oct, 23:00 EDT
     code(@ada, Time.utc(2026, 11, 1, 4), 200)  # Sun 1 Nov, 00:00 EDT
