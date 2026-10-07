@@ -69,6 +69,15 @@
       <summary>i dont know what to make</summary>
       <p>check out the cool desktop pets at the top of this page!!</p>
     </details>
+    <%# An account made before the new site was the default knew the old
+        desktop, which is still here (NewSite::LAUNCHED_ON). %>
+    <% if knew_the_desktop? %>
+      <details>
+        <summary>where did the desktop go?</summary>
+        <p>it's still here! <%= link_to "open the old desktop →", classic_path, aria: { haspopup: "dialog" },
+                                         data: { controller: "classic-switch", action: "classic-switch#open" } %></p>
+      </details>
+    <% end %>
     <details>
       <summary>i have more questions :(</summary>
       <p>join <a href="https://hackclub.slack.com/archives/C0ASBTMS82H" target="_blank" rel="noopener">#playground</a> on the Hack Club Slack, where teen makers chat!! or ask @froppii there!!</p>

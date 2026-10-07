@@ -13,6 +13,11 @@
 #   without the flag never matches a +new_site template.
 # - controllers: where a page does something else on the new site, it asks
 #   new_site?.
+#
+# A user with the flag can switch one browser back to the old desktop, from
+# the new site's footer (ClassicController). A signed cookie, classic, keeps
+# that browser on the old desktop, and new_site? is false there. The flag
+# stays as it is, and a desktop icon switches back.
 module NewSite
   extend ActiveSupport::Concern
 
@@ -21,25 +26,45 @@ module NewSite
   # can set it.
   mattr_accessor :for_visitors, default: false
 
+  # Accounts made before this day knew the old desktop, so the new landing's
+  # FAQ tells them where it went. Far off for now, so every account counts.
+  # It becomes the day the new site is the default.
+  LAUNCHED_ON = Date.new(3000, 1, 1)
+
   def self.for?(user) = user ? user.new_site? : for_visitors
 
-  # For the routes' constraint, before any controller runs: the same signed-in
-  # user that ApplicationController#current_user finds.
-  def self.request?(request)
+  # This browser switched back to the old desktop.
+  def self.classic?(cookies) = cookies.signed[:classic] == "1"
+
+  # For the routes' constraints, before any controller runs: the same
+  # signed-in user that ApplicationController#current_user finds.
+  def self.request?(request) = !classic?(request.cookie_jar) && for?(signed_in(request))
+
+  # A user with the flag, whichever site this browser shows them.
+  def self.flagged?(request) = signed_in(request)&.new_site? || false
+
+  def self.signed_in(request)
     session = request.session
     user = session[:user_id] && User.find_by(id: session[:user_id])
-    user = nil unless user && session[:session_version].to_i == user.session_version
-    for?(user)
+    user if user && session[:session_version].to_i == user.session_version
   end
 
   included do
-    helper_method :new_site?, :active_pet_id, :active_pet
+    helper_method :new_site?, :active_pet_id, :active_pet, :back_to_new_site?, :knew_the_desktop?
     before_action { request.variant = :new_site if new_site? }
   end
 
   private
 
-  def new_site? = NewSite.for?(current_user)
+  def new_site? = !NewSite.classic?(cookies) && NewSite.for?(current_user)
+
+  # The old desktop shows a way back to the new site only to a user with the
+  # flag who switched this browser to the old desktop.
+  def back_to_new_site? = current_user&.new_site? && NewSite.classic?(cookies)
+
+  # The new landing's FAQ says where the desktop went to an account made
+  # before the new site was the default.
+  def knew_the_desktop? = current_user.present? && current_user.created_at.to_date < NewSite::LAUNCHED_ON
 
   # A controller of the new site's own answers 404 to anyone else, as the
   # routes do. It guards a route left out of the constraint by mistake.

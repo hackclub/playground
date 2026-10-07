@@ -24,7 +24,7 @@ class NewSiteShipPageTest < ActionDispatch::IntegrationTest
     assert_select ".topbar a.topbar-tab[aria-current=true]", "my pets"
     assert_select ".page-window h2#ship-title", "ship rock"
     assert_select ".page-window #ship-checks li[data-check]", 6
-    assert_select "dialog", 0
+    assert_select "dialog:not(#classic-dialog)", 0
     assert_select "[data-controller~=ship-popup]", 0
   end
 

@@ -1,0 +1,11 @@
+/* The old desktop's icon back to the new site (landing/_back_to_new_site),
+   for a user with the new site on only. It looks like the desktop's icons
+   (landing.css): a 64px picture, here the site's icon, and a white label
+   with a thin dark outline and a soft shadow. It stands on the right,
+   below the credits, under any window. */
+#back-to-new-site { position: fixed; top: 96px; right: 12px; z-index: 5; margin: 0; }
+.back-to-new-site { display: grid; justify-items: center; gap: 2px; max-width: 168px; padding: 16px; border: 0; background: none; color: #fff; font: inherit; cursor: pointer; }
+.back-to-new-site img { width: 64px; height: 64px; object-fit: contain; }
+.back-to-new-site span { padding-inline: 1px; -webkit-text-stroke: 0.4px black; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6); }
+.back-to-new-site:hover span, .back-to-new-site:focus-visible span { background: #3a70b8; box-shadow: 0 0 0 1px #3a70b8; }
+.back-to-new-site:focus-visible { outline: none; }

@@ -15,7 +15,7 @@
     <%= render "shared/plausible" %>
   </head>
   <body>
-    <%= yield %>
+    <%= yield %><%= render "landing/back_to_new_site" if back_to_new_site? %>
     <%= javascript_importmap_tags "landing" %>
   </body>
 </html>

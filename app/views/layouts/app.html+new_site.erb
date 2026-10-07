@@ -35,7 +35,7 @@
         <% if alert %><p class="flash alert"><%= alert %></p><% end %>
         <%= yield %>
       </main>
-      <%= render "shared/footbar" %>
+      <%= render "shared/footbar", classic: true %>
     </div>
   </body>
 </html>

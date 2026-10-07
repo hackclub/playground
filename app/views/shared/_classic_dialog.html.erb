@@ -1,0 +1,20 @@
+<%# The question before a switch to the old desktop, in a window like the
+    new site's others: its title bar with an X, the question, and two
+    buttons. classic_switch_controller.js opens it from a link. Escape, the
+    X, and "stay here" close it. "stay here" takes the focus, so a stray
+    Enter switches nothing. %>
+<dialog id="classic-dialog" class="classic-dialog" aria-labelledby="classic-dialog-title">
+  <div class="pet-window">
+    <div class="pet-titlebar">
+      <h2 class="pet-title" id="classic-dialog-title">the old desktop</h2>
+      <form method="dialog" class="classic-close"><button type="submit" class="classic-x" aria-label="close">X</button></form>
+    </div>
+    <div class="pet-pane page-pane">
+      <p>switch to the old desktop? you can switch back anytime</p>
+      <div class="row">
+        <%= button_to "switch", classic_path, class: "btn primary", form: { class: "inline", data: { turbo: false } } %>
+        <form method="dialog" class="inline"><button type="submit" class="btn" autofocus>stay here</button></form>
+      </div>
+    </div>
+  </div>
+</dialog>

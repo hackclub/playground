@@ -44,6 +44,11 @@ Rails.application.routes.draw do
       get :delete, on: :member
     end
   end
+  # Switching one browser to the old desktop and back, for a user with the
+  # new site on (NewSite). For anyone else it does not exist.
+  constraints(->(request) { NewSite.flagged?(request) }) do
+    resource :classic, only: %i[show create destroy], controller: "classic"
+  end
   resources :redemptions, only: %i[new create]
 
   get "auth/:provider/callback" => "sessions#create"

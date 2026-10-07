@@ -1,0 +1,9 @@
+<%# Only for a user with the new site on who switched this browser to the old
+    desktop (NewSite.classic?): an icon in the desktop's style, on the right,
+    that switches back to the new site. The desktop's own script leaves it
+    alone. %>
+<%= stylesheet_link_tag "back_to_new_site" %>
+<%= button_to classic_path, method: :delete, class: "back-to-new-site", form: { id: "back-to-new-site" } do %>
+  <img src="/apple-touch-icon.png" alt="" draggable="false">
+  <span>new playground</span>
+<% end %>

@@ -463,3 +463,14 @@ body.home-page { padding-top: 0; }
 .vmeter-goals .muted { color: #4b5b6e; }
 .vmeter-goals li > span > * { display: block; }
 .vmeter-goals li.reached strong { color: var(--green); }
+
+/* The question before a switch to the old desktop: a small window in the
+   middle of the screen, like the pets' windows, with an X at the right of
+   its title bar, over a dimmed page. */
+.classic-dialog { width: min(420px, calc(100% - 32px)); max-width: none; padding: 0; border: 0; background: none; overflow: visible; }
+.classic-dialog::backdrop { background: rgb(20 45 90 / 0.35); }
+.classic-dialog .pet-pane > p { margin: 0 0 14px; }
+.classic-dialog .row { display: flex; flex-wrap: wrap; gap: 8px; }
+.classic-close { display: contents; }
+.classic-x { flex: none; display: grid; place-items: center; width: 16px; height: 16px; margin: 0 2px 0 auto; padding: 0; border: 2px solid white; background: none; color: white; font: bold 12px/1 "Chelsea Market", system-ui, sans-serif; cursor: pointer; }
+.classic-x:focus-visible { outline: 2px solid white; outline-offset: 1px; }

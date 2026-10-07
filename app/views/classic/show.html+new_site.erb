@@ -1,0 +1,13 @@
+<% content_for :title, "the old desktop" %>
+<%# The question before a switch to the old desktop, as a page of its own,
+    where the footer's link goes without scripts. %>
+<section class="pet-window page-window" aria-labelledby="classic-title">
+  <div class="pet-titlebar"><h2 class="pet-title" id="classic-title">the old desktop</h2></div>
+  <div class="pet-pane page-pane">
+    <p>switch to the old desktop? you can switch back anytime</p>
+    <div class="row">
+      <%= button_to "switch", classic_path, class: "btn primary", form: { class: "inline", data: { turbo: false } } %>
+      <%= link_to "stay here", root_path, class: "btn" %>
+    </div>
+  </div>
+</section>

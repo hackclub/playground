@@ -18,7 +18,7 @@ class NewSiteDeletePageTest < ActionDispatch::IntegrationTest
     # The edit page holds one form, and nothing on it deletes or pops up.
     assert_select "form form", 0
     assert_select "form[action=?] input[name=_method][value=delete]", project_path(project), 0
-    assert_select "dialog", 0
+    assert_select "dialog:not(#classic-dialog)", 0
 
     get delete_project_path(project)
     assert_response :ok
@@ -27,7 +27,7 @@ class NewSiteDeletePageTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?] input[name=_method][value=delete]", project_path(project)
     assert_select "form[action=?] button.btn.danger", project_path(project), "delete it"
     assert_select "a.btn[href=?]", edit_project_path(project), "keep it"
-    assert_select "dialog", 0
+    assert_select "dialog:not(#classic-dialog)", 0
   end
 
   test "deleting an unshipped pet lands on my pets" do
@@ -42,7 +42,7 @@ class NewSiteDeletePageTest < ActionDispatch::IntegrationTest
     project.ships.create!(user: @user)
     get edit_project_path(project)
     assert_select "a", text: "delete", count: 0
-    assert_select "dialog", 0
+    assert_select "dialog:not(#classic-dialog)", 0
 
     get delete_project_path(project)
     assert_redirected_to edit_project_path(project)
