@@ -175,7 +175,11 @@ class NewSiteGuideSystemTest < ApplicationSystemTestCase
       assert_selector "h2#start"
       assert_near_top "#guide"
       assert_operator page.evaluate_script("scrollY"), :>, 100, "the next step and the hours stand above the guide"
-      assert_equal 390, page.evaluate_script("document.documentElement.scrollWidth")
+      # Nothing runs off the side. Where a scrollbar takes room, as in Chrome
+      # on Linux, the page has 375px of the 390, so this checks against the
+      # page's own width and not the phone's.
+      assert page.evaluate_script("document.documentElement.scrollWidth <= document.documentElement.clientWidth"),
+             "the page doesn't scroll sideways"
       # The list of steps in the guide goes there too.
       page.execute_script("scrollTo(0, 0)")
       find(".guide-contents a", text: "Make it move").click
