@@ -133,6 +133,40 @@ class AdminStatsTest < ActionDispatch::IntegrationTest
     assert_select ".dau-list a[href=?]", admin_person_path(@admin), 0
   end
 
+  test "where readers stop: a guide's sections in order, the biggest drop marked, for the guide and the days picked" do
+    { "setup-godot" => 10, "hackatime" => 8, "github" => 3 }.each do |section, readers|
+      GuideSectionDay.create!(day: Date.new(2026, 9, 29), guide: "desktop", section:, readers:)
+    end
+    GuideSectionDay.create!(day: Date.new(2026, 9, 29), guide: "stardance", section: "setup-godot", readers: 4)
+
+    # By default, the desktop's guide over the program window.
+    get admin_stats_path
+    assert_select "#guide-progress h2", "where do readers stop in the guide?"
+    assert_select "#guide-progress select[name=progress_guide] option[selected]", "the desktop's guide"
+    assert_select "#guide-progress select[name=progress_guide] option", 4
+    assert_select "#guide-progress input[name=progress_from][value='2026-09-28']"
+    assert_select "#guide-progress input[name=progress_to][value='2026-10-10']"
+    rows = css_select("#guide-progress tr").drop(1).map { |row| row.css("td").map { it.text.squish } }
+    assert_equal GuideSections.find("desktop").sections.size, rows.size
+    assert_equal [ [ "Set up Godot", "10", "100%", "" ], [ "Install Godot Hackatime", "8", "80%", "2 (20%)" ],
+                   [ "Make a GitHub Repository", "3", "30%", "5 (63%) biggest drop" ], [ "Sync with GitHub", "0", "0%", "3 (100%)" ] ],
+                 rows.first(4)
+    assert_select "#guide-progress tr.biggest", 1
+    assert_select "#guide-progress tr.biggest td", text: "Make a GitHub Repository"
+    assert_match "counting started on September 29, 2026, in US Eastern days.", text_of_page
+    assert_match "reached: the section's heading stayed in the top two thirds of the screen for 2 seconds while the tab showed", text_of_page
+
+    get admin_stats_path(progress_guide: "stardance", progress_from: "2026-09-29", progress_to: "2026-09-29")
+    assert_select "#guide-progress select[name=progress_guide] option[selected]", "Stardance's guide"
+    assert_equal [ "Set up Godot", "4", "100%", "" ], css_select("#guide-progress tr")[1].css("td").map { it.text.squish }
+
+    # Days the wrong way round are put right, and a guide nobody reached says so.
+    get admin_stats_path(progress_guide: "clubs", progress_from: "2026-10-01", progress_to: "2026-09-28")
+    assert_select "#guide-progress input[name=progress_from][value='2026-09-28']"
+    assert_select "#guide-progress p.muted", text: "no browser reached a section of the clubs' guide from September 28 to October 1."
+    assert_select "#guide-progress table", 0
+  end
+
   test "a: Stardance and Clubs readers stack on each day's bar, with a legend, and each day's list counts them" do
     GuideReaderDay.create!(day: Date.new(2026, 9, 29), guide: "stardance", readers: 12)
     GuideReaderDay.create!(day: Date.new(2026, 9, 29), guide: "clubs", readers: 3)

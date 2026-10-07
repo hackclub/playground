@@ -1,11 +1,13 @@
 <% content_for :title, [ (guide_step_name(@step) unless @step == GuidePage.first), "Build a desktop pet in Godot" ].compact.join(" · ") %>
 <%= render "guides/reopen" %>
+<% content_for :head, guide_progress_tag %>
 <%# The guide, centered, one step at a time, with buttons under it to the
     step before and the step after, and its outline on the left. Nothing
     else sits beside it. While the tab shows, it counts this browser's
-    reading time for the day (guide_reading_controller.js), and it keeps the
-    reader's place in this guide (guide_place_controller.js). %>
-<div class="hub side-guide-hub" data-controller="guide-pager guide-reading guide-place"
+    reading time for the day (guide_reading_controller.js), it keeps the
+    reader's place in this guide (guide_place_controller.js), and it counts,
+    with no name, which sections this browser reaches (GuideSections). %>
+<div class="hub side-guide-hub" data-controller="guide-pager guide-reading guide-place guide-progress" <%= tag.attributes(data: guide_progress_data(side_guide.slug)) %>
      data-guide-place-key-value="<%= guide_place_key %>" data-guide-place-steps-value="<%= GuidePage.all.map(&:slug).to_json %>"
      data-guide-place-step-value="<%= @step.slug %>" data-guide-place-path-value="<%= guide_step_path(@step) %>"
      data-guide-reading-guide-value="<%= side_guide.slug %>"

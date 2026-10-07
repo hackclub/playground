@@ -364,6 +364,25 @@ h2.inline { display: inline; }
 .dau-day:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
 .dau-list .list { max-width: 560px; }
 .dau-list .list td:last-child, .dau-list .list th:last-child { width: 9em; white-space: nowrap; }
+/* Where readers stop in the guide: a picker, then the sections in order,
+   the biggest drop on a light wash. On a phone each section is its name and
+   bar, with its numbers on a line under them, each labelled. */
+.progress-picker { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 14px; margin: 0 0 12px; }
+.progress-picker label { display: grid; gap: 2px; font-size: 0.9em; }
+.progress-picker select, .progress-picker input { width: auto; }
+.guide-funnel tr.biggest td { background: #fff8e8; }
+.small-print { font-size: 0.85em; }
+@media (max-width: 560px) {
+  .guide-funnel, .guide-funnel tbody, .guide-funnel tr { display: block; }
+  .guide-funnel tr:first-child { display: none; }
+  .guide-funnel tr { padding: 6px 0; border-bottom: 1px dashed var(--line); }
+  .guide-funnel td { display: inline; padding: 0; border: 0; }
+  .guide-funnel td:first-child { display: block; width: auto; }
+  .guide-funnel td[data-label]::before { content: attr(data-label) " "; color: var(--muted); }
+  .guide-funnel td[data-label]:not(:empty)::after { content: " · "; color: var(--muted); }
+  .guide-funnel td[data-label]:last-child::after, .guide-funnel td[data-label]:has(+ td:empty)::after { content: none; }
+  .guide-funnel td[data-label]:empty::before { content: none; }
+}
 .goal-mark.end { transform: translateX(-100%); border-left: 0; border-right: 2px solid var(--ink); text-align: right; }
 /* A goal the approved hours have reached: its tick and label turn green,
    dark enough for small text (5.1:1 on white), and a check comes before the

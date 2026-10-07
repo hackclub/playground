@@ -121,3 +121,45 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     end
   end
 end
+
+# Tests of how far readers get in the guides (GuideSections): a heading
+# counts after half a second in view, and a page reports every second.
+module GuideProgressTests
+  extend ActiveSupport::Concern
+
+  included do
+    setup do
+      @progress = [ GuideSections.reach_seconds, GuideSections.send_seconds ]
+      GuideSections.reach_seconds = 0.5
+      GuideSections.send_seconds = 1
+      # The reports send the page's CSRF token, which only renders with this on.
+      ActionController::Base.allow_forgery_protection = true
+    end
+
+    teardown do
+      GuideSections.reach_seconds, GuideSections.send_seconds = @progress
+      ActionController::Base.allow_forgery_protection = false
+    end
+  end
+
+  def counted(guide, section) = GuideSectionDay.where(guide:, section:).sum(:readers)
+
+  # The sections this browser reported for the guide.
+  def stored(guide) = page.evaluate_script("JSON.parse(localStorage.getItem('playground-guide-progress:#{guide}')) || []")
+
+  def scroll_heading(id) = page.execute_script("document.getElementById(arguments[0]).scrollIntoView({ block: 'start' })", id)
+
+  # The browser here never hides its tab, so the page is told it did.
+  def hide_tab(hidden)
+    page.execute_script(<<~JS)
+      Object.defineProperty(document, "hidden", { value: #{hidden}, configurable: true })
+      document.dispatchEvent(new Event("visibilitychange"))
+    JS
+  end
+
+  def wait_for(seconds = 10)
+    deadline = Time.current + seconds
+    sleep 0.2 until yield || Time.current > deadline
+    assert yield, "waited #{seconds} seconds"
+  end
+end

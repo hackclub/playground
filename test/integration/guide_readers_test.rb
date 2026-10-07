@@ -45,13 +45,13 @@ class GuideReadersTest < ActionDispatch::IntegrationTest
   test "the rate limit counts a keyed hash of the address and the day, never the address" do
     controller = GuideReadersController.new
     controller.request = ActionDispatch::TestRequest.create("REMOTE_ADDR" => "203.0.113.7")
-    key = controller.send(:reader_key)
+    key = controller.send(:anonymous_key)
     assert_match(/\A\h{16}\z/, key)
     assert_not_includes key, "203"
     controller.request = ActionDispatch::TestRequest.create("REMOTE_ADDR" => "203.0.113.8")
-    assert_not_equal key, controller.send(:reader_key)
+    assert_not_equal key, controller.send(:anonymous_key)
     travel 1.day
     controller.request = ActionDispatch::TestRequest.create("REMOTE_ADDR" => "203.0.113.7")
-    assert_not_equal key, controller.send(:reader_key), "a new key each day"
+    assert_not_equal key, controller.send(:anonymous_key), "a new key each day"
   end
 end
