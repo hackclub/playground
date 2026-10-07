@@ -139,6 +139,8 @@ class NewSiteClassicTest < ActionDispatch::IntegrationTest
   end
 
   test "the new landing's FAQ says where the desktop went, only to an account made before the new site's launch" do
+    # The day before the launch, in Eastern time.
+    @user.update_columns(created_at: ActiveSupport::TimeZone[ProgramWindow::ZONE].local(2026, 10, 6, 12))
     get root_path
     assert_select ".home-faq details summary", "where did the desktop go?"
     assert_select ".home-faq details", text: /where did the desktop go\?/ do
@@ -147,7 +149,7 @@ class NewSiteClassicTest < ActionDispatch::IntegrationTest
     end
     assert_select ".home-faq details:last-child summary", "i have more questions :("
 
-    stub_const(NewSite, :LAUNCHED_ON, @user.created_at.to_date) do
+    stub_const(NewSite, :LAUNCHED_ON, Date.new(2026, 10, 6)) do
       get root_path
       assert_select ".home-faq details summary", text: "where did the desktop go?", count: 0
     end

@@ -56,7 +56,8 @@ class SessionsController < ApplicationController
   # flow can be driven without OAuth apps. Not routed in production. Like a
   # real login it goes on to (fake) Hackatime. deny=1 declines that step.
   # A newbie's fake Hackatime has no projects until the new site's guide
-  # sends heartbeats for one.
+  # sends heartbeats for one. Its accounts stand in for those from before
+  # the new site, so they start without it, unlike a real signup.
   def dev
     raise ActionController::RoutingError, "not found" unless FakeServices.on?
     kind = params[:as].presence_in(%w[participant newbie unverified admin froppii red]) || "participant"
@@ -82,6 +83,9 @@ class SessionsController < ApplicationController
     if user.new_record? && identity["verification_status"] == "ineligible"
       return redirect_to login_path, alert: "Hack Club says this account can't join programs like playground."
     end
+    # A new account starts on the new site (NewSite). An account that exists
+    # keeps its flag, which only an admin changes.
+    user.new_site = true if user.new_record?
     # Organizers are admins by email (ADMIN_EMAILS, comma separated), and stop
     # being admins when their email leaves the list.
     user.admin = user.admin_email? if User.admin_emails.any?

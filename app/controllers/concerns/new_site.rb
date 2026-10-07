@@ -1,7 +1,9 @@
 # The new site, without the desktop: the landing, the guide in steps with the
 # next step and the hours beside it, and my pets. It is behind a flag on each
-# user, users.new_site, which only an admin turns on, from the admin's page
-# for that user (Admin::PeopleController#new_site). Everyone else, and every
+# user, users.new_site. An account made at signup from LAUNCHED_ON on starts
+# with it on (SessionsController). For an older account only an admin turns
+# it on, and an admin can turn it off for anyone, from the admin's page for
+# that user (Admin::PeopleController#new_site). Everyone else, and every
 # signed-out visitor, gets the desktop site, unchanged.
 #
 # The gate sits in three places:
@@ -26,10 +28,10 @@ module NewSite
   # can set it.
   mattr_accessor :for_visitors, default: false
 
-  # Accounts made before this day knew the old desktop, so the new landing's
-  # FAQ tells them where it went. Far off for now, so every account counts.
-  # It becomes the day the new site is the default.
-  LAUNCHED_ON = Date.new(3000, 1, 1)
+  # The day, in Eastern time, from which a new account starts on the new
+  # site. Accounts made before it knew the old desktop, so the new landing's
+  # FAQ tells them where it went.
+  LAUNCHED_ON = Date.new(2026, 10, 7)
 
   def self.for?(user) = user ? user.new_site? : for_visitors
 
@@ -63,8 +65,8 @@ module NewSite
   def back_to_new_site? = current_user&.new_site? && NewSite.classic?(cookies)
 
   # The new landing's FAQ says where the desktop went to an account made
-  # before the new site was the default.
-  def knew_the_desktop? = current_user.present? && current_user.created_at.to_date < NewSite::LAUNCHED_ON
+  # before the new site was the default, by the day in Eastern time.
+  def knew_the_desktop? = current_user.present? && current_user.created_at.in_time_zone(ProgramWindow::ZONE).to_date < NewSite::LAUNCHED_ON
 
   # A controller of the new site's own answers 404 to anyone else, as the
   # routes do. It guards a route left out of the constraint by mistake.
