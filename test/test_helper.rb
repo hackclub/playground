@@ -50,6 +50,9 @@ module ActiveSupport
       # A window from 2000 to tomorrow, so the fake's time all counts whatever
       # the date. Tests of the window itself set their own.
       ProgramWindow.current = ProgramWindow.new(starts_at: Time.utc(2000), ends_at: 1.day.from_now)
+      # The NPS form asks nobody, so nps.exe stays shut and a ship needs no
+      # answer. Tests of the form turn it on.
+      NpsResponse.asking = false
     end
   end
 end

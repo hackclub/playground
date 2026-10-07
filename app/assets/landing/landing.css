@@ -456,8 +456,9 @@ a.app { text-decoration: none; }
 #window-guide\.txt .windowcontent,
 #window-requirements\.txt .windowcontent { padding: 0; }
 /* login.exe holds the login in a frame too, at a window's own width, as
-   tall as the login and no taller. */
-#window-login\.exe .windowcontent { padding: 0; }
+   tall as the login and no taller. nps.exe holds the NPS form the same way. */
+#window-login\.exe .windowcontent,
+#window-nps\.exe .windowcontent { padding: 0; }
 
 /* landing.js sets --page-height to the page's own height, so the window fits
    its page: ship.exe's dashboard, the login, a pet's page, or the guide,
@@ -467,7 +468,8 @@ a.app { text-decoration: none; }
 .login-frame,
 .pet-frame,
 .guide-frame,
-.requirements-frame {
+.requirements-frame,
+.nps-frame {
     display: block;
     width: 100%;
     height: var(--page-height, min(640px, calc(100vh - 110px)));
@@ -567,7 +569,8 @@ body.pet-held #desktop-pet-static { z-index: 1002; }
 .window.resized .ship-frame,
 .window.resized .pet-frame,
 .window.resized .guide-frame,
-.window.resized .requirements-frame { height: 100%; }
+.window.resized .requirements-frame,
+.window.resized .nps-frame { height: 100%; }
 
 /* The Hack Club 2026 banner links to hackclub.com. The banner image ignores
    the mouse and sits behind everything, so a link covers the same spot

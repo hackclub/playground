@@ -103,6 +103,8 @@
     data-icon-bounds="<%= IconBounds.all.to_h { |name, box| [ image_path("landing/#{name}"), box ] }.to_json %>"
     <%# Which desktop window each page belongs to. %>
     data-window-pages="<%= DesktopWindows.pages.to_json %>"
+    <%# Whether nps.exe has an icon, and whether it opens by itself now. %>
+    <%= tag.attributes(data: nps_desktop_data) %>
     <%# A signed-in participant's pets, what they put in the trash, and the
         account the open windows are saved for in this browser. %>
     <% if current_user %>data-pets="<%= @pets.to_json %>" data-trash="<%= current_user.desktop_trash_with_peel.to_json %>" data-account="<%= current_user.id %>"<% end %>></div>

@@ -1,0 +1,18 @@
+<%# The ship list's "tell us how playground is going" step: the NPS
+    questions, as the field that fixes it. Unlike the other fields it saves
+    when sent, since the answer is whole only then, through the same path:
+    the list comes back with the step ticked. A sent answer leaves a thanks. %>
+<% if item.ok %>
+  <p class="fix muted">thanks! 🪨</p>
+<% else %>
+  <%= form_with scope: :nps_response, url: nps_path, class: "fix nps-fix", html: { novalidate: true },
+                data: { ship_checks_target: "form", saves_when_sent: true } do %>
+    <%= hidden_field_tag :checks, 1, id: nil %>
+    <%= hidden_field_tag :project_id, @project.id, id: nil %>
+    <% ship_from.each do |name, value| %><%= hidden_field_tag name, value, id: nil %><% end %>
+    <% @checklist.items.each do |shown| %><%= hidden_field_tag "shown[]", shown.key, id: nil %><% end %>
+    <% if flash[:nps_alert] %><p class="banner alert"><%= flash[:nps_alert] %></p><% end %>
+    <%= render "nps_responses/questions", nps: NpsResponse.new, hint: "pick a number and fill in the * ones." %>
+    <button type="submit" class="btn">send</button>
+  <% end %>
+<% end %>

@@ -504,3 +504,57 @@ progress { width: 100%; margin-top: 6px; }
    reaches down over it to the body's edge. */
 .popup-body #ship-checks > .row { bottom: -16px; margin-bottom: -16px; padding-bottom: 24px; }
 
+/* The NPS questions, in nps.exe and as a step's fix in the ship list.
+   The score is a row of eleven boxes drawn as the windows' blue buttons,
+   the picked one filled, with what the ends mean under them. The optional
+   question is quieter. On a phone the boxes narrow to keep one row. */
+.nps h2 { margin-bottom: 10px; }
+.nps-questions { display: grid; gap: 4px; margin: 0 0 12px; }
+.nps-fix .nps-questions { margin-bottom: 8px; }
+.nps-score { min-width: 0; margin: 0 0 8px; padding: 0; border: 0; }
+.nps-score legend { margin: 0 0 6px; padding: 0; }
+.nps-boxes { display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 4px; }
+.nps-box { position: relative; display: grid; place-items: center; height: 36px; border: 2px solid var(--blue); background: var(--paper); color: var(--blue); cursor: pointer; }
+.nps-box input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.nps-box:hover { background: var(--wash); }
+.nps-box:has(input:checked) { background: var(--blue); color: white; }
+.nps-box:has(input:focus-visible) { outline: 2px solid var(--blue); outline-offset: 2px; z-index: 1; }
+.nps-ends { display: flex; justify-content: space-between; gap: 8px; margin: 4px 0 0; color: var(--muted); font-size: 0.85em; }
+.nps-question { margin-top: 6px; }
+.nps-question.optional, .nps-questions textarea.optional { font-size: 0.9em; }
+.nps-question.optional { color: var(--muted); }
+.nps-required { color: var(--red); }
+.nps-hint { margin: 2px 0 0; }
+.nps-hint[hidden] { display: none; }
+@media (max-width: 560px) { .nps-boxes { gap: 2px; } .nps-box { height: 32px; } }
+/* The NPS on the stats page. Over time it is a column per Eastern day, up
+   from the zero line for an NPS above 0 and down for one below, in the
+   bars' fill and ink outline, the NPS above each column and its n under
+   the day. Each group of people has its own fill, here and on each answer. */
+.nps-summary { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; margin: 0 0 8px; }
+.nps-headline { display: grid; justify-items: start; }
+.nps-headline .big { font-size: 2.4rem; line-height: 1.1; color: var(--blue); }
+.kv.nps-groups { flex: 0 1 420px; width: auto; }
+.kv.nps-groups td:not(:first-child) { text-align: right; white-space: nowrap; }
+.key.promoter, .nps-pill.promoter { background: var(--blue); color: white; }
+.key.passive, .nps-pill.passive { background: #dbe6f5; }
+.key.detractor, .nps-pill.detractor, .nps-chart .down .fill { background: color-mix(in srgb, var(--red) 45%, white); }
+.nps-scroll { overflow-x: auto; }
+.nps-chart { width: 100%; min-width: calc(var(--days, 1) * 30px); border-collapse: collapse; table-layout: fixed; font-size: 0.8rem; text-align: center; margin: 4px 0 8px; }
+.nps-chart td { padding: 0; vertical-align: bottom; }
+/* The dashed lines are +100 and -100. */
+.nps-chart .well { display: grid; grid-template-rows: 1fr 1fr; height: 160px; border-block: 1px dashed var(--line); }
+.nps-chart.no-down .well { grid-template-rows: 1fr 0; height: 100px; }
+.nps-chart.no-up .well { grid-template-rows: 0 1fr; height: 100px; }
+.nps-chart .up { display: flex; flex-direction: column; justify-content: flex-end; border-bottom: 2px solid var(--ink); }
+.nps-chart .down { display: flex; flex-direction: column; justify-content: flex-start; }
+.nps-chart .fill { flex: none; height: calc(100% * var(--h)); margin: 0 3px; background: var(--blue); border: 1px solid var(--ink); }
+.nps-chart .up .fill { border-bottom: 0; }
+.nps-chart .down .fill { border-top: 0; }
+.nps-chart .values td { padding-bottom: 2px; }
+.nps-chart .labels td { padding-top: 2px; color: var(--muted); }
+.nps-chart .ns td { color: var(--muted); font-size: 0.7rem; white-space: nowrap; }
+.nps-answers { min-width: 760px; }
+.nps-answers td:nth-child(-n + 4) { white-space: nowrap; }
+.nps-answers td.text { width: 25%; white-space: pre-wrap; }
+.nps-pill { display: inline-block; min-width: 2em; padding: 0 6px; border: 1px solid var(--ink); text-align: center; }

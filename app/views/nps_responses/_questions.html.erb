@@ -1,0 +1,28 @@
+<%# The NPS questions (NpsResponse::QUESTIONS): the score from 0 to 10 as a
+    row of boxes, which the arrow keys move along, then the text questions,
+    an optional one quieter. The form's send button stays off until each
+    required part has an answer, and the hint says what is missing. %>
+<div class="nps-questions" data-controller="nps-form"
+     data-action="input->nps-form#check change->nps-form#check turbo:morph-element@document->nps-form#checkSoon">
+  <fieldset class="nps-score">
+    <legend>how likely are you to recommend playground to a friend? <span class="nps-required" aria-hidden="true">*</span></legend>
+    <div class="nps-boxes">
+      <% NpsResponse::SCORES.each do |score| %>
+        <label class="nps-box">
+          <%= radio_button_tag "nps_response[score]", score, nps.score == score, required: true %>
+          <span><%= score %></span><% if score == NpsResponse::SCORES.first %><span class="visually-hidden">, not at all</span><% elsif score == NpsResponse::SCORES.last %><span class="visually-hidden">, very very likely</span><% end %>
+        </label>
+      <% end %>
+    </div>
+    <p class="nps-ends" aria-hidden="true"><span>0 = not at all</span><span>10 = very very likely</span></p>
+  </fieldset>
+  <% NpsResponse::QUESTIONS.each do |key, question| %>
+    <label class="<%= token_list("nps-question", optional: !question[:required]) %>" for="nps_response_<%= key %>">
+      <%= question[:label] %>
+      <%= question[:required] ? tag.span("*", class: "nps-required", aria: { hidden: true }) : tag.span("optional", class: "muted") %>
+    </label>
+    <%= text_area_tag "nps_response[#{key}]", nps[key], id: "nps_response_#{key}", rows: question[:required] ? 3 : 2,
+                      maxlength: NpsResponse::MAX_LENGTH, required: question[:required], class: ("optional" unless question[:required]) %>
+  <% end %>
+  <p class="muted nps-hint" data-nps-form-target="hint"><%= hint %></p>
+</div>

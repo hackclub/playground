@@ -18,7 +18,7 @@ class DesktopWindowsTest < ActiveSupport::TestCase
   test "each kind of window a page belongs to is one the desktop knows how to open" do
     source = Rails.root.join("app/javascript/landing.js").read
     kinds = source[/^const windowKinds = \{\n(.*?)^\};/m, 1].scan(/^    (\w+): \{/).flatten
-    assert_equal %w[goal login pet ship guide requirements redeem], kinds
+    assert_equal %w[goal login pet ship guide requirements redeem nps], kinds
     assert_empty DesktopWindows::PAGES.values.uniq - kinds, "each kind needs an entry in landing.js's windowKinds"
   end
 
@@ -30,6 +30,7 @@ class DesktopWindowsTest < ActiveSupport::TestCase
       { kind: "requirements", path: "/requirements" },
       { kind: "goal", path: "/projects/new" },
       { kind: "redeem", path: "/redemptions/new" },
+      { kind: "nps", path: "/nps" },
       { kind: "pet", path: "/projects/:id" },
       { kind: "pet", path: "/projects/:id/edit" },
       { kind: "ship", path: "/projects/:id/checks" }

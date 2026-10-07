@@ -19,6 +19,7 @@ module DesktopWindows
     # A pet has no window until it exists, so it is made from ship.exe.
     "projects#new" => "goal",
     "redemptions#new" => "redeem",
+    "nps_responses#show" => "nps",
     "projects#show" => "pet",
     "projects#edit" => "pet",
     "projects#checks" => "ship"

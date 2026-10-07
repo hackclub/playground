@@ -48,7 +48,9 @@ class SubmitGate
       check(:screenshot, "your pet needs a screenshot", :blocker, fix: "add one with edit") { screenshot? },
       check(:ship_message, "you need to link your ship message in #playground-ships", :blocker,
             fix: ship_message_fix) { ship_message? },
-      check(:commits, "the repository should have more than one commit", :warning) { !github? || (repo && repo.commits > 1) }
+      check(:commits, "the repository should have more than one commit", :warning) { !github? || (repo && repo.commits > 1) },
+      # The NPS form, when there is no answer from the last 12 hours.
+      check(:nps, "tell us how playground is going", :blocker, fix: "answer the questions") { !NpsResponse.due?(@user) }
     ]
   end
 

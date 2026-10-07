@@ -19,7 +19,10 @@
 // right click on an icon opens its own menu, which opens it, renames a pet,
 // or moves it to the trash. The login is login.exe, a window with no icon,
 // which a visitor's desktop opens beside welcome.txt, and ship.exe opens
-// for a visitor.
+// for a visitor. nps.exe asks a participant how likely they are to
+// recommend playground, by itself every 12 hours.
+import { confetti } from "confetti";
+
 const appsIcons = {
     file: document.getElementById("apps").dataset.fileIcon,
     exe: document.getElementById("apps").dataset.exeIcon,
@@ -75,6 +78,16 @@ const apps = [
             <iframe class="requirements-frame" src="/requirements" title="requirements.txt"></iframe>
         `
     },
+    // playground: the NPS form, its page in a frame, for a participant the
+    // site asks (data-nps). It opens by itself every 12 hours (see askNps).
+    ...("nps" in document.getElementById("apps").dataset ? [{
+        title: "nps.exe",
+        icon: appsIcons.exe,
+        resizable: true,
+        content: `
+            <iframe class="nps-frame" src="/nps" title="nps.exe"></iframe>
+        `
+    }] : []),
     // playground: the login's first step, its page in a frame. It has no
     // icon: a visitor's desktop opens it with the page (see restoreWindows),
     // and ship.exe opens it for a visitor (see openWindow). It fits its page
@@ -860,7 +873,7 @@ function iconGrid() {
 // bottom left and the trash in the bottom right. Each key names its icon.
 const cornerGroups = [
     { keys: ["welcome.txt", "guide.txt", "goal.exe"], row: "top", side: "left" },
-    { keys: ["requirements.txt"], row: "second", side: "left" },
+    { keys: ["requirements.txt", ...(apps.some(app => app.title === "nps.exe") ? ["nps.exe"] : [])], row: "second", side: "left" },
     { keys: ["armand.sponsor", "Bounty", "Security"], row: "bottom", side: "left" },
     { keys: ["Terms & Privacy", "Hack Club", "trash"], row: "bottom", side: "right" }
 ];
@@ -2109,6 +2122,12 @@ const windowKinds = {
     redeem: {
         owns: win => win.classList.contains("redeem-window"),
         open: page => openRedeemWindow(page.url)
+    },
+    // Only a participant the site asks has nps.exe.
+    nps: {
+        owns: win => win.id === "window-nps.exe",
+        home: () => "/nps",
+        open: page => apps.some(app => app.title === "nps.exe") && openAppAt("nps.exe", page.url)
     }
 };
 
@@ -2356,6 +2375,12 @@ function shipWindowMessage(event) {
     if (!frame) return;
     if (event.data.action === "open") {
         openShipWindow(frame, event.data.project, String(event.data.name ?? ""));
+        return;
+    }
+    // A ship that carried an answer to the NPS form ends in confetti over
+    // the whole screen.
+    if (event.data.action === "confetti") {
+        if (frame.closest(".ship-window")) confetti();
         return;
     }
     const win = frame.closest(".ship-window");
@@ -3082,7 +3107,9 @@ function restoreWindow(entry) {
             () => openPetWindow(pet, page?.url, { atLoad: true })],
         ship: () => pet != null && [`window-ship-${pet}`,
             () => openShipWindow(document.querySelector(`#window-pet-${pet} iframe`), pet, petIcons.get(pet).querySelector("p").textContent, { atLoad: true })],
-        redeem: () => goal && [`window-redeem-${goal}`, () => openRedeemWindow(page.url, { atLoad: true })]
+        redeem: () => goal && [`window-redeem-${goal}`, () => openRedeemWindow(page.url, { atLoad: true })],
+        nps: () => ownPage({ kind: "nps", id: null }) && apps.some(app => app.title === "nps.exe") && ["window-nps.exe",
+            () => openWindowByTitle("nps.exe", { atLoad: true, page: page?.url })]
     }[entry.kind]?.() || [];
     if (entry.kind === "trash") {
         openTrashMenu(Array.isArray(entry.at) && entry.at.length === 2 && entry.at.every(Number.isFinite) ? entry.at : null);
@@ -3110,6 +3137,7 @@ function restoreWindows() {
     // A visitor's login.exe opens with the page, after the rest, in front.
     const done = () => {
         if (!signedIn) openWindowByTitle("login.exe", { atLoad: true });
+        askNps();
         windowStateReady = true;
         saveWindowState();
     };
@@ -3148,6 +3176,51 @@ function restoreWindows() {
     frame?.addEventListener("load", rest, { once: true });
     setTimeout(rest, frame ? 3000 : 0);
 }
+
+// playground: nps.exe opens by itself, in front, once the rest are back,
+// when the server says to ask: no answer in the last 12 hours, and some
+// Hackatime time (data-nps-ask, see NpsResponse.ask?). In this browser it
+// opens by itself at most once every 12 hours, counted from when it last
+// opened by itself or closed, so a close or a cancel keeps it shut for 12
+// hours. Where storage is blocked it opens on each load until answered.
+const npsInterval = 12 * 60 * 60 * 1000;
+const npsAskedStore = `playground-nps-asked:${appsContainer.dataset.account ?? "visitor"}`;
+
+function noteNpsAsked() {
+    try {
+        localStorage.setItem(npsAskedStore, String(Date.now()));
+    } catch {
+        // Nothing remembers the ask.
+    }
+}
+
+function askNps() {
+    if (!("npsAsk" in appsContainer.dataset) || framedDesktop) return;
+    try {
+        // A time to come, as after the clock was set back, has passed.
+        const since = Date.now() - Number(localStorage.getItem(npsAskedStore));
+        if (since >= 0 && since < npsInterval) return;
+    } catch {
+        // Nothing remembers the ask.
+    }
+    noteNpsAsked();
+    openWindowByTitle("nps.exe", { atLoad: true, page: "/nps" });
+}
+
+// Its X, which the form's cancel presses too, counts as a skip.
+document.addEventListener("click", event => {
+    if (event.target.closest?.("#window-nps\\.exe .windowclose")) noteNpsAsked();
+}, true);
+
+// The form's cancel asks the desktop to close nps.exe, and a sent answer
+// to close it with confetti over the whole screen.
+window.addEventListener("message", event => {
+    if (event.origin !== location.origin || event.data?.type !== "playground:nps" || !["close", "sent"].includes(event.data.action)) return;
+    const win = document.getElementById("window-nps.exe");
+    if (!win || win.querySelector("iframe")?.contentWindow !== event.source) return;
+    win.querySelector(".windowclose").click();
+    if (event.data.action === "sent") confetti();
+});
 
 // A restored framed window whose page comes back as anything but one of the
 // site's own pages, such as an error page, closes.

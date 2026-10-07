@@ -1,10 +1,13 @@
 import { Controller } from "@hotwired/stimulus"
 import { Turbo } from "@hotwired/turbo-rails"
+import { confetti } from "confetti"
 
 // ship.exe's list of what still blocks shipping. Each fix saves on change,
 // with no save button: a field when it loses focus or takes Enter, a
-// checkbox when it is ticked, a screenshot when it uploads. The list comes
-// back and morphs in place, so each step shows at once whether it is done.
+// checkbox when it is ticked, a screenshot when it uploads. The NPS answer
+// is whole only when sent, so its form saves on its own button instead. The
+// list comes back and morphs in place, so each step shows at once whether
+// it is done.
 //
 // The forms post with fetch rather than Turbo Drive, which runs one form at
 // a time and would drop a save still on its way when the next one starts.
@@ -15,11 +18,27 @@ export default class extends Controller {
 
   connect() {
     this.queue = Promise.resolve()
+    this.shipped = this.shipped.bind(this)
+    this.element.addEventListener("turbo:submit-end", this.shipped)
+  }
+
+  disconnect() {
+    this.element.removeEventListener("turbo:submit-end", this.shipped)
+  }
+
+  // A ship whose list took an answer to the NPS form ends in confetti over
+  // the whole screen: the desktop's (see landing.js), or the tab's, over the
+  // pet page it lands on.
+  shipped(event) {
+    if (!event.detail.success || !event.target.matches("form[action$='/ship']")) return
+    if (!this.element.querySelector("#ship-check-nps.ok")) return
+    if (window.parent !== window) window.parent.postMessage({ type: "playground:ship", action: "confetti" }, location.origin)
+    else confetti()
   }
 
   save(event) {
     const form = event.target.form
-    if (form && this.formTargets.includes(form)) form.requestSubmit()
+    if (form && this.formTargets.includes(form) && !("savesWhenSent" in form.dataset)) form.requestSubmit()
   }
 
   submit(event) {
@@ -28,7 +47,7 @@ export default class extends Controller {
     event.preventDefault()
     // Enter commits a field, which also fires its change: one save is enough.
     const body = new FormData(form)
-    const sent = new URLSearchParams([...body].filter(([name]) => name.startsWith("project["))).toString()
+    const sent = new URLSearchParams([...body].filter(([name]) => /^(project|nps_response)\[/.test(name))).toString()
     if (form.sent === sent) return
     form.sent = sent
 

@@ -1,0 +1,16 @@
+<% turbo_exempts_page_from_preview %>
+<% content_for :title, "nps.exe" %>
+<%# nps.exe's page. On the desktop, cancel closes the window, and a sent
+    answer closes it with confetti. In a tab of its own, cancel goes to the
+    desktop. %>
+<section class="panel nps" data-controller="nps-window">
+  <h2>how's playground going? be honest!</h2>
+  <%= form_with scope: :nps_response, url: nps_path, id: "nps-form" do %>
+    <% if @nps.errors.any? %><p class="banner alert">pick a number and fill in the * ones first.</p><% end %>
+    <%= render "nps_responses/questions", nps: @nps, hint: "pick a number and fill in the * ones to send." %>
+    <div class="row">
+      <button type="submit" class="btn primary">submit</button>
+      <%= link_to "cancel", root_path, class: "btn", data: { action: "nps-window#close" } %>
+    </div>
+  <% end %>
+</section>

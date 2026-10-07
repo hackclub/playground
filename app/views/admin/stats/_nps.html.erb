@@ -1,0 +1,73 @@
+<section class="panel" id="nps">
+  <h2>how likely are people to recommend playground?</h2>
+  <% if !nps.any? %>
+    <p class="muted">nobody has answered yet. participants answer in nps.exe, which opens every 12 hours, and when they ship.</p>
+  <% else %>
+    <% week = nps.last_7_days %>
+    <p class="muted">NPS is the share of promoters minus the share of detractors, from -100 to 100. over a span of days each person counts once, by their latest answer. days are US Eastern.</p>
+    <div class="nps-summary">
+      <div class="nps-headline"><span class="big"><%= nps_value(week.nps) %></span><span>NPS, last 7 days</span></div>
+      <% if week.people.zero? %>
+        <p class="muted">nobody answered in the last 7 days.</p>
+      <% else %>
+        <table class="kv nps-groups">
+          <% { promoter: [ "promoters, 9 or 10", week.promoters ], passive: [ "passives, 7 or 8", week.passives ],
+               detractor: [ "detractors, 0 to 6", week.detractors ] }.each do |group, (label, count)| %>
+            <tr><td><span class="key <%= group %>"></span> <%= label %></td><td><%= count %></td><td><%= share(count.to_f / week.people) %></td></tr>
+          <% end %>
+          <tr class="total"><td>people who answered</td><td><%= week.people %></td><td></td></tr>
+        </table>
+      <% end %>
+    </div>
+
+    <h3>NPS over time</h3>
+    <% days = nps.over_time %>
+    <p class="muted">each day's column is the NPS of the 7 days ending that day, with n, the people it counts, under the day.</p>
+    <div class="nps-scroll">
+      <%# A side no day reaches is left out, so an NPS above 0 every day needs no room below the line. %>
+      <table class="<%= token_list("nps-chart", "no-down": days.none? { it.nps&.negative? }, "no-up": days.none? { it.nps&.positive? }) %>" style="--days: <%= days.size %>">
+        <tr class="values"><% days.each do |day| %><td><%= nps_value(day.nps) %></td><% end %></tr>
+        <tr class="wells">
+          <% days.each do |day| %>
+            <% about = "7 days to #{day.last_day.strftime("%a %B %-d")}: NPS #{nps_value(day.nps)}, #{pluralize(day.people, "person", plural: "people")}" %>
+            <td title="<%= about %>"><div class="well">
+              <span class="up"><% if day.nps&.positive? %><span class="fill" style="--h: <%= (day.nps / 100.0).round(3) %>"></span><% end %></span>
+              <span class="down"><% if day.nps&.negative? %><span class="fill" style="--h: <%= (-day.nps / 100.0).round(3) %>"></span><% end %></span>
+              <span class="visually-hidden"><%= about %></span>
+            </div></td>
+          <% end %>
+        </tr>
+        <tr class="labels"><% days.each do |day| %><td><%= day.last_day.day %></td><% end %></tr>
+        <tr class="ns"><% days.each do |day| %><td>n=<%= day.people %></td><% end %></tr>
+      </table>
+    </div>
+    <p class="muted"><%= days.first.last_day.strftime("%B %-d") %> to <%= days.last.last_day.strftime("%B %-d") %>.</p>
+    <details>
+      <summary>each day in numbers</summary>
+      <table class="list">
+        <tr><th>7 days to</th><th>NPS</th><th>people</th><th>promoters</th><th>passives</th><th>detractors</th></tr>
+        <% days.reverse_each do |day| %>
+          <tr><td><%= day.last_day.strftime("%a %B %-d") %></td><td><%= nps_value(day.nps) %></td><td><%= day.people %></td>
+            <td><%= day.promoters %></td><td><%= day.passives %></td><td><%= day.detractors %></td></tr>
+        <% end %>
+      </table>
+    </details>
+
+    <h3>the latest answers</h3>
+    <p class="muted">newest first, the latest <%= NpsStats::LATEST %>.</p>
+    <div class="nps-scroll">
+      <table class="list nps-answers">
+        <tr><th>score</th><th>person</th><th>when</th><th>from</th><% NpsResponse::QUESTIONS.each_key do |key| %><th><%= key.to_s.tr("_", " ") %></th><% end %></tr>
+        <% nps.latest.each do |answer| %>
+          <tr>
+            <td><span class="nps-pill <%= nps_group(answer.score) %>" title="<%= nps_group(answer.score) %>"><%= answer.score %></span></td>
+            <td><%= link_to answer.user.display_name, admin_person_path(answer.user) %></td>
+            <td class="muted"><%= answer.created_at.in_time_zone(ProgramWindow::ZONE).strftime("%a %b %-d, %-l:%M%P") %></td>
+            <td class="muted"><%= answer.source == "ship" ? "ship#{" (#{answer.project.name})" if answer.project}" : "nps.exe" %></td>
+            <% NpsResponse::QUESTIONS.each_key do |key| %><td class="text"><%= answer[key] %></td><% end %>
+          </tr>
+        <% end %>
+      </table>
+    </div>
+  <% end %>
+</section>

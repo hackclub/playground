@@ -14,7 +14,7 @@
 class ShipChecklist
   FIELDS = { description: :description, description_length: :description, repo: :code_url,
              playable: :playable_url, hackatime_projects: :hackatime_projects, screenshot: :screenshot,
-             ship_message: :ship_message_url }.freeze
+             ship_message: :ship_message_url, nps: :nps }.freeze
   NEEDS = { readme: :repo, commits: :repo, new_hours: :hackatime_projects }.freeze
   TIPS = {
     eligible: "verify your identity at auth.hackclub.com, then open this again.",
@@ -29,7 +29,8 @@ class ShipChecklist
     ship_message: "each ship needs its own post in #playground-ships. once you've posted, open the message's more actions " \
                   "menu, choose copy link, and paste it here.",
     playable_host: "itch.io is best, since that's where people find pets. another link is fine if someone can play or run your pet from it.",
-    commits: "this doesn't stop you shipping. committing as you go shows how your pet came together."
+    commits: "this doesn't stop you shipping. committing as you go shows how your pet came together.",
+    nps: "we ask every 12 hours. be honest!"
   }.freeze
   UNCHECKED_TIP = "we couldn't check this just now. try again in a minute.".freeze
 

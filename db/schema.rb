@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_07_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_07_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -48,6 +48,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_160000) do
     t.index ["user_id", "hour"], name: "index_coding_hours_on_user_id_and_hour", unique: true
     t.check_constraint "hour = date_trunc('hour'::text, hour)", name: "coding_hours_hour_is_whole"
     t.check_constraint "seconds >= 0 AND seconds <= 3600", name: "coding_hours_seconds_fit_the_hour"
+  end
+
+  create_table "nps_responses", force: :cascade do |t|
+    t.text "anything_else"
+    t.datetime "created_at", null: false
+    t.text "doing_well"
+    t.text "improve"
+    t.bigint "project_id"
+    t.integer "score", null: false
+    t.string "source", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["created_at"], name: "index_nps_responses_on_created_at"
+    t.index ["project_id"], name: "index_nps_responses_on_project_id"
+    t.index ["user_id", "created_at"], name: "index_nps_responses_on_user_id_and_created_at"
+    t.check_constraint "score >= 0 AND score <= 10", name: "nps_responses_score_0_to_10"
   end
 
   create_table "projects", force: :cascade do |t|
@@ -330,6 +346,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_160000) do
   add_foreign_key "audit_events", "users", column: "actor_id"
   add_foreign_key "claims", "users"
   add_foreign_key "coding_hours", "users"
+  add_foreign_key "nps_responses", "projects", on_delete: :nullify
+  add_foreign_key "nps_responses", "users", on_delete: :cascade
   add_foreign_key "projects", "users"
   add_foreign_key "redemptions", "users"
   add_foreign_key "redemptions", "users", column: "fulfilled_by_id"

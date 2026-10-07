@@ -4,6 +4,8 @@
     what is wrong under the field. The upload saves itself. %>
 <% if item.field == :screenshot %>
   <div id="ship-screenshot" class="fix"><%= render "projects/screenshot_upload", project: @project %></div>
+<% elsif item.field == :nps %>
+  <%= render "nps_responses/ship_fix", item: %>
 <% else %>
   <%= form_with model: @project, class: "fix", html: { novalidate: true }, data: { ship_checks_target: "form" } do |f| %>
     <%= hidden_field_tag :checks, 1, id: nil %>

@@ -4,6 +4,8 @@ Rails.application.routes.draw do
   get "dashboard" => "dashboard#show"
   get "guide" => "guides#show"
   get "requirements" => "requirements#show"
+  # nps.exe's form, and its answers.
+  resource :nps, only: %i[show create], controller: "nps_responses"
   resources :projects do
     get :checks, on: :member
     get :trash, on: :member
