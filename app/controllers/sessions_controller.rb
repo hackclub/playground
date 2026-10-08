@@ -92,7 +92,9 @@ class SessionsController < ApplicationController
     DisplayName.assign(user)
     user.hca_access_token = auth.credentials.token
     user.hca_refresh_token = auth.credentials.refresh_token if auth.credentials.refresh_token
+    created = user.new_record?
     user.save!
+    count_signup_source if created
     SlackInviteJob.perform_later(user.id) if user.slack_id.present? && user.slack_invited_at.nil?
     # On the new site, a login begun at a guide step goes back to it. The
     # guide links Hackatime at its own step, so the login skips that one.
@@ -107,6 +109,18 @@ class SessionsController < ApplicationController
     current_user.update!(hackatime_access_token: auth.credentials.token)
     back = guide_return(request.env["omniauth.origin"]) if new_site?
     redirect_to back || root_path(open: "goal")
+  end
+
+  # One more new account from where this browser came from (SignupSourceDay).
+  # The login form put the browser's first and last touch on the login's
+  # address (attribution.js), so OmniAuth kept them in the session for the
+  # round trip and hands them back here, once, taking them out of the
+  # session. They go into the day's count and nowhere else: not on the
+  # account, and not in the log (filter_parameter_logging.rb). A count that
+  # fails never stops the login.
+  def count_signup_source
+    touches = TrafficSource.touches(request.env["omniauth.params"].to_h.slice(*TrafficSource::COLUMNS.map(&:to_s)))
+    Rails.error.handle(ActiveRecord::ActiveRecordError) { SignupSourceDay.count!(**touches) }
   end
 
   # The desktop with ship.exe open, or first the Hackatime step when there

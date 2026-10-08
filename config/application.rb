@@ -30,6 +30,10 @@ module Website
     # its constant is OmniAuth::, which Zeitwerk would expect as Omniauth::.
     config.autoload_lib(ignore: %w[assets tasks omniauth])
 
+    # The anonymous counts the guides report (AnonymousCounting) are not
+    # logged: a request line would pair the address with the report.
+    config.middleware.insert_before Rails::Rack::Logger, Rails::Rack::SilenceRequest, path: %r{\A/guide_(?:journeys|sections|readers)\z}
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

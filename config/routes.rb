@@ -14,6 +14,8 @@ Rails.application.routes.draw do
   post "guide_readers" => "guide_readers#create", as: :guide_readers
   # A browser says which sections of a guide it reached, each once.
   post "guide_sections" => "guide_sections#create", as: :guide_sections
+  # A browser says how far it got in a guide, and how long it spent there.
+  post "guide_journeys" => "guide_journeys#create", as: :guide_journeys
   resources :projects do
     get :checks, on: :member
     get :trash, on: :member

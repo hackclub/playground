@@ -133,38 +133,117 @@ class AdminStatsTest < ActionDispatch::IntegrationTest
     assert_select ".dau-list a[href=?]", admin_person_path(@admin), 0
   end
 
-  test "where readers stop: a guide's sections in order, the biggest drop marked, for the guide and the days picked" do
+  test "where readers stop: each stage of the guide, how many got this far, where they stopped, their time, and the sections seen" do
     { "setup-godot" => 10, "hackatime" => 8, "github" => 3 }.each do |section, readers|
       GuideSectionDay.create!(day: Date.new(2026, 9, 29), guide: "desktop", section:, readers:)
     end
-    GuideSectionDay.create!(day: Date.new(2026, 9, 29), guide: "stardance", section: "setup-godot", readers: 4)
+    # Six readers of the desktop's guide, by first touch: four from Clubs and
+    # two from Slack, the Slack ones last touch Clubs.
+    [ [ "clubs", 0, 0 ], [ "clubs", 1, 2 ], [ "clubs", 3, 5 ], [ "clubs", 3, 10 ], [ "slack", 3, 5, "clubs" ], [ "slack", 17, 60, "clubs" ] ].each { reader(*it) }
+    reader("clubs", 2, 2, guide: "stardance")
 
-    # By default, the desktop's guide over the program window.
+    # By default, the desktop's guide over the program window, every source, by first touch.
     get admin_stats_path
     assert_select "#guide-progress h2", "where do readers stop in the guide?"
     assert_select "#guide-progress select[name=progress_guide] option[selected]", "the desktop's guide"
     assert_select "#guide-progress select[name=progress_guide] option", 4
     assert_select "#guide-progress input[name=progress_from][value='2026-09-28']"
     assert_select "#guide-progress input[name=progress_to][value='2026-10-10']"
-    rows = css_select("#guide-progress tr").drop(1).map { |row| row.css("td").map { it.text.squish } }
-    assert_equal GuideSections.find("desktop").sections.size, rows.size
-    assert_equal [ [ "Set up Godot", "10", "100%", "" ], [ "Install Godot Hackatime", "8", "80%", "2 (20%)" ],
-                   [ "Make a GitHub Repository", "3", "30%", "5 (63%) biggest drop" ], [ "Sync with GitHub", "0", "0%", "3 (100%)" ] ],
-                 rows.first(4)
+    assert_equal [ "all sources", "Clubs", "other" ], css_select("#guide-progress select[name=progress_source] option").map(&:text)
+    assert_select "#guide-progress input[name=progress_touch][value=first][checked]"
+    assert_match "6 readers started the desktop's guide from September 28 to October 10. on average they got through 4.5 of its 17 sections, and 17% reached the last.", text_of_page
+    rows = css_select("#guide-progress table.guide-funnel")[0].css("tr").drop(1).map { |row| row.css("td").map { it.text.squish } }
+    assert_equal GuideJourneyDay.stages(GuideSections.find("desktop")).size, rows.size
+    assert_equal [ [ "opened the guide", "6", "100%", "1 (17%)", "under 2m", "" ], [ "Set up Godot", "5", "83%", "1 (20%)", "2–5m", "10" ],
+                   [ "Install Godot Hackatime", "4", "67%", "0 (0%)", "", "8" ], [ "Make a GitHub Repository", "4", "67%", "3 (75%) most stop here", "5–10m", "3" ],
+                   [ "Sync with GitHub", "1", "17%", "0 (0%)", "", "0" ] ], rows.first(5)
+    assert_equal [ "Export it and put it on itch.io", "1", "17%", "1 finished", "60m+", "0" ], rows.last
     assert_select "#guide-progress tr.biggest", 1
-    assert_select "#guide-progress tr.biggest td", text: "Make a GitHub Repository"
-    assert_match "counting started on September 29, 2026, in US Eastern days.", text_of_page
-    assert_match "reached: the section's heading stayed in the top two thirds of the screen for 2 seconds while the tab showed", text_of_page
 
+    # Each source's time, and how far its readers get.
+    times = css_select("#guide-progress table.time-spent tr").drop(1).map { |row| [ row.css("td")[0].text.squish, row.css("td")[1].text.squish, row.css("td")[3].text.squish ] }
+    assert_equal [ [ "all sources", "6", "5–10m" ], [ "Clubs", "4", "2–5m" ], [ "other", "2", "5–10m" ] ], times
+    assert_select "#guide-progress table.time-spent .time-stack[aria-label*='under 2m: 1 reader, 17%']"
+    sources = css_select("#guide-progress table.sources-table tr").drop(1).map { |row| row.css("td").map { it.text.squish } }
+    assert_equal [ [ "Clubs", "4", "1.8 of 17", "0%", "2–5m" ], [ "other", "2", "10.0 of 17", "50%", "5–10m" ] ], sources
+    assert_select "#guide-progress table.sources-table a[href*='progress_source=clubs']", "Clubs"
+    assert_match "all of this is anonymous counts.", text_of_page
+    assert_match "a source with fewer than 3 readers counts as other.", text_of_page
+    assert_match "counting started on October 8, 2026, so readers from before then are not here.", text_of_page
+
+    # Last touch puts the Slack readers with Clubs.
+    get admin_stats_path(progress_touch: "last")
+    assert_select "#guide-progress input[name=progress_touch][value=last][checked]"
+    assert_equal [ "all sources", "Clubs" ], css_select("#guide-progress select[name=progress_source] option").map(&:text)
+  end
+
+  test "where readers stop, for one source beside everyone else, with where more of them stop marked" do
+    12.times { reader("clubs", 1, 2) }
+    8.times { reader("clubs", 5, 5) }
+    3.times { reader("slack", 1, 0) }
+    27.times { reader("slack", 6, 10) }
+
+    get admin_stats_path(progress_source: "clubs")
+    assert_select "#guide-progress select[name=progress_source] option[selected]", "Clubs"
+    assert_match "20 readers from Clubs, and 30 readers from everywhere else, started the desktop's guide", text_of_page
+    assert_select "#guide-progress .legend .key.cmp-chosen"
+    rows = css_select("#guide-progress table.compare-funnel tr").drop(1).map { |row| row.css("td").drop(1).map { it.text.squish } }
+    assert_equal [ "100% (20)", "0%", "100% (30)", "0%" ], rows[0]
+    assert_equal [ "100% (20)", "60% more stop here", "100% (30)", "10%" ], rows[1]
+    assert_equal [ "40% (8)", "0%", "90% (27)", "0%" ], rows[2]
+    # All eight Clubs readers who got to Important commands stopped there, and none of the 27 others.
+    assert_equal [ "Set up Godot", "Important commands" ], css_select("#guide-progress table.compare-funnel tr.biggest").map { it.css("td").first.text.squish }
+    assert_select "#guide-progress table.time-spent tr.picked td", text: "Clubs"
+    assert_select "#guide-progress a", text: "see every source"
+
+    # A source with too few readers to show is no choice.
+    reader("youtube", 1, 0)
+    get admin_stats_path(progress_source: "youtube")
+    assert_select "#guide-progress table.compare-funnel", 0
+  end
+
+  test "where readers stop with only the sections seen, and a guide nobody read" do
+    GuideSectionDay.create!(day: Date.new(2026, 9, 29), guide: "stardance", section: "setup-godot", readers: 4)
     get admin_stats_path(progress_guide: "stardance", progress_from: "2026-09-29", progress_to: "2026-09-29")
     assert_select "#guide-progress select[name=progress_guide] option[selected]", "Stardance's guide"
-    assert_equal [ "Set up Godot", "4", "100%", "" ], css_select("#guide-progress tr")[1].css("td").map { it.text.squish }
+    assert_select "#guide-progress p.muted", text: "no reader started Stardance's guide from September 29 to September 29, so only the sections seen count."
+    assert_equal [ "Set up Godot", "0", "—", "0", "", "4" ], css_select("#guide-progress table.guide-funnel tr")[2].css("td").map { it.text.squish }
+    assert_select "#guide-progress table.time-spent", 0
 
     # Days the wrong way round are put right, and a guide nobody reached says so.
     get admin_stats_path(progress_guide: "clubs", progress_from: "2026-10-01", progress_to: "2026-09-28")
     assert_select "#guide-progress input[name=progress_from][value='2026-09-28']"
-    assert_select "#guide-progress p.muted", text: "no browser reached a section of the clubs' guide from September 28 to October 1."
+    assert_select "#guide-progress p.muted", text: "no reader started the clubs' guide from September 28 to October 1."
     assert_select "#guide-progress table", 0
+    assert_match "counting starts with the first reader", text_of_page
+  end
+
+  test "where signups come from, by first or last touch, over the days picked, small sources as other" do
+    4.times { signup("clubs", "slack", campaign: "launch") }
+    3.times { signup("slack", "slack") }
+    signup("youtube", "slack")
+    signup("direct", "clubs", day: Date.new(2026, 10, 20))
+
+    get admin_stats_path
+    assert_select "#signup-sources h2", "where do signups come from?"
+    assert_select "#signup-sources input[name=signup_from][value='2026-09-28']"
+    assert_select "#signup-sources input[name=signup_touch][value=first][checked]"
+    assert_match "8 new accounts from September 28 to October 10, by first touch.", text_of_page
+    tables = css_select("#signup-sources table")
+    assert_equal [ [ "Clubs", "4", "50%" ], [ "Slack", "3", "38%" ], [ "other", "1", "13%" ] ], tables[0].css("tr").drop(1).map { |row| row.css("td").map { it.text.squish } }
+    assert_equal [ [ "launch", "4", "50%" ] ], tables[1].css("tr").drop(1).map { |row| row.css("td").map { it.text.squish } }
+    assert_match "it is never stored on the account or linked to it, and an account that logs in again counts nothing.", text_of_page
+    assert_match "counting started on October 8, 2026. accounts made before have no source", text_of_page
+
+    get admin_stats_path(signup_touch: "last", signup_from: "2026-10-01", signup_to: "2026-10-31", progress_guide: "clubs")
+    assert_select "#signup-sources input[name=signup_touch][value=last][checked]"
+    assert_equal [ [ "Slack", "8", "89%" ], [ "other", "1", "11%" ] ], css_select("#signup-sources table")[0].css("tr").drop(1).map { |row| row.css("td").map { it.text.squish } }
+    # Each panel's form keeps the other's choices.
+    assert_select "#signup-sources form input[type=hidden][name=progress_guide][value=clubs]"
+    assert_select "#guide-progress form input[type=hidden][name=signup_touch][value=last]"
+
+    get admin_stats_path(signup_from: "2026-09-28", signup_to: "2026-09-29")
+    assert_select "#signup-sources p.muted", text: "no new account was counted from September 28 to September 29."
   end
 
   test "a: Stardance and Clubs readers stack on each day's bar, with a legend, and each day's list counts them" do
@@ -557,6 +636,20 @@ class AdminStatsTest < ActionDispatch::IntegrationTest
   def names(group) = User.where(id: group.ids).pluck(:display_name).sort
 
   # The page's words, one space between each piece of text.
+  # A browser that started a guide on October 8, from first, now at the
+  # stage and the bucket given.
+  def reader(first, stage, minutes, last = nil, guide: "desktop")
+    guide = GuideSections.find(guide)
+    touch = ->(source) { TrafficSource::Touch.new(source:, medium: "", campaign: "") }
+    GuideJourneyDay.count!(guide:, day: Date.new(2026, 10, 8), first: touch[first], last: touch[last || first], from: nil,
+                           to: GuideJourneyDay::Point.new(stage: GuideJourneyDay.stages(guide)[stage], minutes:))
+  end
+
+  def signup(first, last, campaign: "", day: Date.new(2026, 10, 8))
+    SignupSourceDay.count!(day:, first: TrafficSource::Touch.new(source: first, medium: "", campaign:),
+                           last: TrafficSource::Touch.new(source: last, medium: "", campaign: ""))
+  end
+
   def text_of_page = Nokogiri::HTML(response.body).at("body").xpath(".//text()").map(&:text).join(" ").squish
 
   # Queries a block makes, the query cache off so a repeat still counts.
