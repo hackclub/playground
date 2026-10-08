@@ -33,6 +33,37 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # Windows open where the screen has room, so a leftover size moves them.
   teardown { page.driver.browser.execute_cdp("Emulation.clearDeviceMetricsOverride") }
 
+  # Between tests Capybara's reset leaves the page for about:blank and then
+  # clears the browser's storage. The page still writes as it goes: the
+  # desktop saves its open windows on pagehide, for a reload. Chrome can
+  # commit that write after the clear, as it did on CI, and the next test's
+  # desktop then reopens this test's windows over its own. So each test ends
+  # by taking storage writes away from every page and frame it leaves open,
+  # after the failure screenshot and before the reset.
+  def before_teardown
+    super
+  ensure
+    stop_storage_writes
+  end
+
+  STOP_STORAGE_WRITES = <<~JS.freeze
+    (function stop(view) {
+      try { view.Storage.prototype.setItem = function () {} } catch (error) {}
+      for (let i = 0; i < view.frames.length; i++) stop(view.frames[i])
+    })(window.top)
+  JS
+
+  def stop_storage_writes
+    return unless Capybara::Session.instance_created?
+    browser = page.driver.browser
+    browser.window_handles.each do |handle|
+      browser.switch_to.window(handle)
+      browser.execute_script(STOP_STORAGE_WRITES)
+    end
+  rescue Selenium::WebDriver::Error::WebDriverError
+    # A window that closed, or a dialog in the way: the reset handles it.
+  end
+
   # The login's button shows only with a Hack Club Auth app, and makes the
   # login taller. A test whose layout depends on the login's height sets
   # that there is none, whatever the machine's credentials hold, and each
