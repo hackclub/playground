@@ -30,6 +30,21 @@ class Hackatime
   # the project list also takes one exactly at end_date.
   def self.range(window) = { start_date: window.starts_at.iso8601, end_date: window.ends_at.iso8601 }
 
+  # Someone's seconds on the given projects from `from` to just before `to`,
+  # by their Slack ID and with no token, for people who are not participants
+  # here (StardanceActivity). Hackatime answers only when they allow public
+  # stats: nil when it refuses (403) or knows no such person (404).
+  def self.public_seconds(slack_id, names, from:, to:)
+    names = keep(names)
+    return 0 if names.empty?
+    zone = ProgramWindow::ZONE
+    query = { start_date: from.in_time_zone(zone).iso8601, end_date: to.in_time_zone(zone).iso8601,
+              filter_by_project: names.join(","), total_seconds: true }
+    HttpJson.get("#{SITE}/api/v1/users/#{ERB::Util.url_encode(slack_id)}/stats?#{query.to_query}").fetch("total_seconds").to_i
+  rescue HttpJson::Error => e
+    raise unless e.status.in?([ 403, 404 ])
+  end
+
   def initialize(token)
     @token = token
   end

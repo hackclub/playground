@@ -33,10 +33,14 @@ class ProgramStats
   # A day of the window. A day after today has no figures yet.
   CodingDay = Data.define(:date, :seconds, :people, :signups, :counted)
   # A day so far and who was active on it, most time first, with how many
-  # browsers read Stardance's or the clubs' guide long enough that day
-  # (GuideReaderDay), by guide: { "stardance" => 12 }. Readers have no
-  # account, so they are a count, not people.
-  ActiveDay = Data.define(:date, :people, :today, :readers) do
+  # came from each side guide by guide: { "stardance" => 12 }. They have no
+  # account here, so they are a count, not people. Stardance's count is of
+  # the people on its playground mission with Hackatime time that day
+  # (StardanceActiveDay), and stardance is that day's row. A day without
+  # one, as before the job first ran, falls back to the browsers that read
+  # Stardance's guide long enough (GuideReaderDay), as the clubs' count
+  # always is.
+  ActiveDay = Data.define(:date, :people, :today, :readers, :stardance) do
     def count = people.size
     def reader_count = readers.values.sum
     def total = count + reader_count
@@ -266,17 +270,21 @@ class ProgramStats
 
   # The window's days up to today, each with who was active on it. Active
   # is stricter than the coding days' people, who count with any time. Each
-  # day also counts the side guides' readers, who have no account.
+  # day also counts the side guides' people, who have no account here.
   def active_days
     @active_days ||= begin
       coded = @coding.per_day_and_user(at_least: ACTIVE_CODING_SECONDS)
       users = @people.to_h { [ it.id, it.user ] }
       days = coding_days.select(&:counted)
       readers = GuideReaderDay.per_day(days.map(&:date))
+      stardance = StardanceActiveDay.per_day(days.map(&:date))
       days.map do |day|
         people = coded.fetch(day.date, []).filter_map { |id, seconds| Active.new(user: users[id], reasons: { coded: seconds }) if users[id] }
+        counted = stardance[day.date]
+        read = readers.fetch(day.date, {})
+        read = read.merge("stardance" => counted.active) if counted
         ActiveDay.new(date: day.date, people: people.sort_by { [ -it.seconds, it.user.id ] }, today: day.date == today,
-                      readers: readers.fetch(day.date, {}))
+                      readers: read, stardance: counted)
       end
     end
   end

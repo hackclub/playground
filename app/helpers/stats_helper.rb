@@ -39,11 +39,32 @@ module StatsHelper
   ACTIVE_BECAUSE = { coded: "coded" }.freeze
   def active_because(person) = person.reasons.map { |kind, seconds| "#{ACTIVE_BECAUSE.fetch(kind)} #{hours(seconds)}" }.join(", ")
 
-  # A day's readers of Stardance's and the clubs' guides, as "12 Stardance
-  # readers, 3 Clubs readers", or nil on a day with none.
-  def guide_readers(day)
-    SideGuide.all.filter_map { |guide| (read = day.readers[guide.slug].to_i).positive? && pluralize(read, "#{guide.name} reader") }.join(", ").presence
+  # A day's people from Stardance and the clubs, as "12 Stardance coders, 3
+  # Clubs readers", or nil on a day with none. A coder counted by Hackatime
+  # time (ProgramStats::ActiveDay), a reader by time in the guide. why: each
+  # with what made it count.
+  def guide_readers(day, why: false)
+    SideGuide.all.filter_map do |guide|
+      next unless (count = day.readers[guide.slug].to_i).positive?
+      coded = coded_side?(guide, day)
+      text = pluralize(count, "#{guide.name} #{coded ? "coder" : "reader"}")
+      next text unless why
+      "#{text} (#{coded ? "#{ProgramStats::ACTIVE_CODING_SECONDS / 60}+ min in Hackatime on their playground project" : "#{SideGuide.reading_seconds / 60}+ min in the guide"})"
+    end.join(", ").presence
   end
+
+  # The chart legend's name for a guide's people.
+  def side_legend(guide, days) = "#{guide.name} #{days.any? { coded_side?(guide, it) } ? "coders" : "readers"}"
+
+  # The guides with a day counted by reading, as "Stardance or Clubs", or
+  # nil when none was.
+  def read_guides(days)
+    read = SideGuide.all.select { |guide| days.any? { it.readers[guide.slug].to_i.positive? && !coded_side?(guide, it) } }
+    read.map(&:name).to_sentence(two_words_connector: " or ", last_word_connector: ", or ").presence
+  end
+
+  # Stardance's count on the day is by Hackatime time.
+  def coded_side?(guide, day) = guide.slug == "stardance" && day.stardance.present?
 
   # A bar in the meter's approved fill and ink outline.
   def bar(fraction, kind = nil) = tag.div(tag.span(style: "width: #{(100 * fraction.to_f).round(1)}%"), class: [ "bar", kind ])
