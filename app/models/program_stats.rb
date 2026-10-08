@@ -39,9 +39,12 @@ class ProgramStats
   # (StardanceActiveDay), and stardance is that day's row. A day without
   # one, as before the job first ran, falls back to the browsers that read
   # Stardance's guide long enough (GuideReaderDay), as the clubs' count
-  # always is.
-  ActiveDay = Data.define(:date, :people, :today, :readers, :stardance) do
+  # always is. stardance_people are who Stardance's count was, most time
+  # first (StardanceActivePerson), on a day whose row is listed.
+  ActiveDay = Data.define(:date, :people, :today, :readers, :stardance, :stardance_people) do
     def count = people.size
+    # Everyone the day's list names, here and on Stardance.
+    def listed_count = count + stardance_people.size
     def reader_count = readers.values.sum
     def total = count + reader_count
   end
@@ -278,13 +281,14 @@ class ProgramStats
       days = coding_days.select(&:counted)
       readers = GuideReaderDay.per_day(days.map(&:date))
       stardance = StardanceActiveDay.per_day(days.map(&:date))
+      stardance_people = StardanceActivePerson.per_day(days.map(&:date))
       days.map do |day|
         people = coded.fetch(day.date, []).filter_map { |id, seconds| Active.new(user: users[id], reasons: { coded: seconds }) if users[id] }
         counted = stardance[day.date]
         read = readers.fetch(day.date, {})
         read = read.merge("stardance" => counted.active) if counted
         ActiveDay.new(date: day.date, people: people.sort_by { [ -it.seconds, it.user.id ] }, today: day.date == today,
-                      readers: read, stardance: counted)
+                      readers: read, stardance: counted, stardance_people: counted&.listed ? stardance_people.fetch(day.date, []) : [])
       end
     end
   end

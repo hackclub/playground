@@ -1,7 +1,8 @@
 # Every hour, counts the people on Stardance's playground mission active
-# today and yesterday (StardanceActivity), and stores only the counts
-# (StardanceActiveDay). A day of the window with no count yet, as on the
-# first run, is counted too. One day's failure is logged and the run goes
+# today and yesterday (StardanceActivity), and stores the counts
+# (StardanceActiveDay) and who they were (StardanceActivePerson). A day of
+# the window with no count or no list of people yet, as on the first run,
+# is counted too. One day's failure is logged and the run goes
 # on. Once the window has closed, a day is counted once more after the close
 # and then left alone, so the job goes quiet.
 #
@@ -20,7 +21,7 @@ class StardanceActivityJob < ApplicationJob
     zone = ProgramWindow::ZONE
     today = now.in_time_zone(zone).to_date
     days = (window.starts_at.in_time_zone(zone).to_date..[ (window.ends_at - 1).in_time_zone(zone).to_date, today ].min).to_a
-    counted = StardanceActiveDay.where(day: days).pluck(:day, :updated_at).to_h
+    counted = StardanceActiveDay.where(day: days, listed: true).pluck(:day, :updated_at).to_h
     days.select do |day|
       next true unless counted.key?(day)
       day >= today - 1 && (now < window.ends_at || counted[day] < window.ends_at)
@@ -54,7 +55,7 @@ class StardanceActivityJob < ApplicationJob
   def lock(db, function) = db.uncached { db.select_value("SELECT #{function}(#{LOCK})") }
 
   def count(day, people, here)
-    StardanceActiveDay.record!(day, **StardanceActivity.count(day, people, here:).to_h)
+    StardanceActiveDay.record!(day, StardanceActivity.count(day, people, here:))
   rescue => e
     Rails.logger.error("Stardance activity count crashed for #{day}: #{e.class}")
   end

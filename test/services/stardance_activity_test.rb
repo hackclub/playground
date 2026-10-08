@@ -10,7 +10,7 @@ class StardanceActivityTest < ActiveSupport::TestCase
   FakeMcp = Struct.new(:rows, :asked) do
     def query(sql, question:)
       self.asked = [ sql, question ]
-      StardanceMcp::Result.new(columns: %w[slack_id project], rows:)
+      StardanceMcp::Result.new(columns: %w[slack_id handle project], rows:)
     end
   end
 
@@ -27,20 +27,26 @@ class StardanceActivityTest < ActiveSupport::TestCase
 
   teardown { Hackatime.singleton_class.alias_method(:public_seconds, :real_public_seconds) }
 
-  test "people: each Slack ID with its Hackatime projects, the names decoded" do
-    mcp = FakeMcp.new([ [ "U0A", "6f72626974" ], [ "U0A", "6f726269742d617274" ], [ "U0B", "c3a9746f696c65207c2032" ] ])
-    assert_equal({ "U0A" => %w[orbit orbit-art], "U0B" => [ "étoile | 2" ] }, StardanceActivity.people(mcp))
+  def person(slack_id, *projects) = StardanceActivity::Person.new(slack_id:, handle: "h-#{slack_id}", projects:)
+
+  test "people: each Slack ID once, with its Stardance name and Hackatime projects, all decoded" do
+    mcp = FakeMcp.new([ [ "U0A", "4e6f7661", "6f72626974" ], [ "U0A", "4e6f7661", "6f726269742d617274" ], [ "U0B", "", "c3a9746f696c65207c2032" ] ])
+    assert_equal [ StardanceActivity::Person.new(slack_id: "U0A", handle: "Nova", projects: %w[orbit orbit-art]),
+                   StardanceActivity::Person.new(slack_id: "U0B", handle: nil, projects: [ "étoile | 2" ]) ], StardanceActivity.people(mcp)
     sql, question = mcp.asked
     assert_match "m.slug = 'playground'", sql
     assert_match "encode(convert_to(uhp.name, 'UTF8'), 'hex')", sql
+    assert_match "encode(convert_to(u.display_name, 'UTF8'), 'hex')", sql
     assert question.present?
   end
 
   test "count: a minute or more on the day is active, private stats unknown, a failure unknown, and anyone active here is not asked" do
-    people = { "U0A" => [ "orbit" ], "U0B" => [ "star" ], "U0C" => [ "comet" ], "U0D" => [ "moon" ], "U0E" => [ "sun" ], "U0HERE" => [ "pet" ] }
+    people = [ person("U0A", "orbit"), person("U0B", "star"), person("U0C", "comet"), person("U0D", "moon"), person("U0E", "sun"), person("U0HERE", "pet") ]
     @seconds.merge!("U0A" => 60, "U0B" => 59, "U0C" => nil, "U0D" => Net::ReadTimeout.new, "U0E" => 3600)
     count = StardanceActivity.count(DAY, people, here: Set["U0HERE"])
-    assert_equal StardanceActivity::Count.new(active: 2, unknown: 2), count
+    assert_equal [ 2, 2 ], [ count.active, count.unknown ]
+    # The active ones, most time first.
+    assert_equal [ [ "U0E", 3600 ], [ "U0A", 60 ] ], count.people.map { |p, seconds| [ p.slack_id, seconds ] }
     assert_equal %w[U0A U0B U0C U0D U0E], @asked.map(&:first)
     _, names, from, to = @asked.first
     assert_equal [ "orbit" ], names
@@ -48,7 +54,7 @@ class StardanceActivityTest < ActiveSupport::TestCase
   end
 
   test "count: the day a clock change makes 25 hours long is asked whole" do
-    StardanceActivity.count(Date.new(2026, 11, 1), { "U0A" => [ "orbit" ] })
+    StardanceActivity.count(Date.new(2026, 11, 1), [ person("U0A", "orbit") ])
     _, _, from, to = @asked.first
     assert_equal 25.hours, to - from
   end

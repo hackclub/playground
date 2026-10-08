@@ -11,7 +11,8 @@ class StardanceActivityJobTest < ActiveSupport::TestCase
   setup do
     ProgramWindow.current = WINDOW
     @asked = asked = []
-    @people = people = { "U0A" => [ "orbit" ], "U0HERE" => [ "pet" ] }
+    @people = people = [ StardanceActivity::Person.new(slack_id: "U0A", handle: "Nova", projects: [ "orbit" ]),
+                         StardanceActivity::Person.new(slack_id: "U0HERE", handle: "Here", projects: [ "pet" ]) ]
     @token = "sd_token"
     @originals = { StardanceMcp => %i[token], StardanceActivity => %i[people], Hackatime => %i[public_seconds] }
                    .flat_map { |target, names| names.map { [ target, it, target.method(it) ] } }
@@ -30,6 +31,7 @@ class StardanceActivityJobTest < ActiveSupport::TestCase
   teardown { @originals.each { |target, name, original| target.define_singleton_method(name, &original) } }
 
   def counted = StardanceActiveDay.order(:day).pluck(:day, :active, :unknown)
+  def listed = StardanceActivePerson.order(:day, :slack_id).pluck(:day, :slack_id, :handle, :seconds)
 
   test "without a token it asks nothing and stores nothing" do
     @token = nil
@@ -42,6 +44,7 @@ class StardanceActivityJobTest < ActiveSupport::TestCase
     travel_to(et("2026-09-30 12:00")) { StardanceActivityJob.perform_now }
     days = [ Date.new(2026, 9, 28), Date.new(2026, 9, 29), Date.new(2026, 9, 30) ]
     assert_equal days.map { [ it, 2, 0 ] }, counted
+    assert_equal days.flat_map { [ [ it, "U0A", "Nova", 60 ], [ it, "U0HERE", "Here", 60 ] ] }, listed
     assert_equal days.flat_map { |day| %w[U0A U0HERE].map { [ it, day ] } }, @asked
 
     @asked.clear
@@ -55,7 +58,19 @@ class StardanceActivityJobTest < ActiveSupport::TestCase
     CodingHour.create!(user: coder, hour: Time.utc(2026, 9, 29, 17), seconds: 600)
     travel_to(et("2026-09-29 20:00")) { StardanceActivityJob.perform_now }
     assert_equal [ [ Date.new(2026, 9, 28), 2, 0 ], [ Date.new(2026, 9, 29), 1, 0 ] ], counted
+    assert_equal [ [ Date.new(2026, 9, 29), "U0A", "Nova", 60 ] ], listed.select { it.first == Date.new(2026, 9, 29) }
     assert_not_includes @asked, [ "U0HERE", Date.new(2026, 9, 29) ]
+  end
+
+  test "a day counted before people were kept is counted again, and a recount replaces the day's people" do
+    StardanceActiveDay.create!(day: Date.new(2026, 9, 28), active: 7, unknown: 1)
+    StardanceActiveDay.create!(day: Date.new(2026, 9, 29), active: 3, unknown: 0, listed: true)
+    StardanceActivePerson.create!(day: Date.new(2026, 9, 30), slack_id: "U0GONE", seconds: 600)
+    travel_to(et("2026-10-01 12:00")) { StardanceActivityJob.perform_now }
+    assert_equal [ Date.new(2026, 9, 28), Date.new(2026, 9, 30), Date.new(2026, 10, 1) ], @asked.map(&:last).uniq
+    assert_equal [ Date.new(2026, 9, 28), 2, 0 ], counted.first
+    assert StardanceActiveDay.find_by(day: Date.new(2026, 9, 28)).listed
+    assert_equal %w[U0A U0HERE], listed.select { it.first == Date.new(2026, 9, 30) }.map(&:second)
   end
 
   test "once the window has closed, each day is counted once more and then left alone" do
