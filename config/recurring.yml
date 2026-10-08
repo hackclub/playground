@@ -9,6 +9,12 @@ production:
     class: CodingHoursJob
     schedule: every hour
 
+  # How many on Stardance's playground mission were active each day, by
+  # their Hackatime time, for the daily active users chart.
+  stardance_activity:
+    class: StardanceActivityJob
+    schedule: every hour at minute 30
+
   # Marks who is due the "no time yet" email, after the coding hours refresh.
   no_time_nudge:
     class: NoTimeNudgeJob

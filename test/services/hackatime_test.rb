@@ -173,4 +173,26 @@ class HackatimeTest < ActiveSupport::TestCase
     assert_not Hackatime.ignored?("last-project")
     assert_equal %w[a b], Hackatime.keep([ "a", LAST, "b" ])
   end
+
+  test "public_seconds asks for one Eastern day on the projects, with no token, and is nil when Hackatime won't show the time" do
+    from = ActiveSupport::TimeZone[ProgramWindow::ZONE].local(2026, 10, 1)
+    @answer = { "total_seconds" => 125 }
+    assert_equal 125, Hackatime.public_seconds("U0SD", [ "orbit", LAST, "orbit-art" ], from:, to: from.tomorrow)
+    assert_equal "/api/v1/users/U0SD/stats", URI(@urls.last).path
+    assert_equal({ "start_date" => "2026-10-01T00:00:00-04:00", "end_date" => "2026-10-02T00:00:00-04:00",
+                   "filter_by_project" => "orbit,orbit-art", "total_seconds" => "true" }, query(@urls.last))
+
+    # Private stats, and nobody by that Slack ID.
+    @answer = 403
+    assert_nil Hackatime.public_seconds("U0SD", [ "orbit" ], from:, to: from.tomorrow)
+    @answer = 404
+    assert_nil Hackatime.public_seconds("U0SD", [ "orbit" ], from:, to: from.tomorrow)
+    @answer = 500
+    assert_raises(HttpJson::Error) { Hackatime.public_seconds("U0SD", [ "orbit" ], from:, to: from.tomorrow) }
+
+    # No projects, no question.
+    asked = @urls.size
+    assert_equal 0, Hackatime.public_seconds("U0SD", [ LAST ], from:, to: from.tomorrow)
+    assert_equal asked, @urls.size
+  end
 end

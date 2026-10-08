@@ -39,11 +39,12 @@
     <% top = days.map(&:total).max %>
     <% chosen = days.find(&:today) || days.last %>
     <% readers = days.any? { it.reader_count.positive? } %>
-    <p class="muted">active: at least <%= pluralize(ProgramStats::ACTIVE_CODING_SECONDS / 60, "minute") %> in Hackatime that day.<% if readers %> a Stardance or Clubs reader: <%= SideGuide.reading_seconds / 60 %> minutes or more in their guide that day, counted with no name.<% end %> pick a day to see who was active. the arrow keys move along the days.</p>
+    <% read_by = read_guides(days) %>
+    <p class="muted">active: at least <%= pluralize(ProgramStats::ACTIVE_CODING_SECONDS / 60, "minute") %> in Hackatime that day.<% if days.any?(&:stardance) %> someone on Stardance's playground mission: the same, only on the Hackatime projects linked to their playground project, counted with no name and only if they are not active here already.<% end %><% if read_by %> a <%= read_by %> reader: <%= SideGuide.reading_seconds / 60 %> minutes or more in their guide that day, counted with no name.<% end %> pick a day to see who was active. the arrow keys move along the days.</p>
     <% if readers %>
-      <%# Readers stack on the participants in each day's bar, a colour a guide. %>
+      <%# Stardance's and the clubs' people stack on the participants in each day's bar, a colour a guide. %>
       <p class="legend dau-legend"><span><span class="key dau-coded"></span> playground participants</span>
-        <% SideGuide.all.each do |guide| %><span><span class="key dau-<%= guide.slug %>"></span> <%= guide.name %> readers</span><% end %></p>
+        <% SideGuide.all.each do |guide| %><span><span class="key dau-<%= guide.slug %>"></span> <%= side_legend(guide, days) %></span><% end %></p>
     <% end %>
     <div class="dau-scroll" data-active-days-target="scroller">
       <div class="dau" role="toolbar" aria-label="people active each day">
@@ -72,9 +73,12 @@
               <% end %>
             </table>
           <% end %>
-          <% if (read = guide_readers(day)) %>
-            <p class="dau-readers"><%= "and " if day.people.any? %><%= read %> (<%= SideGuide.reading_seconds / 60 %>+ min in the guide)</p>
+          <% if (others = guide_readers(day, why: true)) %>
+            <p class="dau-readers"><%= "and " if day.people.any? %><%= others %></p>
           <% end %>
+        <% end %>
+        <% if day.stardance&.unknown.to_i.positive? %>
+          <p class="muted dau-unknown"><%= pluralize(day.stardance.unknown, "more person", plural: "more people") %> on Stardance's playground mission could not be counted, as Hackatime would not show their time.</p>
         <% end %>
       <% end %>
     <% end %>
