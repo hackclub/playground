@@ -189,7 +189,7 @@
           <li class="<%= @user.hackatime_red? ? "fail" : "ok" %>"><span class="icon"><%= @user.hackatime_red? ? "✗" : "✓" %></span> Hackatime trust level: <%= @user.hackatime_trust_level || "unknown" %></li>
           <li class="<%= @duplicates&.any? ? "warn" : "ok" %>"><span class="icon"><%= @duplicates&.any? ? "!" : "✓" %></span> repo not shipped by another playground participant</li>
           <li class="<%= @shared_hackatime&.any? ? "warn" : "ok" %>"><span class="icon"><%= @shared_hackatime&.any? ? "!" : "✓" %></span> Hackatime account not linked to another playground participant</li>
-          <li class="warn"><span class="icon">?</span> Unified DB double-dip check: search the Unified DB for <code><%= @ship.snapshot["code_url"] %></code> (no read token yet)</li>
+          <%= render "unified_check", result: @unified, code_url: @ship.snapshot["code_url"] %>
           <li class="warn"><span class="icon">?</span> watch the Lapses in Telescreen and deduct AFK time</li>
         </ul>
       </section>
