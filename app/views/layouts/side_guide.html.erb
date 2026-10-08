@@ -3,7 +3,8 @@
     as layouts/app.html+new_site.erb does, and both stylesheets carry
     Turbo's reload mark, so a visit to a page of the desktop site loads in
     full. Its top bar holds only the logo, which goes back to this guide,
-    and help. %>
+    and help. A building block's page (BuildingBlocksController) wears it
+    too, and its logo goes back to the guide the reader came from. %>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -22,7 +23,7 @@
   </head>
   <body class="app new-site side-guide">
     <header class="topbar">
-      <%= link_to side_guide_path(side_guide), class: "topbar-home" do %><%= image_tag "landing/logo.png", alt: "playground, back to the guide" %><% end %>
+      <%= link_to (side_guide ? side_guide_path(side_guide) : guide_path), class: "topbar-home" do %><%= image_tag "landing/logo.png", alt: "playground, back to the guide" %><% end %>
       <nav class="topbar-links" aria-label="help">
         <a href="https://hackclub.slack.com/archives/C0ASBTMS82H" target="_blank" rel="noopener">help in #playground</a>
       </nav>

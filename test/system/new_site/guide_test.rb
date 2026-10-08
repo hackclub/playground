@@ -162,7 +162,7 @@ class NewSiteGuideSystemTest < ApplicationSystemTestCase
     assert_selector "h2#start"
     visit "/guide/publish"
     assert_no_selector ".guide-next"
-    assert_selector ".guide-prev", text: "Animate and drag"
+    assert_selector ".guide-prev", text: "Make it your own"
   end
 
   test "on a phone, a step lands at the top of the guide, below the next step and the hours" do

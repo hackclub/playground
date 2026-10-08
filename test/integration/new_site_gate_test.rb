@@ -64,10 +64,11 @@ class NewSiteGateTest < ActionDispatch::IntegrationTest
     paths = Rails.application.routes.routes.select { it.verb == "GET" && it.defaults[:controller] }
                  .map { it.path.spec.to_s.delete_suffix("(.:format)") }
                  .reject { it.start_with?("/rails/", "/admin", "/dev/", "/assets", "/cable", "/up") }
-                 .map { it.gsub(":id", pet.id.to_s).gsub(":step", "move").gsub(":provider", "hack_club").gsub(":guide", "stardance").delete("()") }.uniq
-    # Stardance's and the clubs' guides (SideGuide) are open to everyone.
+                 .map { it.gsub(":id", pet.id.to_s).gsub(":step", "move").gsub(":provider", "hack_club").gsub(":guide", "stardance").gsub(":block", "particles").delete("()") }.uniq
+    # Stardance's and the clubs' guides (SideGuide), and the building blocks'
+    # pages from them, are open to everyone.
     side_guides = paths.select { it.start_with?("/stardance") }
-    assert_equal [ "/stardance/move" ], side_guides
+    assert_equal [ "/stardance/blocks/particles", "/stardance/move" ], side_guides.sort
     paths -= side_guides
     assert_operator paths.size, :>, 15
     [ nil, user ].each do |who|

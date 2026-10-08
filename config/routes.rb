@@ -10,6 +10,11 @@ Rails.application.routes.draw do
   # everyone, with nothing that needs an account (SideGuide): /stardance,
   # /stardance/move, /clubs.
   get ":guide(/:step)" => "side_guides#show", as: :side_guide, constraints: { guide: /stardance|clubs/, step: /[a-z]+/ }
+  # A building block's page (BuildingBlock), open to everyone, from the
+  # guide's "Make it your own" step: /guide/blocks/sound-effect, or from a
+  # side guide, /clubs/blocks/sound-effect.
+  get ":guide/blocks/:block" => "building_blocks#show", as: :building_block,
+                                constraints: { guide: /guide|stardance|clubs/, block: /[a-z0-9-]+/ }
   # A browser that read one of them long enough on a day says so, once.
   post "guide_readers" => "guide_readers#create", as: :guide_readers
   # A browser says which sections of a guide it reached, each once.

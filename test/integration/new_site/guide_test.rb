@@ -34,9 +34,10 @@ class NewSiteGuideTest < ActionDispatch::IntegrationTest
     "art" => %w[pretty script],
     "move" => %w[movement on-screen bounce],
     "animate" => %w[animations break drag],
-    "publish" => %w[your-own publish ship]
+    "own" => %w[your-own],
+    "publish" => %w[publish ship]
   }.freeze
-  NAMES = [ "Set up", "Build the scene", "Art and script", "Make it move", "Animate and drag", "Publish and ship" ].freeze
+  NAMES = [ "Set up", "Build the scene", "Art and script", "Make it move", "Animate and drag", "Make it your own", "Publish and ship" ].freeze
   # The scene's transparency settings in order, each screenshot beside its
   # step: the Advanced Settings toggle first, so every setting shows, then
   # the Window tab's settings, Per Pixel Transparency with them, then
@@ -97,7 +98,7 @@ class NewSiteGuideTest < ActionDispatch::IntegrationTest
     assert_response :ok
     assert_equal first, article.(), "/guide and /guide/setup show the same step"
 
-    assert_equal %w[/guide/setup /guide/scene /guide/art /guide/move /guide/animate /guide/publish], GuidePage.all.map(&:path)
+    assert_equal %w[/guide/setup /guide/scene /guide/art /guide/move /guide/animate /guide/own /guide/publish], GuidePage.all.map(&:path)
     assert_equal NAMES, GuidePage.all.map(&:name)
     GuidePage.all.drop(1).each do |step|
       get step.path
@@ -146,9 +147,9 @@ class NewSiteGuideTest < ActionDispatch::IntegrationTest
 
       assert_equal GuidePage.all.map(&:path), css_select(".guide-contents a").map { it["href"] }
       assert_select ".guide-contents a[aria-current=page][href=?]", step.path, text: "#{step.number} #{step.name}"
-      assert_select ".guide-contents a[data-action='guide-pager#go']", 6
+      assert_select ".guide-contents a[data-action='guide-pager#go']", 7
       # The step shows only to a screen reader, as the lists mark it.
-      assert_select ".guide header .visually-hidden", "step #{step.number} of 6: #{step.name}"
+      assert_select ".guide header .visually-hidden", "step #{step.number} of 7: #{step.name}"
     end
     assert_select "#guide-overview", 0
     assert_select ".guide-count", 0
@@ -167,6 +168,8 @@ class NewSiteGuideTest < ActionDispatch::IntegrationTest
     script = css_select(".page > script").first.text
     assert_includes script, %("movement":"/guide/move")
     assert_includes script, %("ship-step":"/guide/publish")
+    # A link to Make it your own from when it opened Publish and ship goes on to its own step.
+    assert_includes script, %("your-own":"/guide/own")
     # The parts that moved go on to the part that took their place.
     assert_includes script, %("connect-hackatime":"pick-project")
     assert_includes script, %("hackatime-step":"pick-step")
@@ -265,19 +268,45 @@ class NewSiteGuideTest < ActionDispatch::IntegrationTest
     assert_equal [ 1200, 630 ], [ image.width, image.height ]
   end
 
-  test "the guide's links out open in a new tab, and its last line goes to the Slack channel" do
+  test "the guide's links out open in a new tab, Make it your own links the Slack channel, and shipping comes last" do
     all_steps do
       css_select(".guide a[href^='http']").each do |link|
         assert_equal "_blank", link["target"], link["href"]
         assert_equal "noopener", link["rel"], link["href"]
       end
     end
+    get "/guide/own"
+    assert_select "section[aria-labelledby=your-own] a[href='https://hackclub.slack.com/archives/C0ASBTMS82H']", "#Playground"
     # Shipping comes last, after the export and the itch.io upload, with the
     # ship step and a link to the requirements.
     get GuidePage.all.last.path
-    assert_select "a[href='https://hackclub.slack.com/archives/C0ASBTMS82H']", "#Playground"
+    assert_select "#your-own", 0
     assert_select ".guide-step > section[aria-labelledby=ship]:last-child turbo-frame#ship-step"
     assert_select "section[aria-labelledby=ship] a[href=?][target=_blank]", requirements_path
+  end
+
+  test "Make it your own sits between Animate and drag and Publish and ship, with a card for each building block that opens its page in a new tab" do
+    assert_equal %w[animate own publish], GuidePage.all.map(&:slug).last(3)
+    assert_equal GuidePage.find("own"), GuidePage.holding("your-own")
+    get "/guide/own"
+    assert_select "title", "Make it your own · Build a desktop pet in Godot · playground"
+    assert_select ".guide header .visually-hidden", "step 6 of 7: Make it your own"
+    assert_select "section[aria-labelledby=your-own] > p", /\Ayour project will be rejected if you just follow this guide/
+    cards = css_select("section[aria-labelledby=your-own] > ul.block-cards > li > a.block-card")
+    assert_equal BuildingBlock.all.map { "/guide/blocks/#{it.slug}" }, cards.map { it["href"] }
+    assert_equal BuildingBlock.all.map(&:title), cards.map { css_select(it, ".block-card-title").first.children.first.text.strip }
+    cards.each do |card|
+      assert_equal [ "_blank", "noopener" ], [ card["target"], card["rel"] ], card["href"]
+      assert_select card, ".visually-hidden", ", opens in a new tab"
+      # The card's GIF loads only as it nears the screen, at its own size.
+      gif = css_select(card, "img").sole
+      assert_match %r{/blocks/[a-z-]+/images/result-\w+\.gif\z}, gif["src"]
+      assert_equal %w[lazy 640 480], [ gif["loading"], gif["width"], gif["height"] ]
+    end
+    # Each card's GIF is served.
+    get css_select(cards.first, "img").sole["src"]
+    assert_response :ok
+    assert_equal "image/gif", response.media_type
   end
 
   private
