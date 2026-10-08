@@ -41,6 +41,9 @@ module AirtableFields
       "Playable URL" => snap["playable_url"],
       # Added to the base on 2026-09-29, not part of the component's fields.
       "Ship Message URL" => snap["ship_message_url"],
+      # Checkbox (fld66Q4RRSsoo4rkg). Only approved ships are copied, so each
+      # one is ready for the Unified DB.
+      "Automation - Submit to Unified YSWS" => true,
       "First Name" => s.user.first_name,
       "Last Name" => s.user.last_name,
       "Email" => s.user.email,
