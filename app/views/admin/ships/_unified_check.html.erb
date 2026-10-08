@@ -1,0 +1,19 @@
+<%# The Unified DB double-dip check. A match from playground itself is shown, but is not a warning. %>
+<% others = result.matches.reject(&:own) %>
+<% own = result.matches.select(&:own) %>
+<% if result.status == :unknown %>
+  <li class="warn"><span class="icon">?</span> Unified DB double-dip check: <%= result.reason == "no read token" ? "no read token, search the Unified DB for" : result.reason %> <code><%= code_url %></code></li>
+<% elsif others.any? %>
+  <li class="warn"><span class="icon">!</span> already in the Unified DB under another program:
+    <ul>
+      <% others.each do |m| %>
+        <li><%= m.program %>, approved <%= m.approved_at || "unknown" %>, <%= m.hours ? "#{m.hours}h" : "hours unknown" %>, <%= link_to m.url, m.url, rel: "noopener noreferrer" %></li>
+      <% end %>
+    </ul>
+  </li>
+<% else %>
+  <li class="ok"><span class="icon">✓</span> not in the Unified DB under another program</li>
+<% end %>
+<% own.each do |m| %>
+  <li class="ok"><span class="icon">✓</span> already in Unified (playground): <%= m.program %>, approved <%= m.approved_at || "unknown" %>, <%= m.hours ? "#{m.hours}h" : "hours unknown" %></li>
+<% end %>

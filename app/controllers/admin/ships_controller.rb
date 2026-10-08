@@ -16,6 +16,7 @@ module Admin
       @other_ships = @user.ships.where.not(id: @ship.id).includes(:project).order(created_at: :desc)
       @duplicates = Project.where(code_url: @project.code_url).where.not(user_id: @user.id).includes(:user) if @project.code_url.present?
       @shared_hackatime = User.where(hackatime_user_id: @user.hackatime_user_id).where.not(id: @user.id) if @user.hackatime_user_id.present?
+      @unified = UnifiedSearch.check(@ship.snapshot["code_url"])
       @justification = Justification.new(@ship).to_s if @ship.review_seconds
     end
 

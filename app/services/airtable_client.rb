@@ -29,6 +29,12 @@ class AirtableClient
     body.fetch("records").to_h { [ it.dig("fields", field).to_s, it ] }
   end
 
+  # Records matching a formula, only the named fields, one page.
+  def search(table, formula:, fields:, timeout: 5, page_size: 20)
+    query = { filterByFormula: formula, pageSize: page_size, "fields[]": fields }.to_query
+    HttpJson.get("#{url(table)}?#{query}", headers: auth, timeout:).fetch("records")
+  end
+
   private
 
   def url(table) = "#{API}/#{@base}/#{ERB::Util.url_encode(table)}"
