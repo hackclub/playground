@@ -1,0 +1,7 @@
+<%# First touch or last touch, for the sources of a stats panel (TrafficSource). %>
+<fieldset class="touch-switch">
+  <legend>source by</legend>
+  <% { "first" => "first touch", "last" => "last touch" }.each do |value, label| %>
+    <label><%= radio_button_tag name, value, touch == value, id: nil %><%= label %></label>
+  <% end %>
+</fieldset>

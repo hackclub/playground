@@ -46,7 +46,30 @@ module StatsHelper
   end
 
   # A bar in the meter's approved fill and ink outline.
-  def bar(fraction) = tag.div(tag.span(style: "width: #{(100 * fraction.to_f).round(1)}%"), class: "bar")
+  def bar(fraction, kind = nil) = tag.div(tag.span(style: "width: #{(100 * fraction.to_f).round(1)}%"), class: [ "bar", kind ])
+
+  # A source as the admin stats name it (TrafficSource), and a time bucket,
+  # as "2–5m" (GuideJourneyStats).
+  def source_name(source) = TrafficSource.name(source)
+  def minutes_name(minutes) = GuideJourneyStats.minutes_name(minutes) || "—"
+
+  # A share of a count, or "—" when there is nothing to share.
+  def share_of(count, total) = share((count.fdiv(total) if total.to_i.positive?))
+
+  # One bar for a group of readers, split into their time buckets, lightest
+  # for the shortest. Each part names its bucket and share on hover, and the
+  # table under it gives the numbers.
+  def time_stack(cohort)
+    parts = GuideJourneyDay::MINUTES.each_index.filter_map do |j|
+      count = cohort.in_bucket(j)
+      [ j, count, "#{minutes_name(GuideJourneyDay::MINUTES[j])}: #{pluralize(count, "reader")}, #{share_of(count, cohort.readers)}" ] if count.positive?
+    end
+    spans = parts.map { |j, count, about| tag.span(class: "time-#{j}", style: "flex-grow: #{count}", title: about) }
+    tag.div(safe_join(spans), class: "time-stack", role: "img", aria: { label: "time spent: #{parts.map(&:last).join("; ")}" })
+  end
+
+  # Hidden fields that keep another form's choices when this one is sent.
+  def kept_params(*names) = safe_join(names.filter_map { |name| hidden_field_tag(name, params[name], id: nil) if params[name].present? })
 
   # The hour stages as a pie, drawn as the meter draws them. Each stage is a
   # layer from twelve o'clock round to where it ends, later stages under

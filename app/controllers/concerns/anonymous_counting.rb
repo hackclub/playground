@@ -1,7 +1,7 @@
 # What the endpoints that browsers report anonymous counts to share
-# (GuideReadersController, GuideSectionsController): the US Eastern day, the
-# day a report names, if it is a date, and the key their rate limit counts
-# by. The key is a keyed hash of the address and the day, not the address
+# (GuideReadersController, GuideSectionsController, GuideJourneysController):
+# the US Eastern day, the day a report names, if it is a date, and the key
+# their rate limit counts by. The key is a keyed hash of the address and the day, not the address
 # itself, so no address is kept, even in the cache, and it changes daily.
 module AnonymousCounting
   extend ActiveSupport::Concern
@@ -15,6 +15,16 @@ module AnonymousCounting
   def asked_day
     day = Date.iso8601(params[:day].to_s)
     day if day.between?(today - 1, today)
+  rescue Date::Error
+    nil
+  end
+
+  # The day a journey began, which a browser reports as long as it reads
+  # (GuideJourneyDay): any of the last COHORT_DAYS days, or tomorrow, for a
+  # browser whose clock runs a little ahead at midnight.
+  def journey_day
+    day = Date.iso8601(params[:day].to_s)
+    day if day.between?(today - GuideJourneyDay::COHORT_DAYS, today + 1)
   rescue Date::Error
     nil
   end
