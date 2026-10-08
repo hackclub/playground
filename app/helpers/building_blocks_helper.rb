@@ -4,7 +4,7 @@
 module BuildingBlocksHelper
   # The languages a page's code block may name, each with the label on its
   # bar, as the guide's own code blocks have them.
-  CODE_LANGUAGES = { "gdscript" => %w[gdscript GDScript], "gd" => %w[gdscript GDScript],
+  CODE_LANGUAGES = { "gdscript" => %w[gdscript GDScript], "gd" => %w[gdscript GDScript], "glsl" => %w[glsl GLSL],
                      "shell" => %w[shell shell], "sh" => %w[shell shell], "bash" => %w[shell shell] }.freeze
 
   # A block's page, from the guide this reader came from: the new site's at

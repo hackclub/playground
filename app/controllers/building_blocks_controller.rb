@@ -1,12 +1,14 @@
 # A building block's page (BuildingBlock), which a card in the guide's
 # "Make it your own" step opens in a new tab. It shows the same to everyone,
 # signed in or not, with the new site or not, so a club's readers, who may
-# have no account, can read it. It wears the side guides' layout, and its
-# logo goes back to the guide the reader came from: /guide/blocks/<slug> is
-# the new site's, and /stardance/blocks/<slug> or /clubs/blocks/<slug> a side
-# guide's (SideGuide).
+# have no account, can read it. It wears the layout of the guide it came
+# from: /guide/blocks/<slug> the new site's, with its top bar and tabs, and
+# /stardance/blocks/<slug> or /clubs/blocks/<slug> a side guide's (SideGuide),
+# whose logo goes back to that guide.
 class BuildingBlocksController < ApplicationController
-  layout "side_guide"
+  layout -> { @side_guide ? "side_guide" : "app" }
+  # The new site's look for everyone, as the side guides have it.
+  before_action { request.variant = :new_site }
 
   def show
     @block = BuildingBlock.find(params[:block])

@@ -154,4 +154,21 @@ class GuideTest < ActionDispatch::IntegrationTest
     assert_select "section[aria-labelledby=publish] a[href=?][target=_top]", "/?open=ship", text: "ship"
     assert_select "section[aria-labelledby=drag] a[href=?]", "/?open=ship", 0
   end
+
+  test "Make it your own lists every building block under its text, each GIF opening the block's page in a new tab" do
+    get guide_path
+    assert_select "section[aria-labelledby=your-own] > p", /\Ayour project will be rejected/
+    assert_equal BuildingBlock.all.map(&:title), css_select("section[aria-labelledby=your-own] > h3").map(&:text)
+    assert_select "section[aria-labelledby=your-own] > h3[id]", 0
+    links = css_select("section[aria-labelledby=your-own] > h3 + a.block-card")
+    assert_equal BuildingBlock.all.map { "/guide/blocks/#{it.slug}" }, links.map { it["href"] }
+    links.each do |link|
+      assert_equal [ "_blank", "noopener" ], [ link["target"], link["rel"] ]
+      assert_select link, "img[loading=lazy][width='640'][height='480']"
+    end
+    # Its block pages open for a reader of this guide too, and lead back to it.
+    get links.first["href"]
+    assert_response :ok
+    assert_select "p.block-back a[href='/guide']"
+  end
 end

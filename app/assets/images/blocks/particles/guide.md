@@ -52,7 +52,7 @@ whenever you want your pet to give off its particles, run
 $CPUParticles2D.restart()
 ```
 
-or if you like, you can set `emitting` to `true` instead.
+or if you like, you can set `emitting` to `true` instead, but it won’t start a new burst until the last one has finished.
 
 ```gdscript
 $CPUParticles2D.emitting = true

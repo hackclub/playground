@@ -26,18 +26,6 @@
 .guide-pager { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 0; }
 .guide-pager .btn { max-width: 100%; padding: 8px 16px; font-size: 1.05rem; }
 .guide-pager .guide-next { margin-left: auto; text-align: right; }
-/* The "Make it your own" step's building blocks: a grid of cards, each its
-   block's demo GIF over its name, in the step list's hand-cut corners. Three
-   to a row beside the guide. On a phone each card takes the whole row, so
-   the GIF is big enough to see what the pet does. Each card is a link. */
-.guide .block-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr)); gap: 12px; margin: 16px 0 18px; padding: 0; list-style: none; }
-.guide .block-cards li { margin: 0; }
-.block-card { display: flex; flex-direction: column; height: 100%; overflow: hidden; border: 2px solid var(--line); border-radius: 9px 12px 10px 8px; background: var(--paper); color: var(--blue); text-decoration: none; }
-.block-card:hover { border-color: var(--blue); }
-.block-card:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-.block-card img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-bottom: 2px solid var(--line); background: var(--wash); }
-.block-card:hover img { border-bottom-color: var(--blue); }
-.block-card-title { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; padding: 5px 10px 6px; line-height: 1.35; }
 /* A building block's page: the guide's column, with a small link back above
    it, and the block's demo GIF the guide's full width. */
 .page > .block-back { margin-bottom: 8px; font-size: 0.9rem; }

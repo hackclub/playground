@@ -20,13 +20,34 @@ class BuildingBlock < Data.define(:slug, :title, :gif)
   def initialize(slug:, title:, gif: "result.gif") = super
 
   ALL = [
-    new(slug: "sound-effect", title: "Sound effect", gif: "result.gif"),
-    new(slug: "save-and-load", title: "Save and load", gif: "result.gif"),
-    new(slug: "click-the-pet", title: "Click the pet", gif: "result.gif"),
-    new(slug: "speech-bubble", title: "Speech bubble", gif: "result.gif"),
-    new(slug: "particles", title: "Particles", gif: "result.gif"),
-    new(slug: "follow-the-mouse", title: "Follow the mouse", gif: "result.gif"),
-    new(slug: "fall-to-the-taskbar", title: "Fall to the taskbar", gif: "result.gif")
+    # Input: the mouse and the keyboard.
+    new(slug: "click-the-pet", title: "Click the pet"),
+    new(slug: "double-click", title: "Double click"),
+    new(slug: "right-click-menu", title: "Right-click menu"),
+    new(slug: "hover", title: "Hover"),
+    new(slug: "scroll-wheel", title: "Scroll wheel"),
+    new(slug: "keyboard-shortcut", title: "Keyboard shortcut"),
+    new(slug: "follow-the-mouse", title: "Follow the mouse"),
+    new(slug: "throw", title: "Throw"),
+    # Look and sound.
+    new(slug: "sound-effect", title: "Sound effect"),
+    new(slug: "speech-bubble", title: "Speech bubble"),
+    new(slug: "particles", title: "Particles"),
+    new(slug: "shader", title: "Shader"),
+    new(slug: "face-direction", title: "Face direction"),
+    # Logic: time, chance, and memory.
+    new(slug: "timer", title: "Timer"),
+    new(slug: "random", title: "Random"),
+    new(slug: "clock", title: "Clock"),
+    new(slug: "states", title: "States"),
+    new(slug: "save-and-load", title: "Save and load"),
+    # The desktop around the pet.
+    new(slug: "fall-to-the-taskbar", title: "Fall to the taskbar"),
+    new(slug: "click-through", title: "Click-through"),
+    new(slug: "second-window", title: "Second window"),
+    new(slug: "open-website", title: "Open a website"),
+    new(slug: "clipboard", title: "Clipboard"),
+    new(slug: "text-to-speech", title: "Text to speech")
   ].freeze
 
   def self.all = ALL
@@ -43,5 +64,10 @@ class BuildingBlock < Data.define(:slug, :title, :gif)
   def gif_asset = asset("images/#{gif}")
   def gif_size = Page.image_size(folder.join("images", gif))
 
-  def page = Page.new(folder.join("guide.md").read)
+  # The block's page, read once a process where code does not reload.
+  PAGES = Concurrent::Map.new
+  def page
+    return Page.new(folder.join("guide.md").read) if Rails.application.config.enable_reloading
+    PAGES.compute_if_absent(slug) { Page.new(folder.join("guide.md").read) }
+  end
 end

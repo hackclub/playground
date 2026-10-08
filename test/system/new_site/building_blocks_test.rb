@@ -1,12 +1,13 @@
 require "application_system_test_case"
 
 # The guide's "Make it your own" step: after Animate and drag, before
-# Publish and ship, with a card for each building block. A card opens the
-# block's page in a new tab, and the guide stays where it was.
+# Publish and ship, with each building block under its heading: its demo
+# GIF, which opens the block's page in a new tab, while the guide stays
+# where it was.
 class NewSiteBuildingBlocksSystemTest < ApplicationSystemTestCase
   include NewSiteTests
 
-  test "the step after Animate and drag lists a card for each block, and a card opens its page in a new tab" do
+  test "the step after Animate and drag shows each block under its heading, and its GIF opens its page in a new tab" do
     visit guide_page_path("animate")
     find(".guide-pager a.guide-next", text: "Make it your own").click
     assert_current_path "/guide/own"
@@ -15,15 +16,26 @@ class NewSiteBuildingBlocksSystemTest < ApplicationSystemTestCase
                  all(".hub-outline .outline-step > a").map { it.text.sub(/\A\d+\s*/, "") }
     assert_selector ".guide-pager a.guide-next", text: "Publish and ship"
 
-    cards = all("#your-own ~ .block-cards a.block-card", count: BuildingBlock.all.size)
-    assert_equal BuildingBlock.all.map(&:title), cards.map { it.find(".block-card-title").text[/\A[^↗]+/].strip }
-    card = cards.first
-    assert_equal "_blank", card[:target]
-    assert_match %r{/guide/blocks/sound-effect\z}, card[:href]
+    # One block after another, each its heading, then its GIF, the guide's
+    # full width, which is the link.
+    headings = all("section[aria-labelledby=your-own] > h3", count: BuildingBlock.all.size)
+    assert_equal BuildingBlock.all.map(&:title), headings.map(&:text)
+    links = all("section[aria-labelledby=your-own] > a.block-card", count: BuildingBlock.all.size)
+    headings.zip(links).each_cons(2) do |(heading, link), (next_heading, _)|
+      assert_operator link.rect.y, :>, heading.rect.y
+      assert_operator next_heading.rect.y, :>, link.rect.y + link.rect.height - 1
+    end
+    assert_in_delta find("section[aria-labelledby=your-own]").rect.width, links.first.rect.width, 1
+    assert_selector ".outline-step ol a", text: "Sound effect"
 
-    page_block = window_opened_by { card.click }
+    link = find("a.block-card[href$='/guide/blocks/sound-effect']")
+    assert_equal "_blank", link[:target]
+    assert_match %r{/guide/blocks/sound-effect\z}, link[:href]
+    assert_selector "a.block-card .block-open", text: "open ↗", count: BuildingBlock.all.size
+    page_block = window_opened_by { link.find("img").click }
     within_window(page_block) do
       assert_current_path "/guide/blocks/sound-effect"
+      assert_selector ".topbar .topbar-tab[aria-current]", text: "guide"
       assert_selector "article.guide h1", text: "Let's make some noise!"
       assert_selector "img.block-result"
       assert page.evaluate_script("document.querySelector('img.block-result').complete")
@@ -33,13 +45,11 @@ class NewSiteBuildingBlocksSystemTest < ApplicationSystemTestCase
     assert_current_path "/guide/own"
   end
 
-  test "on a phone each card takes the whole row, so its GIF is big, and nothing scrolls sideways" do
+  test "on a phone each block's GIF takes the guide's width, and nothing scrolls sideways" do
     resize_viewport_to(390, 844) do
       visit "/clubs/own"
-      cards = all(".block-cards a.block-card", count: BuildingBlock.all.size)
-      assert_operator cards[1].rect.y, :>, cards[0].rect.y
-      assert_equal cards[0].rect.x, cards[1].rect.x
-      assert_operator cards[0].find("img").rect.width, :>, 300
+      gifs = all("section[aria-labelledby=your-own] > a.block-card", count: BuildingBlock.all.size)
+      assert_in_delta find("section[aria-labelledby=your-own]").rect.width, gifs.first.rect.width, 1
       assert page.evaluate_script("document.documentElement.scrollWidth <= document.documentElement.clientWidth")
 
       visit "/clubs/blocks/particles"

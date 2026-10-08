@@ -20,12 +20,12 @@ module NewSiteHelper
     tag.script(lines.join("\n").html_safe, type: "module")
   end
 
-  # The top bar's open tab: the guide, or the participant's pets, which
-  # holds each pet's own pages too. Other pages, such as the requirements,
+  # The top bar's open tab: the guide, which holds the building blocks'
+  # pages too, or the participant's pets, which holds each pet's own pages too. Other pages, such as the requirements,
   # open no tab.
   def topbar_tab
     case controller_path
-    when "guides" then :guide
+    when "guides", "building_blocks" then :guide
     when "projects" then :pets
     end
   end

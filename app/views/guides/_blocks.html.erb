@@ -1,0 +1,17 @@
+<%# Each building block (BuildingBlock), one after another, under "Make it
+    your own" in every guide: the guide in steps, the side guides, and the
+    desktop's one long guide. Its name is one of the guide's headings, then
+    its demo GIF, so the reader sees what it makes. The GIF is a link that
+    opens the block's page in a new tab, so the guide stays open where it
+    was. The headings carry no anchor, so they are not sections the guide
+    counts (GuideSections). %>
+<% BuildingBlock.all.each do |block| %>
+  <% width, height = block.gif_size %>
+  <h3><%= block.title %></h3>
+  <%= link_to building_block_page_path(block), class: "block-card", target: "_blank", rel: "noopener" do %>
+    <%= image_tag block.gif_asset, alt: block.page.alt_for("images/#{block.gif}") || block.title, width:, height:,
+                                   loading: "lazy", decoding: "async" %>
+    <span class="block-open" aria-hidden="true">open ↗</span>
+    <span class="visually-hidden">Open the guide to <%= block.title %>, in a new tab.</span>
+  <% end %>
+<% end %>

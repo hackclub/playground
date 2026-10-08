@@ -285,26 +285,31 @@ class NewSiteGuideTest < ActionDispatch::IntegrationTest
     assert_select "section[aria-labelledby=ship] a[href=?][target=_blank]", requirements_path
   end
 
-  test "Make it your own sits between Animate and drag and Publish and ship, with a card for each building block that opens its page in a new tab" do
+  test "Make it your own sits between Animate and drag and Publish and ship, with each building block under its heading, its GIF a link to its page in a new tab" do
     assert_equal %w[animate own publish], GuidePage.all.map(&:slug).last(3)
     assert_equal GuidePage.find("own"), GuidePage.holding("your-own")
     get "/guide/own"
     assert_select "title", "Make it your own · Build a desktop pet in Godot · playground"
     assert_select ".guide header .visually-hidden", "step 6 of 7: Make it your own"
     assert_select "section[aria-labelledby=your-own] > p", /\Ayour project will be rejected if you just follow this guide/
-    cards = css_select("section[aria-labelledby=your-own] > ul.block-cards > li > a.block-card")
-    assert_equal BuildingBlock.all.map { "/guide/blocks/#{it.slug}" }, cards.map { it["href"] }
-    assert_equal BuildingBlock.all.map(&:title), cards.map { css_select(it, ".block-card-title").first.children.first.text.strip }
-    cards.each do |card|
-      assert_equal [ "_blank", "noopener" ], [ card["target"], card["rel"] ], card["href"]
-      assert_select card, ".visually-hidden", ", opens in a new tab"
-      # The card's GIF loads only as it nears the screen, at its own size.
-      gif = css_select(card, "img").sole
-      assert_match %r{/blocks/[a-z-]+/images/result-\w+\.gif\z}, gif["src"]
-      assert_equal %w[lazy 640 480], [ gif["loading"], gif["width"], gif["height"] ]
+    # Each block, in order: one of the guide's headings, then its GIF, which
+    # is a link that opens its page in a new tab.
+    headings = css_select("section[aria-labelledby=your-own] > h3")
+    assert_equal BuildingBlock.all.map(&:title), headings.map(&:text)
+    assert headings.none? { it["id"] }, "a block's heading is not a section the guide counts"
+    links = css_select("section[aria-labelledby=your-own] > h3 + a.block-card")
+    assert_equal BuildingBlock.all.map { "/guide/blocks/#{it.slug}" }, links.map { it["href"] }
+    BuildingBlock.all.zip(links).each do |block, link|
+      assert_equal [ "_blank", "noopener" ], [ link["target"], link["rel"] ], block.slug
+      # The GIF loads only as it nears the screen, at its own size.
+      gif = css_select(link, "img").sole
+      assert_match %r{/blocks/#{block.slug}/images/result-\w+\.gif\z}, gif["src"]
+      assert_equal [ "lazy", "640", "480", block.page.alt_for("images/result.gif") ], [ gif["loading"], gif["width"], gif["height"], gif["alt"] ]
+      assert_select link, ".block-open[aria-hidden=true]", "open ↗"
+      assert_select link, ".visually-hidden", "Open the guide to #{block.title}, in a new tab."
     end
-    # Each card's GIF is served.
-    get css_select(cards.first, "img").sole["src"]
+    # Each GIF is served.
+    get css_select(links.first, "img").sole["src"]
     assert_response :ok
     assert_equal "image/gif", response.media_type
   end
