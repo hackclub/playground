@@ -1,0 +1,40 @@
+<%# Where new accounts came from, over the days picked (SignupSourceStats):
+    anonymous counts, never linked to an account. %>
+<% signups = @signups %>
+<section class="panel" id="signup-sources">
+  <h2>where do signups come from?</h2>
+  <%= form_with url: admin_stats_path(anchor: "signup-sources"), method: :get, class: "progress-picker" do %>
+    <label>from <%= date_field_tag :signup_from, signups.days.first %></label>
+    <label>to <%= date_field_tag :signup_to, signups.days.last %></label>
+    <%= render "touch_switch", name: :signup_touch, touch: signups.touch %>
+    <%= kept_params(:progress_guide, :progress_from, :progress_to, :progress_source, :progress_touch) %>
+    <button class="btn small">show</button>
+  <% end %>
+  <% if signups.empty? %>
+    <p class="muted">no new account was counted from <%= signups.days.first.strftime("%B %-d") %> to <%= signups.days.last.strftime("%B %-d") %>.</p>
+  <% else %>
+    <p><%= pluralize(signups.total, "new account") %> from <%= signups.days.first.strftime("%B %-d") %> to <%= signups.days.last.strftime("%B %-d") %>, by <%= signups.touch %> touch.</p>
+    <table class="list guide-funnel signup-table">
+      <tr><th>source</th><th>signups</th><th>of all signups</th></tr>
+      <% top = signups.sources.map(&:signups).max %>
+      <% signups.sources.each do |row| %>
+        <tr><td><%= source_name(row.name) %><%= bar(row.signups.fdiv(top)) %></td><td data-label="signups"><%= row.signups %></td><td data-label="of all signups"><%= share(row.share) %></td></tr>
+      <% end %>
+    </table>
+    <% if signups.campaigns.any? %>
+      <h3>by campaign</h3>
+      <table class="list guide-funnel signup-table">
+        <tr><th>campaign</th><th>signups</th><th>of all signups</th></tr>
+        <% signups.campaigns.each do |row| %>
+          <tr><td><%= row.name %></td><td data-label="signups"><%= row.signups %></td><td data-label="of all signups"><%= share(row.share) %></td></tr>
+        <% end %>
+      </table>
+    <% end %>
+  <% end %>
+  <% started = SignupSourceStats.started %>
+  <ul class="muted small-print notes">
+    <li>a count goes up by one when a login with Hack Club makes a new account, for where that browser came from. it is never stored on the account or linked to it, and an account that logs in again counts nothing.</li>
+    <li>first touch: how the browser first came to playground. last touch: its latest arrival that was not direct, before it signed up. a source or campaign with fewer than <%= TrafficSource.min_shown %> signups in these days counts as other. days are US Eastern.</li>
+    <li><%= started ? "counting started on #{started.strftime("%B %-d, %Y")}" : "counting starts with the next new account" %>. accounts made before have no source, and none can be worked out for them.</li>
+  </ul>
+</section>

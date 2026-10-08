@@ -21,6 +21,8 @@
 // which a visitor's desktop opens beside welcome.txt, and ship.exe opens
 // for a visitor. nps.exe asks a participant how likely they are to
 // recommend playground, by itself every 12 hours.
+// Where this browser came from, before the desktop keeps anything.
+import "attribution";
 import { confetti } from "confetti";
 
 const appsIcons = {

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_07_210001) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_08_030002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -48,6 +48,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_210001) do
     t.index ["user_id", "hour"], name: "index_coding_hours_on_user_id_and_hour", unique: true
     t.check_constraint "hour = date_trunc('hour'::text, hour)", name: "coding_hours_hour_is_whole"
     t.check_constraint "seconds >= 0 AND seconds <= 3600", name: "coding_hours_seconds_fit_the_hour"
+  end
+
+  create_table "guide_journey_days", force: :cascade do |t|
+    t.date "day", null: false
+    t.string "first_campaign", default: "", null: false
+    t.string "first_medium", default: "", null: false
+    t.string "first_source", default: "", null: false
+    t.string "guide", null: false
+    t.string "last_campaign", default: "", null: false
+    t.string "last_medium", default: "", null: false
+    t.string "last_source", default: "", null: false
+    t.integer "minutes", null: false
+    t.integer "readers", default: 0, null: false
+    t.string "stage", null: false
+    t.index ["guide", "day", "stage", "minutes", "first_source", "first_medium", "first_campaign", "last_source", "last_medium", "last_campaign"], name: "index_guide_journey_days_uniquely", unique: true
+    t.check_constraint "minutes = ANY (ARRAY[0, 2, 5, 10, 20, 40, 60])", name: "guide_journey_days_minutes_bucket"
+    t.check_constraint "readers >= 0", name: "guide_journey_days_readers_not_negative"
   end
 
   create_table "guide_reader_days", force: :cascade do |t|
@@ -148,6 +165,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_210001) do
     t.index ["reviewer_id"], name: "index_ships_on_reviewer_id"
     t.index ["synced_at"], name: "index_ships_on_synced_at"
     t.index ["user_id"], name: "index_ships_on_user_id"
+  end
+
+  create_table "signup_source_days", force: :cascade do |t|
+    t.date "day", null: false
+    t.string "first_campaign", default: "", null: false
+    t.string "first_medium", default: "", null: false
+    t.string "first_source", default: "", null: false
+    t.string "last_campaign", default: "", null: false
+    t.string "last_medium", default: "", null: false
+    t.string "last_source", default: "", null: false
+    t.integer "signups", default: 0, null: false
+    t.index ["day", "first_source", "first_medium", "first_campaign", "last_source", "last_medium", "last_campaign"], name: "index_signup_source_days_uniquely", unique: true
+    t.check_constraint "signups >= 0", name: "signup_source_days_signups_not_negative"
   end
 
   create_table "solid_cable_messages", force: :cascade do |t|

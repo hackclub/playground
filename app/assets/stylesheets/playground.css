@@ -383,6 +383,44 @@ h2.inline { display: inline; }
   .guide-funnel td[data-label]:last-child::after, .guide-funnel td[data-label]:has(+ td:empty)::after { content: none; }
   .guide-funnel td[data-label]:empty::before { content: none; }
 }
+/* Where readers and signups come from (TrafficSource): first touch or last
+   touch as a two-way switch, a source beside everyone else in blue and
+   orange, and each source's time spent as one bar split by bucket, one
+   blue from light for little time to dark for an hour or more. A bar part
+   names its bucket on hover, and the table under it has the numbers. On a
+   phone the readers column gives the bar its room. */
+.touch-switch { display: flex; flex-wrap: wrap; margin: 0; padding: 0; border: 0; font-size: 0.9em; }
+.touch-switch legend { float: left; width: 100%; margin: 0 0 2px; padding: 0; }
+.touch-switch label { position: relative; padding: 4px 10px; border: 2px solid var(--blue); color: var(--blue); cursor: pointer; }
+.touch-switch label + label { border-left: 0; }
+.touch-switch input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.touch-switch label:has(input:checked) { background: var(--blue); color: white; }
+.touch-switch label:has(input:focus-visible) { outline: 2px solid var(--blue); outline-offset: 2px; }
+.bar.cmp-chosen > span, .key.cmp-chosen { background: var(--blue); }
+.bar.cmp-others > span, .key.cmp-others { background: #c8743a; }
+.compare-funnel .bar + .bar { margin-top: 0; }
+.list tr.picked td { background: var(--wash); }
+.time-stack { display: flex; gap: 2px; height: 14px; min-width: 110px; border: 1px solid var(--ink); background: var(--paper); }
+.time-stack > span { min-width: 3px; }
+.time-0 { background: #dbe6f5; }
+.time-1 { background: #b9cdea; }
+.time-2 { background: #93b1dc; }
+.time-3 { background: #6b93cc; }
+.time-4 { background: #3a70b8; }
+.time-5 { background: #2c5791; }
+.time-6 { background: #1f3f6b; }
+.time-spent td:nth-child(3) { width: 55%; }
+.time-spent td:nth-child(2), .time-spent td:nth-child(4) { white-space: nowrap; }
+.table-scroll { overflow-x: auto; }
+.list.numbers td:not(:first-child), .list.numbers th:not(:first-child) { text-align: right; white-space: nowrap; }
+.notes { margin: 12px 0 0; padding-left: 18px; }
+.notes li + li { margin-top: 2px; }
+@media (max-width: 560px) {
+  .compare-funnel td:nth-child(3)::after { content: none; }
+  .compare-funnel td:nth-child(4) { display: block; }
+  .time-spent th:nth-child(2), .time-spent td:nth-child(2) { display: none; }
+  .time-spent td:nth-child(3) { width: auto; }
+}
 .goal-mark.end { transform: translateX(-100%); border-left: 0; border-right: 2px solid var(--ink); text-align: right; }
 /* A goal the approved hours have reached: its tick and label turn green,
    dark enough for small text (5.1:1 on white), and a check comes before the

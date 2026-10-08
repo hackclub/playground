@@ -9,5 +9,9 @@ Rails.application.config.filter_parameters += [
   # takes names and emails.
   :shipping, :address, :phone, /\Aq\z/,
   # OAuth callback parameters.
-  /\Acode\z/, /\Astate\z/
+  /\Acode\z/, /\Astate\z/,
+  # Where a browser came from, which the login carries to count a new
+  # account's source, so no log line pairs it with the account
+  # (TrafficSource).
+  /\A(?:first|last)_(?:source|medium|campaign)\z/
 ]

@@ -1,5 +1,6 @@
 # The tracker of how far a reader reads a guide (GuideSections,
-# guide_progress_controller.js), on the guides' pages alone. It is not in the
+# guide_progress_controller.js), and of each browser's journey through it
+# (GuideJourneyDay), on the guides' pages alone. The tracker is not in the
 # import map, so no other page lists or loads it.
 module GuideProgressHelper
   # Registers the tracker. A guide's page puts it in its head.
@@ -15,6 +16,7 @@ module GuideProgressHelper
     guide = GuideSections.find(key)
     { guide_progress_guide_value: guide.key, guide_progress_sections_value: guide.sections.to_json,
       guide_progress_seconds_value: GuideSections.reach_seconds, guide_progress_every_value: GuideSections.send_seconds,
-      guide_progress_url_value: guide_sections_path }
+      guide_progress_url_value: guide_sections_path, guide_progress_journey_url_value: guide_journeys_path,
+      guide_progress_idle_value: GuideJourneyDay.idle_seconds, guide_progress_minute_value: GuideJourneyDay.minute_seconds }
   end
 end

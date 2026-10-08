@@ -105,37 +105,9 @@
   <% end %>
 </section>
 
-<%# How many browsers reached each section of the guide picked, over the days
-    picked, from the counts the guides' pages report (GuideSections). %>
-<section class="panel" id="guide-progress">
-  <h2>where do readers stop in the guide?</h2>
-  <% funnel = @guide_funnel %>
-  <%= form_with url: admin_stats_path(anchor: "guide-progress"), method: :get, class: "progress-picker" do %>
-    <label>guide <%= select_tag :progress_guide, options_for_select(GuideSections.all.map { [ it.name, it.key ] }, funnel.guide.key) %></label>
-    <label>from <%= date_field_tag :progress_from, funnel.days.first %></label>
-    <label>to <%= date_field_tag :progress_to, funnel.days.last %></label>
-    <button class="btn small">show</button>
-  <% end %>
-  <% if funnel.empty? %>
-    <p class="muted">no browser reached a section of <%= funnel.guide.name %> from <%= funnel.days.first.strftime("%B %-d") %> to <%= funnel.days.last.strftime("%B %-d") %>.</p>
-  <% else %>
-    <% most = funnel.rows.map(&:readers).max %>
-    <table class="list funnel guide-funnel">
-      <tr><th>section</th><th>browsers</th><th>of the first</th><th>fewer than the one before</th></tr>
-      <% funnel.rows.each do |row| %>
-        <%= tag.tr class: ("biggest" if row.biggest) do %>
-          <td><%= row.name %><%= bar(row.readers.to_f / most) %></td>
-          <td data-label="browsers"><%= row.readers %></td>
-          <td data-label="of the first"><%= share(row.share) %></td>
-          <td data-label="fewer than the one before"><% if row.drop&.positive? %><%= row.drop %> (<%= share(row.drop_share) %>)<% if row.biggest %> <span class="late">biggest drop</span><% end %><% elsif row.drop&.negative? %><%= -row.drop %> more<% elsif row.drop %>0<% end %></td>
-        <% end %>
-      <% end %>
-    </table>
-  <% end %>
-  <% started = GuideSectionDay.minimum(:day) %>
-  <p class="muted small-print">reached: the section's heading stayed in the top two thirds of the screen for <%= pluralize(GuideSections.reach_seconds, "second") %> while the tab showed, or, at the end of the page, anywhere on it. each browser counts once a section, ever, with no name. a link to a part of the guide skips what is above it, so a later section can count more.
-    <%= started ? "counting started on #{started.strftime("%B %-d, %Y")}" : "counting starts with the first reader" %>, in US Eastern days.</p>
-</section>
+<%= render "signup_sources" %>
+
+<%= render "guide_progress" %>
 
 <section class="panel">
   <h2>who can I nudge today?</h2>

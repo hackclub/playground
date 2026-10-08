@@ -424,17 +424,18 @@ body.home-page { padding-top: 0; }
 .home-faq details p { margin: 0; padding: 0 4px 14px; }
 
 /* The meter standing up right of the guide: the prizes on the left, each
-   beside its tick, and a thin bar on the right, filling from the bottom. A
-   stage of the bar says its name and hours on hover or focus, and a strip
-   wider than the bar answers the pointer.
+   beside its tick, and a thin bar, filling from the bottom. A stage of the
+   bar says its name and hours on hover or focus, and a strip wider than the
+   bar answers the pointer.
    A tick is a line as thick as the bar's border. It crosses the bar and
    runs a stub left, toward its prize. The last goal's tick lies on the
    bar's top border, so the two are one line, as on the flat meter. --at is
    a goal's share of the bar, 0 to 1. Ticks and prizes sit on whole pixels,
-   so no tick blurs at its edges. Nothing reaches right of the bar, so the
-   column beside the guide never scrolls sideways. */
-.vmeter { --vmeter-width: 14px; --vmeter-border: 2px; --vmeter-stub: 8px; position: relative; height: 300px; margin: 10px 0 26px; }
-.vmeter-bar { position: absolute; top: 0; bottom: 0; right: 0; width: var(--vmeter-width); border: var(--vmeter-border) solid var(--ink); background: var(--paper); }
+   so no tick blurs at its edges. Right of the bar is the lane of the tag
+   with the total. Nothing reaches past the lane, so the column beside the
+   guide never scrolls sideways. */
+.vmeter { --vmeter-width: 14px; --vmeter-border: 2px; --vmeter-stub: 8px; --vmeter-lane: 62px; --reached: #2f7d3a; position: relative; height: 300px; margin: 10px 0 26px; }
+.vmeter-bar { position: absolute; top: 0; bottom: 0; right: var(--vmeter-lane); width: var(--vmeter-width); border: var(--vmeter-border) solid var(--ink); background: var(--paper); }
 /* A stage runs from --from to --to, shares of the bar's inside, and its
    ends sit on whole pixels, so no pale seam shows between two stages. */
 .vseg {
@@ -449,7 +450,7 @@ body.home-page { padding-top: 0; }
 /* A hovered stage darkens a little. A focused stage also gets an ink ring. */
 .vseg:hover, .vseg:focus-visible { box-shadow: inset 0 0 0 999px rgb(43 58 77 / 0.18); }
 .vseg:focus-visible { box-shadow: inset 0 0 0 2px var(--ink), inset 0 0 0 999px rgb(43 58 77 / 0.18); }
-.vseg:hover::after, .vseg:focus-visible::after, .vmeter-bar[data-tip]:hover::after {
+.vseg:hover::after, .vseg:focus-visible::after {
   content: attr(data-tip); position: absolute; z-index: 3; right: calc(100% + 10px); top: 50%; transform: translateY(-50%);
   padding: 2px 8px; background: var(--ink); color: white; font-size: 0.8rem; white-space: nowrap; pointer-events: none; }
 /* A tick's box is the bar's inside, so it reaches out over the border.
@@ -460,8 +461,12 @@ body.home-page { padding-top: 0; }
   bottom: calc(var(--at) * (100% + var(--vmeter-border)) - var(--vmeter-border));
   bottom: calc(round(var(--at) * (100% + var(--vmeter-border)), 1px) - var(--vmeter-border));
   background: var(--ink); pointer-events: none; }
-.vmeter-tick.reached { background: var(--green); }
-.vmeter-goals { position: absolute; top: 0; bottom: 0; left: 0; right: calc(var(--vmeter-width) + var(--vmeter-stub) + 8px); margin: 0; padding: 0; list-style: none; pointer-events: none; }
+/* A goal the approved hours have reached, as on the flat meter: its tick
+   and prize turn a green dark enough for small text, a thin paper edge keeps
+   the tick apart from the blue fill, and a drawn check comes before its
+   hours, so colour is not the only sign. */
+.vmeter-tick.reached { background: var(--reached); filter: drop-shadow(0 1px 0 var(--paper)) drop-shadow(0 -1px 0 var(--paper)); }
+.vmeter-goals { position: absolute; top: 0; bottom: 0; left: 0; right: calc(var(--vmeter-lane) + var(--vmeter-width) + var(--vmeter-stub) + 8px); margin: 0; padding: 0; list-style: none; pointer-events: none; }
 /* A prize hangs from its tick: the tick runs through the middle of the
    prize's first line, so the top prize lines up with the top of the bar. */
 .vmeter-goals li {
@@ -472,7 +477,33 @@ body.home-page { padding-top: 0; }
 .vmeter-goals img { width: 44px; height: 40px; object-fit: contain; filter: url(#vmeter-ink); }
 .vmeter-goals .muted { color: #4b5b6e; }
 .vmeter-goals li > span > * { display: block; }
-.vmeter-goals li.reached strong { color: var(--green); }
+.vmeter-goals .goal-hours { white-space: nowrap; }
+.vmeter-goals li.reached strong, .vmeter-goals li.reached .goal-hours { color: var(--reached); }
+.vmeter-goals li.reached .goal-hours::before {
+  content: "";
+  display: inline-block; width: 0.8em; height: 0.8em; margin-right: 0.25em; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M1.9 6.3Q3.7 7.8 4.9 9.6Q7.3 5.5 10.3 2.4' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M1.9 6.3Q3.7 7.8 4.9 9.6Q7.3 5.5 10.3 2.4' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+/* The total, on a tag that rides the top of the fill. A line as thick as
+   the border runs from the bar to the tag, on the pixel row a goal's tick
+   would take, so on a goal the two are one mark. The tag stays inside the
+   bar's height, at 0m and past the top alike, and its left corners are
+   square, so the line meets it there too. It says how the total splits on
+   hover or focus. --now is the total's share of the bar, 0 to 1. */
+.vmeter-now { position: absolute; top: 0; bottom: 0; right: 0; width: var(--vmeter-lane); pointer-events: none; }
+.vmeter-now-line {
+  position: absolute; left: 0; width: 5px; height: var(--vmeter-border); background: var(--ink);
+  bottom: calc(var(--now) * (100% - var(--vmeter-border)));
+  bottom: round(var(--now) * (100% - var(--vmeter-border)), 1px); }
+.vmeter-now-tag {
+  position: absolute; left: 4px; height: 20px; display: flex; align-items: center; padding: 0 6px; border-radius: 2px 11px 10px 2px;
+  background: var(--ink); color: white; font-size: 0.75rem; line-height: 1; white-space: nowrap; pointer-events: auto; cursor: default; outline: none;
+  bottom: clamp(0px, calc(var(--now) * (100% - var(--vmeter-border)) + var(--vmeter-border) / 2 - 10px), calc(100% - 20px));
+  bottom: clamp(0px, calc(round(var(--now) * (100% - var(--vmeter-border)), 1px) + var(--vmeter-border) / 2 - 10px), calc(100% - 20px)); }
+.vmeter-now-tag:focus-visible { box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--blue); }
+.vmeter-now-tag:hover::after, .vmeter-now-tag:focus-visible::after {
+  content: attr(data-tip); position: absolute; z-index: 3; right: calc(100% + 28px); top: 50%; transform: translateY(-50%);
+  padding: 3px 8px; background: var(--ink); color: white; font-size: 0.8rem; line-height: 1.35; white-space: pre; text-align: left; pointer-events: none; }
 
 /* The question before a switch to the old desktop: a small window in the
    middle of the screen, like the pets' windows, with an X at the right of

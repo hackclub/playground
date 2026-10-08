@@ -128,21 +128,25 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
 end
 
 # Tests of how far readers get in the guides (GuideSections): a heading
-# counts after half a second in view, and a page reports every second.
+# counts after half a second in view, and a page reports every second. A
+# reader's time (GuideJourneyDay) stops 2 seconds after they last did
+# anything, and a "minute" of it lasts a second.
 module GuideProgressTests
   extend ActiveSupport::Concern
 
   included do
     setup do
-      @progress = [ GuideSections.reach_seconds, GuideSections.send_seconds ]
+      @progress = [ GuideSections.reach_seconds, GuideSections.send_seconds, GuideJourneyDay.idle_seconds, GuideJourneyDay.minute_seconds ]
       GuideSections.reach_seconds = 0.5
       GuideSections.send_seconds = 1
+      GuideJourneyDay.idle_seconds = 2
+      GuideJourneyDay.minute_seconds = 1
       # The reports send the page's CSRF token, which only renders with this on.
       ActionController::Base.allow_forgery_protection = true
     end
 
     teardown do
-      GuideSections.reach_seconds, GuideSections.send_seconds = @progress
+      GuideSections.reach_seconds, GuideSections.send_seconds, GuideJourneyDay.idle_seconds, GuideJourneyDay.minute_seconds = @progress
       ActionController::Base.allow_forgery_protection = false
     end
   end
@@ -161,6 +165,17 @@ module GuideProgressTests
       document.dispatchEvent(new Event("visibilitychange"))
     JS
   end
+
+  # The journey counts of a guide: { [stage, minutes] => readers }, and the
+  # sources they came with.
+  def journey(guide) = GuideJourneyDay.where(guide:).group(:stage, :minutes).sum(:readers)
+  def journey_sources(guide) = GuideJourneyDay.where(guide:).distinct.pluck(:first_source, :first_medium, :first_campaign, :last_source)
+
+  # This browser's journey through a guide, as it keeps it.
+  def kept_journey(guide) = page.evaluate_script("JSON.parse(localStorage.getItem('playground-guide-journey:#{guide}'))")
+
+  # The reader does something, as a key press does.
+  def nudge = page.execute_script("window.dispatchEvent(new KeyboardEvent('keydown'))")
 
   def wait_for(seconds = 10)
     deadline = Time.current + seconds

@@ -1,0 +1,117 @@
+<%# Where readers stop in the guide picked, for the readers who started it on
+    the days picked, by where they came from (GuideJourneyStats), with the
+    sections each browser saw (GuideFunnel). All of it is anonymous counts. %>
+<% funnel = @guide_funnel %>
+<% journeys = @journeys %>
+<% all = journeys.all %>
+<% days = "from #{funnel.days.first.strftime("%B %-d")} to #{funnel.days.last.strftime("%B %-d")}" %>
+<section class="panel" id="guide-progress">
+  <h2>where do readers stop in the guide?</h2>
+  <%= form_with url: admin_stats_path(anchor: "guide-progress"), method: :get, class: "progress-picker" do %>
+    <label>guide <%= select_tag :progress_guide, options_for_select(GuideSections.all.map { [ it.name, it.key ] }, funnel.guide.key) %></label>
+    <label>from <%= date_field_tag :progress_from, funnel.days.first %></label>
+    <label>to <%= date_field_tag :progress_to, funnel.days.last %></label>
+    <label>readers from <%= select_tag :progress_source, options_for_select([ [ "all sources", "" ] ] + journeys.sources.map { [ source_name(it), it ] }, journeys.source) %></label>
+    <%= render "touch_switch", name: :progress_touch, touch: journeys.touch %>
+    <%= kept_params(:signup_from, :signup_to, :signup_touch) %>
+    <button class="btn small">show</button>
+  <% end %>
+
+  <% if all.empty? && funnel.empty? %>
+    <p class="muted">no reader started <%= funnel.guide.name %> <%= days %>.</p>
+  <% elsif (chosen = journeys.chosen) %>
+    <% others = journeys.others %>
+    <p><%= pluralize(chosen.readers, "reader") %> from <%= source_name(journeys.source) %>, and <%= pluralize(others.readers, "reader") %> from everywhere else, started <%= funnel.guide.name %> <%= days %>.
+      <%= link_to "see every source", admin_stats_path(request.query_parameters.except("progress_source").merge(anchor: "guide-progress")) %></p>
+    <p class="legend"><span><span class="key cmp-chosen"></span> <%= source_name(journeys.source) %></span><span><span class="key cmp-others"></span> everyone else</span></p>
+    <table class="list funnel guide-funnel compare-funnel">
+      <tr><th>section</th><th><%= source_name(journeys.source) %>: got this far</th><th>stopped here</th><th>everyone else: got this far</th><th>stopped here</th></tr>
+      <% journeys.stages.each_with_index do |stage, i| %>
+        <% rate = ->(group) { group.stopped(i).fdiv(group.reached(i)) if group.reached(i).positive? } %>
+        <% more = GuideJourneyStats.stops_more?(chosen, others, i) %>
+        <%= tag.tr class: ("biggest" if more) do %>
+          <td><%= journeys.stage_name(stage) %><%= bar(chosen.reached(i).fdiv([ chosen.readers, 1 ].max), "cmp-chosen") %><%= bar(others.reached(i).fdiv([ others.readers, 1 ].max), "cmp-others") %></td>
+          <td data-label="<%= source_name(journeys.source) %>: got this far"><%= share_of(chosen.reached(i), chosen.readers) %> (<%= chosen.reached(i) %>)</td>
+          <td data-label="<%= i == chosen.last ? "finished" : "stopped here" %>"><% if i == chosen.last %><%= chosen.finished %> finished<% else %><%= share(rate[chosen]) %><% if more %> <span class="late">more stop here</span><% end %><% end %></td>
+          <td data-label="everyone else: got this far"><%= share_of(others.reached(i), others.readers) %> (<%= others.reached(i) %>)</td>
+          <td data-label="<%= i == others.last ? "finished" : "stopped here" %>"><% if i == others.last %><%= others.finished %> finished<% else %><%= share(rate[others]) %><% end %></td>
+        <% end %>
+      <% end %>
+    </table>
+  <% else %>
+    <% saw = funnel.rows.to_h { [ it.section, it.readers ] } %>
+    <% biggest = all.biggest_stop %>
+    <% if all.empty? %>
+      <p class="muted">no reader started <%= funnel.guide.name %> <%= days %>, so only the sections seen count.</p>
+    <% else %>
+      <p><%= pluralize(all.readers, "reader") %> started <%= funnel.guide.name %> <%= days %>. on average they got through <%= number_with_precision(all.sections_reached, precision: 1) %> of its <%= all.last %> sections, and <%= share_of(all.finished, all.readers) %> reached the last.</p>
+    <% end %>
+    <table class="list funnel guide-funnel">
+      <tr><th>section</th><th>got this far</th><th>of those who opened it</th><th>stopped here</th><th>their time</th><th>saw it</th></tr>
+      <% journeys.stages.each_with_index do |stage, i| %>
+        <%= tag.tr class: ("biggest" if i == biggest) do %>
+          <td><%= journeys.stage_name(stage) %><%= bar(all.reached(i).fdiv([ all.readers, 1 ].max)) %></td>
+          <td data-label="got this far"><%= all.reached(i) %></td>
+          <td data-label="of those who opened it"><%= share_of(all.reached(i), all.readers) %></td>
+          <td data-label="<%= i == all.last ? "finished" : "stopped here" %>"><% if i == all.last %><%= all.finished %> finished<% elsif all.reached(i).positive? %><%= all.stopped(i) %> (<%= share_of(all.stopped(i), all.reached(i)) %>)<% if i == biggest %> <span class="late">most stop here</span><% end %><% else %>0<% end %></td>
+          <td data-label="their time"><%= minutes_name(all.stopped_minutes(i)) if all.stopped(i).positive? %></td>
+          <td data-label="saw it"><%= saw[stage] %></td>
+        <% end %>
+      <% end %>
+    </table>
+  <% end %>
+
+  <% unless all.empty? %>
+    <h3>how long did readers spend in the guide?</h3>
+    <p class="muted">each reader's engaged time over every visit, as a share of each source's readers.</p>
+    <p class="legend time-legend"><% GuideJourneyDay::MINUTES.each_with_index do |minutes, j| %><span><span class="key time-<%= j %>"></span> <%= minutes_name(minutes) %></span><% end %></p>
+    <% groups = [ [ "all sources", all, nil ] ] + journeys.by_source.map { |source, cohort| [ source_name(source), cohort, source ] } %>
+    <table class="list time-spent">
+      <tr><th>readers from</th><th>readers</th><th>time spent</th><th>median</th></tr>
+      <% groups.each do |name, cohort, source| %>
+        <%= tag.tr class: ("picked" if source && source == journeys.source) do %>
+          <td><%= name %></td>
+          <td data-label="readers"><%= cohort.readers %></td>
+          <td><%= time_stack(cohort) %></td>
+          <td data-label="median"><%= minutes_name(cohort.median_minutes) %></td>
+        <% end %>
+      <% end %>
+    </table>
+    <details>
+      <summary>each time in numbers</summary>
+      <div class="table-scroll">
+        <table class="list numbers">
+          <tr><th>readers from</th><% GuideJourneyDay::MINUTES.each do |minutes| %><th><%= minutes_name(minutes) %></th><% end %></tr>
+          <% groups.each do |name, cohort, _| %>
+            <tr><td><%= name %></td><% GuideJourneyDay::MINUTES.each_index do |j| %><td><%= cohort.in_bucket(j) %></td><% end %></tr>
+          <% end %>
+        </table>
+      </div>
+    </details>
+
+    <h3>where do readers come from?</h3>
+    <table class="list guide-funnel sources-table">
+      <tr><th>source</th><th>readers</th><th>sections on average</th><th>finished</th><th>median time</th></tr>
+      <% journeys.by_source.each do |source, cohort| %>
+        <%= tag.tr class: ("picked" if source == journeys.source) do %>
+          <td><%= link_to source_name(source), admin_stats_path(request.query_parameters.merge("progress_source" => source, anchor: "guide-progress")) %><%= bar(cohort.readers.fdiv(all.readers)) %></td>
+          <td data-label="readers"><%= cohort.readers %></td>
+          <td data-label="sections on average"><%= number_with_precision(cohort.sections_reached, precision: 1) %> of <%= cohort.last %></td>
+          <td data-label="finished"><%= share_of(cohort.finished, cohort.readers) %></td>
+          <td data-label="median time"><%= minutes_name(cohort.median_minutes) %></td>
+        <% end %>
+      <% end %>
+    </table>
+  <% end %>
+
+  <% started = GuideJourneyDay.minimum(:day) %>
+  <ul class="muted small-print notes">
+    <li>all of this is anonymous counts. a reader's browser works out where it came from and how long it read, and keeps both to itself. the server only adds one to counts, with no name, address, cookie or browser id.</li>
+    <li>readers: browsers that started this guide in these days, US Eastern, and spent <%= pluralize(GuideSections.reach_seconds, "second") %> in it or reached a section. got this far: reached the section or one after it. stopped here: got this far and no further, so far. a reader who comes back moves on.</li>
+    <li>time: engaged time over every visit, while the tab showed and the reader scrolled, moved the pointer, touched or typed in the last <%= GuideJourneyDay.idle_seconds %> seconds. their time: the median of those who stopped there.</li>
+    <li>saw it: browsers whose heading stayed in view for <%= pluralize(GuideSections.reach_seconds, "second") %>, on the day they saw it. a link to a later part skips what is above it.</li>
+    <li>first touch: how this browser first came to playground. last touch: its latest arrival that was not direct, before it opened this guide. a source with fewer than <%= TrafficSource.min_shown %> readers counts as other.</li>
+    <li>more stop here: at least <%= GuideJourneyStats::MIN_STOPS %> of them stopped there, and a two-proportion test says the gap is not chance, at 95%.</li>
+    <li><%= started ? "counting started on #{started.strftime("%B %-d, %Y")}" : "counting starts with the first reader" %>, so readers from before then are not here.</li>
+  </ul>
+</section>
