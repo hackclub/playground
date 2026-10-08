@@ -106,7 +106,10 @@ class AdminStatsTest < ActionDispatch::IntegrationTest
     assert_select "section h2", text: "how many people are active each day?"
     sections = css_select("section.panel h2").map(&:text)
     assert_equal sections.index("how many hours, in which stage?") + 1, sections.index("how many people are active each day?")
-    assert_match "active: at least 1 minute in Hackatime that day.", text_of_page
+    # The heading sits right over the chart, and the keyboard hint is for screen readers only.
+    assert_no_match "active: at least", text_of_page
+    assert_select ".dau[aria-describedby=dau-hint]"
+    assert_select "p.visually-hidden#dau-hint", "pick a day to see who was active. the arrow keys move along the days."
     assert_select ".dau button.dau-day", 3
     assert_equal [ %w[2026-09-28 false -1], %w[2026-09-29 false -1], %w[2026-09-30 true 0] ],
                  css_select(".dau button.dau-day").map { |day| %w[data-date aria-pressed tabindex].map { day[it] } }
@@ -260,7 +263,6 @@ class AdminStatsTest < ActionDispatch::IntegrationTest
     top = days.map(&:total).max
 
     get admin_stats_path
-    assert_match "a Stardance or Clubs reader: 20 minutes or more in their guide that day, counted with no name.", text_of_page
     assert_select ".dau-legend .key", 3
     assert_select ".dau-legend", text: /playground participants\s+Stardance readers\s+Clubs readers/
     assert_select "button.dau-day[data-date='2026-09-29'][aria-label=?]",
@@ -279,31 +281,52 @@ class AdminStatsTest < ActionDispatch::IntegrationTest
   end
 
   test "a: Stardance's people count by their Hackatime time where the day is counted, and by reading where it is not yet" do
-    StardanceActiveDay.create!(day: Date.new(2026, 9, 29), active: 5, unknown: 2)
-    StardanceActiveDay.create!(day: Date.new(2026, 9, 28), active: 0, unknown: 0)
+    StardanceActiveDay.create!(day: Date.new(2026, 9, 29), active: 2, unknown: 2, listed: true)
+    StardanceActivePerson.create!(day: Date.new(2026, 9, 29), slack_id: "U0STAR", handle: "Shebas6", seconds: 720)
+    StardanceActivePerson.create!(day: Date.new(2026, 9, 29), slack_id: "U0NONAME", seconds: 90)
+    StardanceActiveDay.create!(day: Date.new(2026, 9, 28), active: 0, unknown: 0, listed: true)
     # Counted by Hackatime time, so the guide's readers that day are not.
     GuideReaderDay.create!(day: Date.new(2026, 9, 29), guide: "stardance", readers: 12)
     GuideReaderDay.create!(day: Date.new(2026, 9, 29), guide: "clubs", readers: 3)
     # Not counted yet, so the readers stand in.
     GuideReaderDay.create!(day: Date.new(2026, 9, 30), guide: "stardance", readers: 4)
     days = ProgramStats.new.active_days
-    assert_equal [ { "stardance" => 0 }, { "stardance" => 5, "clubs" => 3 }, { "stardance" => 4 } ], days.map(&:readers)
+    assert_equal [ { "stardance" => 0 }, { "stardance" => 2, "clubs" => 3 }, { "stardance" => 4 } ], days.map(&:readers)
     assert_equal [ true, true, false ], days.map { it.stardance.present? }
     tuesday = days[1]
-    assert_equal tuesday.count + 8, tuesday.total
+    assert_equal tuesday.count + 5, tuesday.total
+    assert_equal %w[U0STAR U0NONAME], tuesday.stardance_people.map(&:slack_id)
 
     get admin_stats_path
-    assert_match "someone on Stardance's playground mission: the same, only on the Hackatime projects linked to their playground project, " \
-                 "counted with no name and only if they are not active here already.", text_of_page
-    assert_match "a Stardance or Clubs reader: 20 minutes or more in their guide that day", text_of_page
     assert_select ".dau-legend", text: /playground participants\s+Stardance coders\s+Clubs readers/
-    assert_select "button.dau-day[data-date='2026-09-29'][aria-label=?]", "Tue September 29: #{tuesday.count} people active, 5 Stardance coders, 3 Clubs readers"
-    assert_select ".dau-list#active-2026-09-29 p.dau-readers",
-                  "and 5 Stardance coders (1+ min in Hackatime on their playground project), 3 Clubs readers (20+ min in the guide)"
-    assert_select ".dau-list#active-2026-09-29 p.dau-unknown", "2 more people on Stardance's playground mission could not be counted, as Hackatime would not show their time."
+    assert_select "button.dau-day[data-date='2026-09-29'][aria-label=?]", "Tue September 29: #{tuesday.count} people active, 2 Stardance coders, 3 Clubs readers"
+    assert_select ".dau-list#active-2026-09-29" do
+      assert_select "h3", text: "Tuesday September 29: #{tuesday.count + 2} people active"
+      # Stardance's people are rows of the table, after the participants, each tagged and linked to Stardance and Slack.
+      assert_select "tr", tuesday.count + 3
+      assert_select "tr.dau-stardance-person", 2
+      assert_select "tr.dau-stardance-person:nth-last-child(2)" do
+        assert_select "a[href='https://stardance.hackclub.com/@Shebas6']", "Shebas6"
+        assert_select "a[href='https://hackclub.slack.com/team/U0STAR']", "Slack"
+        assert_select ".badge-stardance", "Stardance"
+        assert_select "td", text: "coded 12m on Stardance"
+      end
+      # No Stardance name: the Slack ID, and no Stardance link.
+      assert_select "tr.dau-stardance-person:last-child td", text: /\AU0NONAME\s+Stardance\s+Slack\z/
+      assert_select "tr.dau-stardance-person:last-child a[href^='https://stardance']", 0
+      assert_select "p.dau-readers", "and 3 Clubs readers (20+ min in the guide)"
+      assert_select "p.dau-unknown", "2 more people on Stardance's playground mission could not be counted, as Hackatime would not show their time."
+    end
     assert_select ".dau-list#active-2026-09-30 p.dau-readers", "and 4 Stardance readers (20+ min in the guide)"
     assert_select ".dau-list#active-2026-09-28 p.dau-readers", 0
     assert_select ".dau-list#active-2026-09-28 p.dau-unknown", 0
+  end
+
+  test "a: a Stardance day counted before people were kept still says how many coded" do
+    StardanceActiveDay.create!(day: Date.new(2026, 9, 29), active: 5, unknown: 0)
+    get admin_stats_path
+    assert_select ".dau-list#active-2026-09-29 tr.dau-stardance-person", 0
+    assert_select ".dau-list#active-2026-09-29 p.dau-readers", "and 5 Stardance coders (1+ min in Hackatime on their playground project)"
   end
 
   test "a: a day with only guide readers charts them, and lists them without a table" do

@@ -39,14 +39,22 @@ module StatsHelper
   ACTIVE_BECAUSE = { coded: "coded" }.freeze
   def active_because(person) = person.reasons.map { |kind, seconds| "#{ACTIVE_BECAUSE.fetch(kind)} #{hours(seconds)}" }.join(", ")
 
+  # A Stardance person in a day's list: their name to their Stardance
+  # profile, a link to them on Slack, and a tag that says where they are from.
+  def stardance_person(person)
+    name = person.stardance_url ? link_to(person.name, person.stardance_url) : person.name
+    safe_join([ name, tag.span("Stardance", class: "badge badge-stardance"), link_to("Slack", person.slack_url, class: "muted") ], " ")
+  end
+
   # A day's people from Stardance and the clubs, as "12 Stardance coders, 3
   # Clubs readers", or nil on a day with none. A coder counted by Hackatime
   # time (ProgramStats::ActiveDay), a reader by time in the guide. why: each
-  # with what made it count.
+  # with what made it count, and without the coders the day's table lists.
   def guide_readers(day, why: false)
     SideGuide.all.filter_map do |guide|
       next unless (count = day.readers[guide.slug].to_i).positive?
       coded = coded_side?(guide, day)
+      next if why && coded && day.stardance.listed
       text = pluralize(count, "#{guide.name} #{coded ? "coder" : "reader"}")
       next text unless why
       "#{text} (#{coded ? "#{ProgramStats::ACTIVE_CODING_SECONDS / 60}+ min in Hackatime on their playground project" : "#{SideGuide.reading_seconds / 60}+ min in the guide"})"
@@ -55,13 +63,6 @@ module StatsHelper
 
   # The chart legend's name for a guide's people.
   def side_legend(guide, days) = "#{guide.name} #{days.any? { coded_side?(guide, it) } ? "coders" : "readers"}"
-
-  # The guides with a day counted by reading, as "Stardance or Clubs", or
-  # nil when none was.
-  def read_guides(days)
-    read = SideGuide.all.select { |guide| days.any? { it.readers[guide.slug].to_i.positive? && !coded_side?(guide, it) } }
-    read.map(&:name).to_sentence(two_words_connector: " or ", last_word_connector: ", or ").presence
-  end
 
   # Stardance's count on the day is by Hackatime time.
   def coded_side?(guide, day) = guide.slug == "stardance" && day.stardance.present?

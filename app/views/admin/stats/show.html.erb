@@ -39,15 +39,14 @@
     <% top = days.map(&:total).max %>
     <% chosen = days.find(&:today) || days.last %>
     <% readers = days.any? { it.reader_count.positive? } %>
-    <% read_by = read_guides(days) %>
-    <p class="muted">active: at least <%= pluralize(ProgramStats::ACTIVE_CODING_SECONDS / 60, "minute") %> in Hackatime that day.<% if days.any?(&:stardance) %> someone on Stardance's playground mission: the same, only on the Hackatime projects linked to their playground project, counted with no name and only if they are not active here already.<% end %><% if read_by %> a <%= read_by %> reader: <%= SideGuide.reading_seconds / 60 %> minutes or more in their guide that day, counted with no name.<% end %> pick a day to see who was active. the arrow keys move along the days.</p>
     <% if readers %>
       <%# Stardance's and the clubs' people stack on the participants in each day's bar, a colour a guide. %>
       <p class="legend dau-legend"><span><span class="key dau-coded"></span> playground participants</span>
         <% SideGuide.all.each do |guide| %><span><span class="key dau-<%= guide.slug %>"></span> <%= side_legend(guide, days) %></span><% end %></p>
     <% end %>
+    <p class="visually-hidden" id="dau-hint">pick a day to see who was active. the arrow keys move along the days.</p>
     <div class="dau-scroll" data-active-days-target="scroller">
-      <div class="dau" role="toolbar" aria-label="people active each day">
+      <div class="dau" role="toolbar" aria-label="people active each day" aria-describedby="dau-hint">
         <% days.each do |day| %>
           <% about = [ "#{day.date.strftime("%a %B %-d")}: #{pluralize(day.count, "person", plural: "people")} active", guide_readers(day) ].compact.join(", ") %>
           <%= tag.button type: "button", class: "dau-day", title: about, aria: { label: about, pressed: day.date == chosen.date, controls: "active-#{day.date.iso8601}" },
@@ -61,20 +60,23 @@
     <p class="muted"><%= days.first.date.strftime("%B %-d") %> to <%= days.last.date.strftime("%B %-d") %>, in US Eastern time.</p>
     <% days.each do |day| %>
       <%= tag.div class: "dau-list", id: "active-#{day.date.iso8601}", hidden: day.date != chosen.date, data: { active_days_target: "list", date: day.date.iso8601 } do %>
-        <h3><%= "today, " if day.today %><%= day.date.strftime("%A %B %-d") %>: <%= pluralize(day.count, "person", plural: "people") %> active</h3>
+        <h3><%= "today, " if day.today %><%= day.date.strftime("%A %B %-d") %>: <%= pluralize(day.listed_count, "person", plural: "people") %> active</h3>
         <% if day.total.zero? %>
           <p class="muted">nobody was active on this day.</p>
         <% else %>
-          <% if day.people.any? %>
+          <% if day.listed_count.positive? %>
             <table class="list">
               <tr><th>person</th><th>active because</th></tr>
               <% day.people.each do |person| %>
                 <tr><td><%= link_to person.user.display_name, admin_person_path(person.user) %></td><td><%= active_because(person) %></td></tr>
               <% end %>
+              <% day.stardance_people.each do |person| %>
+                <tr class="dau-stardance-person"><td><%= stardance_person(person) %></td><td>coded <%= hours(person.seconds) %> on Stardance</td></tr>
+              <% end %>
             </table>
           <% end %>
           <% if (others = guide_readers(day, why: true)) %>
-            <p class="dau-readers"><%= "and " if day.people.any? %><%= others %></p>
+            <p class="dau-readers"><%= "and " if day.listed_count.positive? %><%= others %></p>
           <% end %>
         <% end %>
         <% if day.stardance&.unknown.to_i.positive? %>

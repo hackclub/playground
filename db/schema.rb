@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_08_150001) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_08_210001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -355,9 +355,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_08_150001) do
     t.integer "active", default: 0, null: false
     t.datetime "created_at", null: false
     t.date "day", null: false
+    t.boolean "listed", default: false, null: false
     t.integer "unknown", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["day"], name: "index_stardance_active_days_on_day", unique: true
+  end
+
+  create_table "stardance_active_people", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.date "day", null: false
+    t.string "handle"
+    t.integer "seconds", null: false
+    t.string "slack_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["day", "slack_id"], name: "index_stardance_active_people_on_day_and_slack_id", unique: true
   end
 
   create_table "users", force: :cascade do |t|

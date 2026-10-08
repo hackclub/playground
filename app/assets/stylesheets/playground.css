@@ -370,6 +370,7 @@ h2.inline { display: inline; }
 .dau-day .fill.dau-clubs, .key.dau-clubs { background: var(--green); }
 .key.dau-coded { background: var(--blue); }
 .dau-readers { margin: 6px 0 0; }
+.badge-stardance { color: var(--amber); }
 .dau-day[aria-pressed=true] .day-label { background: var(--ink); color: var(--paper); }
 .dau-day:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
 .dau-list .list { max-width: 560px; }
