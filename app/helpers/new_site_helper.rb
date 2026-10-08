@@ -37,6 +37,22 @@ module NewSiteHelper
     link_to label, path, class: "topbar-tab", aria: { current: }
   end
 
+  # Hours on the meter beside the guide, short and to the minute: "12m",
+  # "2h", "2h 1m". Minutes round down, so the meter never shows a goal's
+  # hours before they are all there.
+  def meter_hours(seconds)
+    h, m = (seconds.to_i / 60).divmod(60)
+    return "#{m}m" if h.zero?
+    m.zero? ? "#{h}h" : "#{h}h #{m}m"
+  end
+
+  # The total on the meter's tag. Past the top of the bar it shows whole
+  # hours, as "14h", so the tag always fits its lane.
+  def meter_total(hours)
+    seconds = hours.total_seconds.to_i
+    seconds >= hours.scale_seconds ? "#{seconds / 3600}h" : meter_hours(seconds)
+  end
+
   # A pet's card on my pets, which shows all there is about the pet.
   def pet_card_path(project) = projects_path(anchor: "pet-#{project.id}")
 
