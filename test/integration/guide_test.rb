@@ -4,6 +4,9 @@ require "test_helper"
 # its recordings, screenshots, and code, each file served, and a link to it
 # that unfurls as the guide.
 class GuideTest < ActionDispatch::IntegrationTest
+  setup { NewSite.for_visitors = false }
+  teardown { NewSite.for_visitors = true }
+
   STEPS = {
     "setup-godot" => "Set up Godot",
     "hackatime" => "Install Godot Hackatime, and set up Hackatime on your machine",

@@ -77,8 +77,8 @@ class ActionDispatch::IntegrationTest
 end
 
 # Tests of the new site (NewSite). In them every development login signs in
-# a user with the new site on, and signed-out visitors get the new site too,
-# as they will once it opens to everyone. The gate itself has its own tests.
+# a user with the new site on, and signed-out visitors get the new site too.
+# The gate itself has its own tests.
 module NewSiteTests
   extend ActiveSupport::Concern
   KINDS = %w[participant newbie unverified admin froppii red].freeze
@@ -88,7 +88,7 @@ module NewSiteTests
       NewSite.for_visitors = true
       KINDS.each { NewSiteTests.dev_user(it) }
     end
-    teardown { NewSite.for_visitors = false }
+    teardown { NewSite.for_visitors = true }
   end
 
   # The user the development login signs in as, made first with the new site

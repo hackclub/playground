@@ -7,6 +7,9 @@ require "test_helper"
 # 9, and passes by the crawler name it adds. The user agents are real ones, as
 # the browsers sent them.
 class BrowserFloorTest < ActionDispatch::IntegrationTest
+  setup { NewSite.for_visitors = false }
+  teardown { NewSite.for_visitors = true }
+
   IOS_SAFARI_16_4 = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1"
   IOS_SAFARI_16_3 = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.3 Mobile/15E148 Safari/604.1"
   MAC_SAFARI_16_4 = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Safari/605.1.15"

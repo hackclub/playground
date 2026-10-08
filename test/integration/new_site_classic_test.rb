@@ -84,8 +84,12 @@ class NewSiteClassicTest < ActionDispatch::IntegrationTest
 
     delete logout_path
     get root_path
-    assert_select "#welcome"
+    assert_select "body.new-site .home-window", 4
+    assert_select "#welcome", 0
     assert_select "#back-to-new-site", 0
+    get guide_page_path("move")
+    assert_response :ok
+    assert_select "body.new-site"
   end
 
   test "with the flag and the cookie, every page is the desktop site's, with the icon back on the desktop only" do
@@ -118,7 +122,9 @@ class NewSiteClassicTest < ActionDispatch::IntegrationTest
         cookies.delete("classic")
         get path
         assert_equal seen, with, "#{who} #{path}"
-        MARKS.each { assert_not_includes response.body, it, "#{who} #{path}" } unless response.status == 404 || side_guide?(path)
+        if who == :participant && response.status != 404 && !side_guide?(path)
+          MARKS.each { assert_not_includes response.body, it, "#{who} #{path}" }
+        end
       end
     end
   end
@@ -155,13 +161,10 @@ class NewSiteClassicTest < ActionDispatch::IntegrationTest
     end
 
     delete logout_path
-    NewSite.for_visitors = true
     get root_path
     assert_select ".home-faq"
     assert_select ".home-faq details summary", text: "where did the desktop go?", count: 0
     assert_select ".footbar-classic, #classic-dialog", 0
-  ensure
-    NewSite.for_visitors = false
   end
 
   private

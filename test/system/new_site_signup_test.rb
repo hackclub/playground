@@ -5,6 +5,7 @@ require "application_system_test_case"
 # account from before the new site ends on the desktop.
 class NewSiteSignupSystemTest < ApplicationSystemTestCase
   setup do
+    NewSite.for_visitors = true
     OmniAuth.config.test_mode = true
     ENV["REAL_SERVICES"] = "1"
     OmniAuth.config.mock_auth[:hackatime] = OmniAuth::AuthHash.new(provider: "hackatime", credentials: { token: "hka-new" })
@@ -43,6 +44,7 @@ class NewSiteSignupSystemTest < ApplicationSystemTestCase
                                        last_name: "Dev", verification_status: "verified", ysws_eligible: true } } }
     )
     visit login_path
+    assert_selector "body.new-site"
     page.execute_script(<<~JS)
       const form = Object.assign(document.createElement("form"), { method: "post", action: "/auth/hack_club" })
       document.body.append(form)

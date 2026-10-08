@@ -64,6 +64,7 @@ class GuideSectionsTest < ActionDispatch::IntegrationTest
   end
 
   test "each guide's sections are the headings its pages show, in order" do
+    user = log_in("participant")
     get guide_path
     assert_equal GuideSections.find("desktop").sections, css_select("article.guide h2[id], article.guide h3[id]").map { it["id"] } - %w[guide-overview]
     assert_select "article.guide[data-controller~=guide-progress][data-guide-progress-guide-value=desktop]"
@@ -78,7 +79,6 @@ class GuideSectionsTest < ActionDispatch::IntegrationTest
       assert_select ".hub[data-guide-progress-guide-value=?]", key
     end
 
-    user = log_in("participant")
     user.update!(new_site: true)
     ids = GuidePage.all.flat_map do |step|
       get guide_page_path(step)

@@ -1,6 +1,11 @@
 require "test_helper"
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
+  # Existing system tests explicitly cover the legacy desktop for guests.
+  # New-site tests opt in during setup; teardown restores the visitor default.
+  setup { NewSite.for_visitors = false }
+  teardown { NewSite.for_visitors = true }
+
   # Locally the tests run in Chrome for Testing, which Selenium Manager fetches
   # and caches, so they need no installed Chrome. CI uses its own Chrome. Rails
   # resolves the driver path up front, after which Selenium never looks up a

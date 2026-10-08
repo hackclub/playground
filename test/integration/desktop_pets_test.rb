@@ -4,6 +4,9 @@ require "test_helper"
 # trash that follows their account, and the delete popups for a pet dragged
 # into the trash, which delete it and answer without leaving the page.
 class DesktopPetsTest < ActionDispatch::IntegrationTest
+  setup { NewSite.for_visitors = false }
+  teardown { NewSite.for_visitors = true }
+
   test "the desktop lists a signed-in participant's pets and trash, and nothing for a visitor" do
     get root_path
     assert_select "#apps[data-pets]", 0
