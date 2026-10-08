@@ -118,7 +118,7 @@ class NewSiteGuideStepsTest < ActionDispatch::IntegrationTest
       assert_select "article.guide ##{anchor}", 1, href
     end
     # The card links the other parts it may point to, each on its step.
-    { "pick-project" => "/guide/scene", "ship" => "/guide/publish", "your-own" => "/guide/publish" }.each do |anchor, path|
+    { "pick-project" => "/guide/scene", "ship" => "/guide/publish", "your-own" => "/guide/own" }.each do |anchor, path|
       assert_equal "#{path}##{anchor}", GuidePage.href(anchor)
     end
   end
@@ -144,7 +144,7 @@ class NewSiteGuideStepsTest < ActionDispatch::IntegrationTest
     assert_redirected_to "/guide/publish#ship"
     ship = pet.ships.sole
     assert ship.pending?
-    assert_equal [ "rock is in review", "/guide/publish#your-own" ], card.call
+    assert_equal [ "rock is in review", "/guide/own#your-own" ], card.call
     get guide_side_path(part: "next")
     assert_select "#hub-next #next-title", "rock is in review"
 

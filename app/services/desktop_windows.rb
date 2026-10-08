@@ -30,10 +30,11 @@ module DesktopWindows
   # their own. The pet list is JSON for the desktop, not a page. The new
   # site (NewSite) has no desktop: its guide's frames, its delete page, and
   # its question before a switch to the old desktop show in no window. Nor
-  # do Stardance's and the clubs' guides (SideGuide), which have no desktop.
+  # do Stardance's and the clubs' guides (SideGuide), which have no desktop,
+  # or a building block's page, which opens in a tab of its own.
   ELSEWHERE = %w[landing#show sessions#create sessions#failure sessions#hackatime_step sessions#dev
                  projects#trash projects#index guide_steps#check guide_steps#side guide_steps#ship projects#delete
-                 side_guides#show classic#show].freeze
+                 side_guides#show building_blocks#show classic#show].freeze
 
   # Each page's path for landing.js, as the router writes it: /projects/:id/edit.
   def self.pages

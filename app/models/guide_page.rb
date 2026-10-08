@@ -49,6 +49,7 @@ class GuidePage < Data.define(:slug, :name, :anchors)
     new(slug: "art", name: "Art and script", anchors: %w[pretty script]),
     new(slug: "move", name: "Make it move", anchors: %w[movement on-screen bounce]),
     new(slug: "animate", name: "Animate and drag", anchors: %w[animations break drag]),
-    new(slug: "publish", name: "Publish and ship", anchors: %w[your-own publish it-s-time-to-upload-your-project-to-itch ship ship-step])
+    new(slug: "own", name: "Make it your own", anchors: %w[your-own]),
+    new(slug: "publish", name: "Publish and ship", anchors: %w[publish it-s-time-to-upload-your-project-to-itch ship ship-step])
   ].freeze
 end

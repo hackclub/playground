@@ -1,0 +1,14 @@
+<%# The step to make the pet your own: a word on why, and each building
+    block. A side guide (SideGuide) has no review to be rejected
+    by, so it says it another way. %>
+<section aria-labelledby="your-own">
+  <h2 id="your-own">Make it your own!</h2>
+  <% if side_guide %>
+    <p>Don't just follow this guide and change nothing. Make the project your own! Experiment, and do something entirely different.</p>
+  <% else %>
+    <p>your project will be rejected if you just follow this guide and change nothing. Make the project your own! Experiment, and do something entirely different.</p>
+  <% end %>
+  <p>There are so many things you can do, and this guide is here to show you the ropes so you can do something for yourself.</p>
+  <p>If you need ideas or help, ask in <a href="https://hackclub.slack.com/archives/C0ASBTMS82H" target="_blank" rel="noopener">#Playground</a> we’ll be glad to help!</p>
+  <%= render "guides/blocks" %>
+</section>

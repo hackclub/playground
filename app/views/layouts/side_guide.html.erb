@@ -2,8 +2,9 @@
     everyone, with no flag. It loads the new site's stylesheet and scripts,
     as layouts/app.html+new_site.erb does, and both stylesheets carry
     Turbo's reload mark, so a visit to a page of the desktop site loads in
-    full. Its top bar holds only the logo, which goes back to this guide,
-    and help. %>
+    full. Its top bar holds only the logo, and help. A building block's
+    page from a side guide (BuildingBlocksController) wears it too, and its
+    logo goes back to that guide. %>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -22,7 +23,13 @@
   </head>
   <body class="app new-site side-guide">
     <header class="topbar">
-      <%= link_to side_guide_path(side_guide), class: "topbar-home" do %><%= image_tag "landing/logo.png", alt: "playground, back to the guide" %><% end %>
+      <%# On a step of the guide, the logo would only reopen the step read
+          last, which is this one, so it is a picture there, not a link. %>
+      <% if controller_path == "side_guides" %>
+        <span class="topbar-home"><%= image_tag "landing/logo.png", alt: "playground" %></span>
+      <% else %>
+        <%= link_to side_guide_path(side_guide), class: "topbar-home" do %><%= image_tag "landing/logo.png", alt: "playground, back to the guide" %><% end %>
+      <% end %>
       <nav class="topbar-links" aria-label="help">
         <a href="https://hackclub.slack.com/archives/C0ASBTMS82H" target="_blank" rel="noopener">help in #playground</a>
       </nav>

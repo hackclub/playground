@@ -83,12 +83,21 @@ module GuideHelper
   # faded, and the copy button leaves it out.
   def guide_code(name)
     path = SNIPPETS.glob("#{name}.*").first
-    language, label = LANGUAGES.fetch(path.extname)
-    lines = path.read.chomp.split("\n", -1).map do |line|
+    code_block(path.read.chomp, *LANGUAGES.fetch(path.extname))
+  end
+
+  # The languages whose blocks copy: shell commands, which are only to run,
+  # and a shader, which a building block's page says to paste in whole.
+  COPYABLE = %w[shell glsl].freeze
+
+  # A code block, as guide_code draws one, from its text, its language, and
+  # the label on its bar.
+  def code_block(text, language, label)
+    lines = text.split("\n", -1).map do |line|
       context = line.start_with?("~")
       tag.span(highlight_code(line.delete_prefix("~"), language), class: [ "line", ("context" if context) ])
     end
-    copyable = language == "shell"
+    copyable = COPYABLE.include?(language)
     tag.div(class: [ "code-block", ("no-copy" unless copyable) ], data: { controller: ("code-block" if copyable) }) do
       tag.div(class: "code-bar") do
         tag.span(label, class: "code-lang") +

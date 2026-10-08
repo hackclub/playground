@@ -216,6 +216,16 @@ body.app > .dashboard-link:has(+ .guide) { max-width: 760px; margin: 0 auto 10px
    spaces wide, as in Godot. Where it shows lines around the new ones, as
    the editor's selection did in a screenshot, the new lines sit on the
    wash and the lines around them are faded. */
+/* The building blocks under "Make it your own", in every guide: under each
+   block's heading, its demo GIF, the guide's full width, in the step list's hand-cut
+   corners. The whole GIF is a link, and a small "open" tag in its top right
+   corner, on clear sky, says so. */
+.block-card { position: relative; display: block; margin: 8px 0 18px; overflow: hidden; border: 2px solid var(--line); border-radius: 9px 12px 10px 8px; background: var(--wash); }
+.block-card:hover { border-color: var(--blue); }
+.block-card:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.block-card img { display: block; width: 100%; height: auto; }
+.block-open { position: absolute; top: 8px; right: 8px; padding: 1px 10px; border: 2px solid var(--blue); border-radius: 9px 12px 10px 8px; background: var(--paper); color: var(--blue); font-size: 0.85rem; }
+.block-card:hover .block-open { background: var(--blue); color: white; }
 .code-block { margin: 10px 0 16px; border: 1px solid var(--line); background: var(--paper); }
 .code-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 3px 4px 3px 10px; border-bottom: 1px solid var(--line); background: var(--wash); color: var(--muted); font-size: 0.8rem; }
 .code-copy { padding: 1px 10px; border: 2px solid var(--blue); background: var(--paper); color: var(--blue); font: inherit; cursor: pointer; }

@@ -26,6 +26,10 @@
 .guide-pager { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 0; }
 .guide-pager .btn { max-width: 100%; padding: 8px 16px; font-size: 1.05rem; }
 .guide-pager .guide-next { margin-left: auto; text-align: right; }
+/* A building block's page: the guide's column, with a small link back above
+   it, and the block's demo GIF the guide's full width. */
+.page > .block-back { margin-bottom: 8px; font-size: 0.9rem; }
+.block-result { display: block; width: 100%; max-width: 100%; height: auto; margin: 10px 0 16px; border: 1px solid var(--line); }
 /* A guide step that acts on the site: no box and no square, just the step's
    words and buttons at the left edge of the guide text. A step that waits on
    another is faded. */

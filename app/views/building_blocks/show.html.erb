@@ -1,0 +1,11 @@
+<% content_for :title, "#{@block.title} · Build a desktop pet in Godot" %>
+<%# A building block's page, in the guide's look: its title, then its
+    guide.md (BuildingBlock::Page), with a small link back to the guide's
+    step that lists every block. %>
+<p class="block-back"><%= link_to "← back to the guide", building_blocks_guide_path %></p>
+<article class="guide panel block-page" id="block">
+  <header>
+    <h1><%= @block.page.title || @block.title %></h1>
+  </header>
+  <%= building_block_body(@block) %>
+</article>

@@ -23,14 +23,16 @@ class SideGuidesTest < ActionDispatch::IntegrationTest
         assert_response :ok
         assert_select "body.new-site.side-guide"
         INTERACTIVE.each { assert_select it, 0, "#{guide.slug}/#{step.slug}: #{it}" }
-        # The top bar is the logo, back to this guide, and help.
-        assert_select ".topbar a", 2
-        assert_select ".topbar a.topbar-home[href=?]", side_guide_path(guide)
+        # The top bar is the logo and help. On the guide's own steps the logo
+        # would only lead back to the step read last, this one, so it is a
+        # picture, not a link.
+        assert_select ".topbar a", 1
+        assert_select ".topbar span.topbar-home img[alt=playground]"
         assert_select ".topbar a[href='https://hackclub.slack.com/archives/C0ASBTMS82H']", "help in #playground"
         # The outline, the list of steps, and the buttons stay on this guide.
-        assert_select ".outline-step > a", 6
+        assert_select ".outline-step > a", 7
         assert_equal GuidePage.all.map { side_guide_path(guide, it) }, css_select(".outline-step > a").map { it["href"] }
-        assert_select ".guide-contents a", 6
+        assert_select ".guide-contents a", 7
         assert_select ".guide-pager a[href^=?]", "/#{guide.slug}/", count: [ step.previous, step.following ].compact.size
         assert_select "footer.footbar"
         css_select("#guide").text
@@ -39,9 +41,14 @@ class SideGuidesTest < ActionDispatch::IntegrationTest
       get side_guide_path(guide)
       assert_select "title", "Build a desktop pet in Godot · playground"
       assert_select ".outline-step > a[aria-current=page]", /Set up/
+      get side_guide_path(guide, "own")
+      assert_select "#your-own", "Make it your own!"
+      assert_select "section[aria-labelledby=your-own] > p", /\ADon't just follow this guide/
+      # The building blocks' links open their pages from this guide.
+      assert_equal BuildingBlock.all.map { "/#{guide.slug}/blocks/#{it.slug}" }, css_select("#your-own ~ a.block-card[target=_blank]").map { it["href"] }
       get side_guide_path(guide, "publish")
       assert_select "title", "Publish · Build a desktop pet in Godot · playground"
-      assert_select "#your-own", "Make it your own!"
+      assert_select "a.topbar-home", 0
       assert_select "#it-s-time-to-upload-your-project-to-itch"
       assert_select ".outline-step > a", text: /Publish and ship/, count: 0
     end
