@@ -66,7 +66,7 @@ class AirtableSyncJobTest < ActiveSupport::TestCase
     assert_match "p (2h 0m)", row["Justification - Hackatime Project Name(s) + Date Range(s)"]
     assert_equal "a", row["GitHub Username"]
     refute row.key?("idv_rec"), "Submit fields are gone"
-    refute rows.first.key?("Automation - Submit to Unified YSWS")
+    assert_equal true, row["Automation - Submit to Unified YSWS"]
     assert_nil pending.reload.airtable_record_id
   end
 
@@ -78,7 +78,7 @@ class AirtableSyncJobTest < ActiveSupport::TestCase
     "ZIP / Postal Code", "Birthday", "Optional - Override Hours Spent", "Optional - Override Hours Spent Justification",
     "Justification - Hackatime Project Name(s) + Date Range(s)", "Justification - Submitter Hackatime ID",
     "Justification - Specific Technical Features", "Justification - Deflation Justification",
-    "Justification - Lapse Links, comma-separated"
+    "Justification - Lapse Links, comma-separated", "Automation - Submit to Unified YSWS"
   ].freeze
 
   test "every field a ship row writes exists in the submission table" do

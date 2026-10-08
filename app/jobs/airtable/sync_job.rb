@@ -2,7 +2,8 @@
 # Every minute, for each table, it upserts the 10 rows with the oldest
 # synced_at, never-synced rows first. A change to a row sets synced_at back to
 # nil, so the row goes next. The ship copy never overwrites a row the Unified
-# DB has taken, and never sets "Automation - Submit to Unified YSWS".
+# DB has taken, and sets "Automation - Submit to Unified YSWS" on every ship
+# it copies, since only final ships cross.
 module Airtable
   class SyncJob < ApplicationJob
     queue_as :default
