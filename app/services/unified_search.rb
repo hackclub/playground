@@ -8,10 +8,8 @@ module UnifiedSearch
   CACHE_FOR = 10.minutes
   MIN_LENGTH = 8
   REPO_HOSTS = %w[github.com gitlab.com codeberg.org bitbucket.org].freeze
-  # Playground's own rows get their program name from the Unified DB, and
-  # nothing in the sync code sets or reads it. This is a guess at that name,
-  # so such matches are shown apart, never counted as a double dip.
-  OWN_PROGRAM = /playground/i
+  # The program's name in the Unified DB's YSWS Programs table.
+  OWN_PROGRAM = "playground"
 
   Match = Struct.new(:program, :approved_at, :hours, :url, :own, keyword_init: true)
   # status: :ok, :warn, :own_only, :unknown. reason: why it is unknown.
@@ -51,7 +49,8 @@ module UnifiedSearch
   def match(record, key)
     fields = record["fields"]
     return unless normalize(fields["Code URL"]) == key
-    program = Array(fields["YSWS–Name"]).join(", ").presence || "unknown program"
-    Match.new(program:, approved_at: fields["Approved At"], hours: fields["Override Hours Spent"], url: fields["Code URL"], own: program.match?(OWN_PROGRAM))
+    names = Array(fields["YSWS–Name"]).map { it.to_s.strip }.compact_blank
+    program = names.join(", ").presence || "unknown program"
+    Match.new(program:, approved_at: fields["Approved At"], hours: fields["Override Hours Spent"], url: fields["Code URL"], own: names.any? && names.all? { it.casecmp?(OWN_PROGRAM) })
   end
 end
