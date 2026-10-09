@@ -52,6 +52,23 @@ class UnifiedSearchTest < ActiveSupport::TestCase
     assert result.matches.first.own
   end
 
+  test "similar program names still warn" do
+    %w[Playhouse Playphone Hackapet].each do |name|
+      result = UnifiedSearch.check("https://github.com/a/b", client: Stub.new([ record("https://github.com/a/b", [ name ]) ]))
+      assert_equal :warn, result.status, name
+    end
+  end
+
+  test "own program is the exact name, any case, trimmed" do
+    result = UnifiedSearch.check("https://github.com/a/b", client: Stub.new([ record("https://github.com/a/b", [ " PLAYGROUND " ]) ]))
+    assert_equal :own_only, result.status
+  end
+
+  test "a row in playground and another program warns" do
+    result = UnifiedSearch.check("https://github.com/a/b", client: Stub.new([ record("https://github.com/a/b", [ "Playground", "Sleepover" ]) ]))
+    assert_equal :warn, result.status
+  end
+
   test "a longer repo name is not a match" do
     result = UnifiedSearch.check("https://github.com/a/b", client: Stub.new([ record("https://github.com/a/b-two", [ "Sleepover" ]) ]))
     assert_equal :ok, result.status
