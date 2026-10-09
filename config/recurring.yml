@@ -15,6 +15,12 @@ production:
     class: StardanceActivityJob
     schedule: every hour at minute 30
 
+  # The hours of Stardance's playground mission by stage, for the hours pie
+  # on the admin stats page.
+  stardance_hours:
+    class: StardanceHoursJob
+    schedule: every hour at minute 50
+
   # Marks who is due the "no time yet" email, after the coding hours refresh.
   no_time_nudge:
     class: NoTimeNudgeJob

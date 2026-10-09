@@ -82,6 +82,43 @@ class AdminStatsTest < ActionDispatch::IntegrationTest
     assert_match "the oldest refresh is 3d 0h old, the median 1h 0m. 1 pet with Hackatime projects never refreshed.", text_of_page
   end
 
+  test "a: Stardance's hours by stage join the pie in their own fills, as a group with its subtotal under the total" do
+    StardanceHours.create!(approved_seconds: 2 * H, pending_seconds: 6 * H, unshipped_seconds: 4 * H, returned_seconds: H, projects: 9,
+                           left_out_projects: 2, left_out_seconds: 5 * H, updated_at: NOW - 40.minutes)
+    get admin_stats_path
+    assert_response :success
+    %w[approved pending unshipped].each { assert_select "svg.pie .stardance-#{it}", 1 }
+    assert_select "svg.pie pattern#pie-stardance-pending"
+    # 31h 20m here and 12h 0m on Stardance, 43h 20m in all.
+    assert_select ".kv.stages tr.group th", text: "on playground"
+    assert_select ".kv.stages tr", text: /approved\s*14h 30m\s*33%/
+    assert_select ".kv.stages tr.subtotal", text: /playground\s*31h 20m\s*72%/
+    assert_select ".kv.stages tr.group th", text: "on Stardance's playground mission"
+    assert_select ".kv.stages tr td .key.stardance-approved"
+    assert_select ".kv.stages tr", text: /approved\s*2h 0m\s*5%/
+    assert_select ".kv.stages tr", text: /pending\s*6h 0m\s*14%/
+    assert_select ".kv.stages tr", text: /unshipped\s*4h 0m\s*9%/
+    assert_select ".kv.stages tr.subtotal", text: /Stardance\s*12h 0m\s*28%/
+    assert_select ".kv.stages tr.total", text: /43h 20m/
+    assert_match "Stardance's hours are as of 40m ago, read from its database every hour: the Hackatime time its devlogs logged on 9 projects, " \
+                 "by the state of each ship. its unshipped hours there include 1h 0m sent back for changes. 2 projects with 5h 0m are also a pet here, so they count only as this site's.", text_of_page
+  end
+
+  test "a: without a read of Stardance the table has no groups, and Stardance's hours alone still draw the pie" do
+    get admin_stats_path
+    assert_select ".kv.stages tr.group", 0
+    assert_select ".kv.stages tr.subtotal", 0
+    assert_select "svg.pie [class^=stardance]", 0
+    assert_no_match "Stardance's hours are as of", text_of_page
+
+    User.where.not(id: @admin.id).find_each { it.update_columns(admin: true) }
+    StardanceHours.create!(unshipped_seconds: 3 * H, projects: 1)
+    get admin_stats_path
+    assert_select "svg.pie circle.stardance-unshipped", 1
+    assert_select ".kv.stages tr.subtotal", text: /playground\s*0m\s*0%/
+    assert_select ".kv.stages tr.total", text: /3h 0m/
+  end
+
   test "a: people active each day, with a minute or more in Hackatime, a bar a day up to today, today pressed" do
     # eve's 50 seconds today are under a minute, so she is not active. dan's
     # two half minutes on Tuesday add up to one, so he is. The coding days
