@@ -1,0 +1,58 @@
+<%# The new site's ask for the NPS form (NpsHelper#nps_rock). On a computer
+    the old desktop's rock peeks from the corner of the screen with a line
+    in its bubble, and a click opens the form in feedback.exe, a popup in
+    ship.exe's frame. The rock drags into a bin, which hides it for 12
+    hours, and so does "not now", which shows on keyboard focus. On a phone
+    a 0 to 10 strip stands here in its place, and a number opens the same
+    popup with that score picked. All of it stays hidden until the script
+    says this browser has not skipped it in the last 12 hours (the nps-rock
+    controller). %>
+<div class="nps-ask" hidden data-controller="nps-rock" data-nps-rock-store-value="playground-nps-asked:<%= current_user.id %>"
+     data-action="pointermove@window->nps-rock#near mouseleave@document->nps-rock#far blur@window->nps-rock#far turbo:before-cache@document->nps-rock#leave">
+  <button type="button" class="nps-rock" aria-haspopup="dialog" aria-label="tell us how playground is going" data-nps-rock-target="rock"
+          data-action="pointerdown->nps-rock#press click->nps-rock#open keydown->nps-rock#key focus->nps-rock#wake blur->nps-rock#wake">
+    <span class="nps-bubble" aria-hidden="true"><span class="nps-bubble-text" data-nps-rock-target="say"></span></span>
+    <%= image_tag "landing/rock.png", alt: "", class: "nps-rock-img", width: 140, height: 96, draggable: false, data: { nps_rock_target: "picture" } %>
+  </button>
+  <button type="button" class="nps-rock-skip" data-nps-rock-target="skip" data-action="nps-rock#skip">not now<span class="visually-hidden">, hide the rock for 12 hours</span></button>
+  <div class="nps-bin" aria-hidden="true" data-nps-rock-target="bin">
+    <%= image_tag "landing/trash-empty.png", alt: "", class: "nps-bin-empty", width: 264, height: 264 %>
+    <%= image_tag "landing/trash-full.png", alt: "", class: "nps-bin-full", width: 264, height: 264 %>
+    <span class="nps-bin-say">et tu?</span>
+  </div>
+
+  <section class="nps-strip" aria-labelledby="nps-strip-title" data-nps-rock-target="strip">
+    <h2 id="nps-strip-title">how likely are you to recommend playground to a friend?</h2>
+    <div data-nps-rock-target="scale">
+      <p class="muted">pick a number, and tell us a little more after.</p>
+      <div class="nps-strip-boxes" role="group" aria-labelledby="nps-strip-title">
+        <% NpsResponse::SCORES.each do |score| %>
+          <button type="button" class="nps-strip-box" value="<%= score %>" aria-haspopup="dialog" data-action="nps-rock#rate"><%= score %><% if score == NpsResponse::SCORES.first %><span class="visually-hidden">, not at all</span><% elsif score == NpsResponse::SCORES.last %><span class="visually-hidden">, very very likely</span><% end %></button>
+        <% end %>
+      </div>
+      <p class="nps-ends" aria-hidden="true"><span>0 = not at all</span><span>10 = very very likely</span></p>
+    </div>
+    <p class="nps-strip-thanks" tabindex="-1" hidden data-nps-rock-target="stripThanks"></p>
+  </section>
+
+  <dialog class="popup nps-popup" aria-labelledby="nps-popup-title" data-controller="popup-drag" data-nps-rock-target="dialog"
+          data-action="close->nps-rock#closed">
+    <div class="popup-head" data-popup-drag-target="head" data-action="pointerdown->popup-drag#start pointermove->popup-drag#move pointerup->popup-drag#end pointercancel->popup-drag#end lostpointercapture->popup-drag#end">
+      <h2 class="popup-title" id="nps-popup-title">feedback.exe</h2>
+      <button type="button" class="popup-close" aria-label="close" data-action="nps-rock#close">X</button>
+    </div>
+    <div class="popup-body">
+      <%= form_with scope: :nps_response, url: nps_path, class: "nps", html: { novalidate: true },
+                    data: { turbo: false, nps_rock_target: "form", action: "submit->nps-rock#send" } do %>
+        <p class="nps-intro">how's playground going? be honest!</p>
+        <p class="banner alert" hidden data-nps-rock-target="error"></p>
+        <%= render "nps_responses/questions", nps: NpsResponse.new, hint: "pick a number and fill in the * ones to send.", prefix: "nps_rock" %>
+        <div class="row">
+          <button type="submit" class="btn primary">submit</button>
+          <button type="button" class="btn" data-action="nps-rock#close">cancel</button>
+        </div>
+      <% end %>
+    </div>
+  </dialog>
+  <p class="visually-hidden" aria-live="polite" data-nps-rock-target="live"></p>
+</div>

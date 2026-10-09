@@ -7,6 +7,10 @@
 # answer here marked with checks and the pet. It goes back to the list,
 # which shows the step ticked, or still to do. On the new site the list in
 # the guide sends from=guide, which goes back with it.
+#
+# On the new site, the rock's popup sends its answer from a script, which
+# asks for JSON and gets only a status back: 201 when it saved, and 422
+# when it did not.
 class NpsResponsesController < ApplicationController
   layout "app"
   before_action :require_login
@@ -22,6 +26,8 @@ class NpsResponsesController < ApplicationController
     if project
       flash[:nps_alert] = "pick a number and fill in the * ones first." unless saved
       redirect_to checks_project_path(project, from: params[:from].presence_in(%w[guide]), shown: params[:shown].presence), status: :see_other
+    elsif request.format.json?
+      head(saved ? :created : :unprocessable_entity)
     elsif saved
       redirect_to nps_path
     else

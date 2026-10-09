@@ -5,7 +5,9 @@
 <%# The guide, centered, one step at a time, with buttons under it to the
     step before and the step after. On its left, the next step and the
     guide's outline. On its right, a signed-in participant's hours. It
-    counts, with no name, which sections this browser reaches (GuideSections). %>
+    counts, with no name, which sections this browser reaches (GuideSections).
+    Between the step and its buttons, the rock asks a participant how
+    playground is going (NpsHelper#nps_rock). %>
 <div class="hub" data-controller="guide-pager guide-place guide-progress" <%= tag.attributes(data: guide_progress_data("new_site")) %>
      data-guide-place-key-value="<%= guide_place_key %>" data-guide-place-steps-value="<%= GuidePage.all.map(&:slug).to_json %>"
      data-guide-place-step-value="<%= @step.slug %>" data-guide-place-path-value="<%= guide_step_path(@step) %>">
@@ -15,6 +17,7 @@
   </nav>
   <div class="hub-main">
     <%= render "guides/article" %>
+    <%= nps_rock %>
     <%= render "guides/pager" %>
   </div>
   <% if current_user %>

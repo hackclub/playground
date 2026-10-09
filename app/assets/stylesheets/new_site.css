@@ -519,3 +519,67 @@ body.home-page { padding-top: 0; }
 .classic-close { display: contents; }
 .classic-x { flex: none; display: grid; place-items: center; width: 16px; height: 16px; margin: 0 2px 0 auto; padding: 0; border: 2px solid white; background: none; color: white; font: bold 12px/1 "Chelsea Market", system-ui, sans-serif; cursor: pointer; }
 .classic-x:focus-visible { outline: 2px solid white; outline-offset: 1px; }
+
+/* The rock that asks how playground is going (nps_responses/_rock.html.erb,
+   nps_rock_controller.js). The old desktop's rock, still, sits whole in the
+   bottom right corner of the screen, with nothing cut off. Its bubble sits
+   above it, its tail pointing down at it. The bubble has one width and
+   room for two lines, so a new line never moves it. The script shakes the
+   rock by the pointer's distance. Held, it lifts in front of everything,
+   and its bubble pleads, on its right in the left half of the screen.
+   Falling, it goes behind the bin's front. Thanked, it sinks out of sight. */
+.nps-rock { position: fixed; z-index: 20; right: 24px; bottom: 12px; display: block; width: 140px; height: 96px; padding: 0; border: 0; background: none; color: var(--ink); font: inherit; cursor: pointer; touch-action: none; -webkit-user-select: none; user-select: none; }
+.nps-rock-img { display: block; width: 140px; height: 96px; transform-origin: 50% 80%; pointer-events: none; }
+.nps-rock:focus-visible { outline: none; }
+.nps-rock:focus-visible .nps-bubble { outline: 2px solid var(--blue); outline-offset: 2px; }
+.nps-bubble { position: absolute; right: 56px; bottom: calc(100% + 12px); display: flex; align-items: flex-end; width: 212px; min-height: calc(2lh + 16px); padding: 6px 12px; border: 2px solid var(--ink); border-radius: 14px 16px 14px 12px / 12px 14px 16px 14px; background: var(--paper); font-size: 0.9rem; line-height: 1.35; text-align: left; box-shadow: 2px 3px 0 rgb(43 58 77 / 0.15); }
+.nps-bubble::after { content: ""; position: absolute; right: 18px; bottom: -8px; width: 12px; height: 12px; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink); background: var(--paper); transform: rotate(45deg) skew(10deg, 10deg); }
+.nps-bubble u { color: var(--blue); white-space: nowrap; }
+.nps-rock.is-dragging { z-index: 40; cursor: grabbing; }
+.nps-rock.is-dragging .nps-bubble { justify-content: center; text-align: center; }
+.nps-rock.bubble-right .nps-bubble { right: auto; left: 56px; }
+.nps-rock.bubble-right .nps-bubble::after { right: auto; left: 18px; }
+.nps-rock.is-falling { z-index: 20; }
+.nps-rock.is-falling .nps-bubble { opacity: 0; transition: opacity 0.15s; }
+.nps-rock.is-gone { transform: translateY(calc(100% + 60px)); visibility: hidden; transition: transform 0.6s ease-in, visibility 0s 0.6s; }
+/* "not now": hidden until it has keyboard focus, then a white pill above
+   the bubble. */
+.nps-rock-skip { position: fixed; z-index: 41; right: 40px; bottom: 190px; padding: 1px 10px; border: 2px solid var(--blue); border-radius: 6px 9px 7px 8px; background: var(--paper); color: var(--blue); font: inherit; font-size: 0.9rem; cursor: pointer; }
+.nps-rock-skip:not(:focus) { clip-path: inset(50%); width: 1px; height: 1px; padding: 0; border: 0; overflow: hidden; white-space: nowrap; }
+/* The bin: the old desktop's trash can, its basket 1.35 times the rock's
+   width, rising in at the bottom left while the rock is held. Over it, it
+   leans in and grows. Fed the rock, it shows full and says one last line. */
+.nps-bin { position: fixed; z-index: 30; left: 24px; bottom: 0; width: 264px; pointer-events: none; opacity: 0; visibility: hidden; transform: translateY(40px) scale(0.9); transform-origin: 50% 100%; transition: opacity 0.25s, transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1), visibility 0s 0.3s; }
+.nps-bin img { display: block; width: 264px; height: 264px; transition: opacity 0.15s; }
+.nps-bin .nps-bin-full { position: absolute; left: 0; top: 0; opacity: 0; }
+.nps-bin.is-shown { opacity: 1; visibility: visible; transform: none; transition: opacity 0.25s, transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1), visibility 0s; }
+.nps-bin.is-hot { transform: scale(1.08) rotate(3deg); }
+.nps-bin.is-full .nps-bin-full { opacity: 1; }
+.nps-bin.is-full .nps-bin-empty { opacity: 0; }
+.nps-bin-say { position: absolute; left: 50%; bottom: calc(100% - 20px); padding: 4px 12px; border: 2px solid var(--ink); border-radius: 12px 14px 12px 10px; background: var(--paper); color: var(--ink); font-size: 1rem; white-space: nowrap; opacity: 0; transform: translateX(-50%) scale(0.6); transition: opacity 0.2s, transform 0.25s cubic-bezier(0.3, 1.5, 0.5, 1); }
+.nps-bin.is-saying .nps-bin-say { opacity: 1; transform: translateX(-50%); }
+/* On a phone, the 0 to 10 strip in the rock's place, at the end of the
+   guide's step, set off by a dashed line. Each number opens the popup. */
+.nps-strip { display: none; }
+@media (max-width: 640px) {
+  .nps-rock, .nps-rock-skip, .nps-bin { display: none; }
+  .nps-strip { display: block; margin: 24px 0 4px; padding: 12px 14px 10px; border: 2px dashed var(--line); background: var(--paper); overflow: hidden; transition: opacity 0.45s, max-height 0.45s; max-height: 260px; }
+  .nps-strip.is-gone { max-height: 0; margin: 0; padding-block: 0; border-width: 0; opacity: 0; }
+}
+.nps-strip h2 { margin: 0 0 2px; font-size: 1.05rem; line-height: 1.3; }
+.nps-strip p { margin: 0 0 8px; }
+.nps-strip-boxes { display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 3px; }
+.nps-strip-box { display: grid; place-items: center; min-width: 0; height: 40px; padding: 0; border: 2px solid var(--blue); background: var(--paper); color: var(--blue); font: inherit; cursor: pointer; }
+.nps-strip-box:hover { background: var(--wash); }
+.nps-strip-box:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; position: relative; z-index: 1; }
+.nps-strip .nps-ends { margin: 4px 0 0; }
+.nps-strip-thanks { margin: 0; font-size: 1.05rem; }
+/* feedback.exe: ship.exe's popup, a little wider for the eleven boxes, in
+   the middle of the screen. */
+.nps-popup { inset: 0; margin: auto; width: min(520px, calc(100% - 24px)); height: fit-content; max-height: calc(100% - 24px); transform: none; box-shadow: 0 8px 22px rgb(20 45 90 / 0.3); }
+.nps-popup::backdrop { background: none; }
+.nps-popup .nps-intro { margin: 0 0 12px; }
+@media (prefers-reduced-motion: reduce) {
+  .nps-rock.is-gone, .nps-bin, .nps-bin.is-shown, .nps-bin-say, .nps-strip { transition: none; }
+  .nps-bin, .nps-bin.is-hot { transform: none; }
+}

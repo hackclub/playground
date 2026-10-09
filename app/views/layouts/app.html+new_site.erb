@@ -34,6 +34,7 @@
         <% if notice %><p class="flash notice"><%= notice %></p><% end %>
         <% if alert %><p class="flash alert"><%= alert %></p><% end %>
         <%= yield %>
+        <%= nps_rock %>
       </main>
       <%= render "shared/footbar", classic: true %>
     </div>
