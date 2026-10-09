@@ -31,7 +31,7 @@ module AirtableFields
   # Field names are the YSWS Project Submissions component's, read from the
   # base on 2026-09-23. The address and birthday come from Hack Club Auth at
   # sync time, so the app never stores them outside a redemption.
-  def ship(s)
+  def ship(s, unified: false)
     identity = (HackClubAuth.for(s.user).identity rescue {})
     snap = s.snapshot
     just = Justification.new(s)
@@ -42,8 +42,10 @@ module AirtableFields
       # Added to the base on 2026-09-29, not part of the component's fields.
       "Ship Message URL" => snap["ship_message_url"],
       # Checkbox (fld66Q4RRSsoo4rkg). Only approved ships are copied, so each
-      # one is ready for the Unified DB.
-      "Automation - Submit to Unified YSWS" => true,
+      # is ready for the Unified DB, unless Airtable::SyncJob finds its repo
+      # shipped on Stardance. False, not left out, so a row
+      # not yet taken is unchecked again.
+      "Automation - Submit to Unified YSWS" => unified,
       "First Name" => s.user.first_name,
       "Last Name" => s.user.last_name,
       "Email" => s.user.email,

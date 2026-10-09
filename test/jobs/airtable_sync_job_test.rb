@@ -86,6 +86,64 @@ class AirtableSyncJobTest < ActiveSupport::TestCase
     assert_empty row.keys - SUBMISSION_FIELDS
   end
 
+  def ship_row = @fake.upserts.find { it.first == "YSWS Project Submission" }&.last&.first
+
+  def ship_rows = @fake.upserts.select { it.first == "YSWS Project Submission" }.flat_map(&:last)
+
+  def with_code_url(ship, url)
+    ship.update!(snapshot: ship.snapshot.merge("code_url" => url))
+    ship
+  end
+
+  test "a ship whose repo is shipped on Stardance is copied unchecked" do
+    ship = with_code_url(approved_ship, "https://github.com/Ziv/Desktop-Pet")
+    OfflineStardance.urls = [ "https://github.com/ziv/desktop-pet/tree/main#" ]
+    Airtable::SyncJob.perform_now
+    assert_equal false, ship_row["Automation - Submit to Unified YSWS"]
+    assert_equal "ship-#{ship.id}", ship_row["playground_id"], "the row still reaches Airtable"
+  end
+
+  test "a ship whose repo is not shipped on Stardance is copied checked" do
+    approved_ship
+    OfflineStardance.urls = [ "https://github.com/someone/else" ]
+    Airtable::SyncJob.perform_now
+    assert_equal true, ship_row["Automation - Submit to Unified YSWS"]
+  end
+
+  test "Stardance is asked once per run, and not when no ship is to be copied" do
+    3.times { approved_ship }
+    Airtable::SyncJob.perform_now
+    assert_equal 1, OfflineStardance.asked
+    assert_equal 3, ship_rows.size
+    Ship.update_all(in_unified: true)
+    Airtable::SyncJob.perform_now
+    assert_equal 1, OfflineStardance.asked
+  end
+
+  test "when Stardance can't be read no ship in the batch is checked, and one line is logged" do
+    2.times { approved_ship }
+    OfflineStardance.error = StardanceMcp::Rejected.new(StardanceMcp::REJECTED, status: 401)
+    io = StringIO.new
+    previous = Rails.logger
+    Rails.logger = ActiveSupport::Logger.new(io)
+    begin
+      Airtable::SyncJob.perform_now
+    ensure
+      Rails.logger = previous
+    end
+    _, rows = @fake.upserts.find { it.first == "YSWS Project Submission" }
+    assert_equal 2, rows.size
+    assert_equal [ false ], rows.map { it["Automation - Submit to Unified YSWS"] }.uniq
+    assert_equal 1, io.string.lines.grep(/Stardance shipped repos not read/).size
+  end
+
+  test "a ship with no code URL is copied unchecked" do
+    ship = approved_ship
+    ship.update!(snapshot: ship.snapshot.except("code_url"))
+    Airtable::SyncJob.perform_now
+    assert_equal false, ship_row["Automation - Submit to Unified YSWS"]
+  end
+
   test "never overwrites a ship the Unified DB has taken" do
     ship = approved_ship
     @fake.existing = { "ship-#{ship.id}" => { "fields" => { "Automation - YSWS Record ID" => "recUNIFIED" } } }

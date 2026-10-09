@@ -147,6 +147,11 @@
       <% if @ship.review_status == "pending" && @ship.pending? %>
         <section class="panel">
           <h2>verdict</h2>
+          <% if @stardance == :shipped %>
+            <p class="banner"><%= StardanceRepos::MESSAGE %> Approve is off. Request changes or reject.</p>
+          <% elsif @stardance == :unknown %>
+            <p class="muted">Could not check whether this repo is shipped on Stardance.</p>
+          <% end %>
           <%# The presets fill in shares of the claimed hours that are not quarter hours, so the field's step is only for its arrows. %>
           <%= form_with url: review_admin_ship_path(@ship, flow: params[:flow]), class: "stack", id: "verdict", html: { novalidate: true },
                 data: { controller: "deflate", deflate_claimed_value: @ship.claimed_seconds / 3600.0 } do %>
@@ -163,7 +168,7 @@
             <label>note to the participant <span class="muted">shown to them. required for changes needed.</span>
               <%= text_area_tag :feedback, nil, rows: 2, data: { shortcut: "f" } %></label>
             <div class="row">
-              <button class="btn primary" name="verdict" value="approve" data-shortcut="a" data-shortcut-confirm>approve</button><kbd>a a</kbd>
+              <button class="btn primary" name="verdict" value="approve" data-shortcut="a" data-shortcut-confirm <%= "disabled" if @stardance == :shipped %>>approve</button><kbd>a a</kbd>
               <button class="btn" name="verdict" value="changes" data-shortcut="c" data-shortcut-confirm>changes needed</button><kbd>c c</kbd>
               <button class="btn danger" name="verdict" value="reject" data-shortcut="r" data-shortcut-confirm>reject</button><kbd>r r</kbd>
             </div>

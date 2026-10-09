@@ -17,12 +17,14 @@ module Admin
       @duplicates = Project.where(code_url: @project.code_url).where.not(user_id: @user.id).includes(:user) if @project.code_url.present?
       @shared_hackatime = User.where(hackatime_user_id: @user.hackatime_user_id).where.not(id: @user.id) if @user.hackatime_user_id.present?
       @unified = UnifiedSearch.check(@ship.snapshot["code_url"])
+      @stardance = StardanceRepos.for_project(@project, @ship.snapshot["code_url"])
       @justification = Justification.new(@ship).to_s if @ship.review_seconds
     end
 
     def review
       return stale unless @ship.review_status == "pending" && @ship.pending?
       return taken("review") if Claim.held_by_other?(@ship, "review", current_user)
+      return stardance_shipped if params[:verdict] == "approve" && StardanceRepos.for_project(@ship.project, @ship.snapshot["code_url"]) == :shipped
       seconds = (params[:approved_hours].to_f * 3600).round
       case params[:verdict]
       when "approve" then @ship.approve_review!(by: current_user, seconds:, judgement: params[:judgement], feedback: params[:feedback])
@@ -77,6 +79,8 @@ module Admin
       redirect_to path, notice: message
     end
 
+    # Stardance reviews it, so the approve is refused. Changes and reject stay open.
+    def stardance_shipped = redirect_to(admin_ship_path(@ship, stage: "review", flow: params[:flow]), alert: StardanceRepos::MESSAGE)
     def stale = redirect_to(admin_ship_path(@ship), alert: "this ship already moved on")
     def taken(stage) = redirect_to(admin_ship_path(@ship, stage:), alert: "someone else holds this ship")
   end
