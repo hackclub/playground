@@ -96,24 +96,40 @@ module StatsHelper
   # The hour stages as a pie, drawn as the meter draws them. Each stage is a
   # layer from twelve o'clock round to where it ends, later stages under
   # earlier ones, inside the meter's ink outline. Pending hours wear the
-  # meter's own hatching tile.
-  def hours_pie(stages)
-    total = stages.values.sum.to_f
+  # meter's own hatching tile. Stardance's stages, when given, follow this
+  # site's in the same three fills in Stardance's amber.
+  def hours_pie(stages, stardance: nil)
+    slices = stages.map { |stage, seconds| [ stage.to_s, stage.to_s, seconds ] } +
+             stardance.to_h.map { |stage, seconds| [ "stardance-#{stage}", "Stardance #{stage}", seconds ] }
+    total = slices.sum(&:last).to_f
     reached = 0
-    layers = stages.filter_map do |stage, seconds|
-      [ stage, (reached += seconds) / total, "#{stage} #{hours(seconds)}, #{share(seconds / total)}" ] if seconds.positive?
+    layers = slices.filter_map do |kind, name, seconds|
+      [ kind, (reached += seconds) / total, "#{name} #{hours(seconds)}, #{share(seconds / total)}" ] if seconds.positive?
     end
     label = layers.map(&:last).join("; ")
     tag.svg(class: "pie", viewBox: "0 0 200 200", width: 200, height: 200, role: "img", aria: { label: }) do
-      hatching = tag.pattern(id: "pie-pending", patternUnits: "userSpaceOnUse", width: 594, height: 18) do
-        tag.rect(width: 594, height: 18, fill: "#9bb8e0") + tag.image(href: image_path("meter/pending.svg"), width: 594, height: 18)
-      end
-      safe_join([ tag.defs(hatching), *layers.reverse.map { |stage, upto, title| wedge(stage, upto, title) },
+      tiles = [ hatching("pie-pending", "#9bb8e0", "meter/pending.svg") ]
+      tiles << hatching("pie-stardance-pending", "#f2d9a2", "meter/pending-stardance.svg") if stardance
+      safe_join([ tag.defs(safe_join(tiles)), *layers.reverse.map { |kind, upto, title| wedge(kind, upto, title) },
                   tag.circle(class: "outline", cx: 100, cy: 100, r: PIE_RADIUS) ])
     end
   end
 
+  # A stage's row in the table beside the pie: its key, name, hours, and
+  # share of every hour in the pie.
+  def stage_row(kind, name, seconds, total)
+    tag.tr do
+      tag.td(safe_join([ tag.span(class: [ "key", kind ]), " ", name ])) + tag.td(hours(seconds)) + tag.td(share(seconds.to_f / total))
+    end
+  end
+
   private
+
+  def hatching(id, ground, tile)
+    tag.pattern(id:, patternUnits: "userSpaceOnUse", width: 594, height: 18) do
+      tag.rect(width: 594, height: 18, fill: ground) + tag.image(href: image_path(tile), width: 594, height: 18)
+    end
+  end
 
   def wedge(stage, fraction, title)
     return tag.circle(tag.title(title), class: stage, cx: 100, cy: 100, r: PIE_RADIUS) if fraction >= 0.9999

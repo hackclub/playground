@@ -311,6 +311,19 @@ h2.inline { display: inline; }
 .pie .outline { fill: none; stroke: var(--ink); stroke-width: 2; }
 .kv.stages { flex: 0 1 420px; width: auto; }
 .kv.stages td:not(:first-child) { text-align: right; white-space: nowrap; }
+/* Stardance's playground mission wears the meter's three fills in its own
+   amber, so its slices read apart from this site's in the same pie. */
+.pie .stardance-approved { fill: var(--amber); }
+.pie .stardance-pending { fill: url(#pie-stardance-pending); }
+.pie .stardance-unshipped { fill: #f8e6c0; }
+.key.stardance-approved { background: var(--amber); }
+.key.stardance-pending { background: #f2d9a2 url("/meter/pending-stardance.svg") 0 50% / 594px 18px repeat-x; }
+.key.stardance-unshipped { background: #f8e6c0; }
+/* With Stardance's hours, the table has a group for each place, each with
+   its subtotal, above the total of both. */
+.kv.stages tr.group th { padding: 10px 6px 2px; text-align: left; font-weight: normal; color: var(--muted); font-size: 0.9em; }
+.kv.stages tr.group:first-child th { padding-top: 0; }
+.kv.stages tr.subtotal td { font-weight: bold; border-bottom: 1px solid var(--ink); }
 .bar { height: 10px; margin: 3px 0 2px; border: 1px solid var(--ink); background: var(--paper); }
 .bar > span { display: block; height: 100%; background: var(--blue); }
 .funnel td:first-child { width: 55%; }

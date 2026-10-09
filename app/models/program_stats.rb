@@ -102,6 +102,14 @@ class ProgramStats
     end
   end
 
+  # The hours of Stardance's playground mission by stage, as last read from
+  # Stardance (StardanceHours), or nil before the first read. Projects that
+  # are also pets here are left out of it, as hours_by_stage has them.
+  def stardance_hours
+    @stardance_hours = StardanceHours.latest unless defined?(@stardance_hours)
+    @stardance_hours
+  end
+
   # Claimed hours that finished ships did not approve: deflated in review,
   # deducted in fraud, and whole claims rejected.
   def cut

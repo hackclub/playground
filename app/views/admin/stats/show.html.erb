@@ -1,15 +1,26 @@
 <section class="panel">
   <h2>how many hours, in which stage?</h2>
   <% stages = @stats.hours_by_stage %>
-  <% total = stages.values.sum %>
+  <% here = stages.values.sum %>
+  <% stardance = @stats.stardance_hours %>
+  <% sd_stages = stardance&.by_stage %>
+  <% total = here + sd_stages.to_h.values.sum %>
   <% if total.zero? %>
     <p class="muted">nobody has any hours yet.</p>
   <% else %>
     <div class="row pie-row">
-      <%= hours_pie(stages) %>
+      <%= hours_pie(stages, stardance: sd_stages) %>
       <table class="kv stages">
-        <% stages.each do |stage, seconds| %>
-          <tr><td><span class="key <%= stage %>"></span> <%= stage %></td><td><%= hours(seconds) %></td><td><%= share(seconds.to_f / total) %></td></tr>
+        <% if sd_stages %>
+          <%# Two groups, this site's and Stardance's, each with its subtotal, and every share of the whole pie. %>
+          <tr class="group"><th colspan="3">on playground</th></tr>
+          <% stages.each do |stage, seconds| %><%= stage_row(stage, stage, seconds, total) %><% end %>
+          <tr class="subtotal"><td>playground</td><td><%= hours(here) %></td><td><%= share(here.to_f / total) %></td></tr>
+          <tr class="group"><th colspan="3">on Stardance's playground mission</th></tr>
+          <% sd_stages.each do |stage, seconds| %><%= stage_row("stardance-#{stage}", stage, seconds, total) %><% end %>
+          <tr class="subtotal"><td>Stardance</td><td><%= hours(stardance.total_seconds) %></td><td><%= share(stardance.total_seconds.to_f / total) %></td></tr>
+        <% else %>
+          <% stages.each do |stage, seconds| %><%= stage_row(stage, stage, seconds, total) %><% end %>
         <% end %>
         <tr class="total"><td>total</td><td><%= hours(total) %></td><td></td></tr>
       </table>
@@ -25,6 +36,11 @@
     <p class="muted">unshipped hours are as of each pet's last Hackatime refresh, which runs every hour and whenever its owner opens their dashboard.
       <% if refreshes.oldest %>the oldest refresh is <%= wait(refreshes.oldest) %> old, the median <%= wait(refreshes.median) %>.<% end %>
       <% if refreshes.never.positive? %><%= pluralize(refreshes.never, "pet") %> with Hackatime projects never refreshed.<% end %></p>
+  <% end %>
+  <% if stardance %>
+    <p class="muted">Stardance's hours are as of <%= wait(@stats.now - stardance.updated_at) %> ago, read from its database every hour: the Hackatime time its devlogs logged on <%= pluralize(stardance.projects, "project") %>, by the state of each ship.
+      <% if stardance.returned_seconds.positive? %>its unshipped hours there include <%= hours(stardance.returned_seconds) %> sent back for changes.<% end %>
+      <% if stardance.left_out_projects.positive? %><%= pluralize(stardance.left_out_projects, "project") %> with <%= hours(stardance.left_out_seconds) %> <%= stardance.left_out_projects == 1 ? "is" : "are" %> also a pet here, so <%= stardance.left_out_projects == 1 ? "it counts" : "they count" %> only as this site's.<% end %></p>
   <% end %>
 </section>
 
