@@ -42,6 +42,9 @@ class SubmitGate
       check(:new_hours, "your pet needs new hours to ship", :blocker, fix: new_hours_fix) { @project.unshipped_seconds.positive? },
       check(:not_pending, "your last ship needs its review first", :blocker) { !@project.pending_ship? },
       check(:repo, "your pet needs a link to its code", :blocker, fix: repo_fix) { code_ok? },
+      # An outage of Stardance's database does not block: the reviewer sees it.
+      check(:not_stardance, "your pet needs to not be shipped on Stardance", :blocker,
+            fix: StardanceRepos::MESSAGE) { !stardance_shipped? },
       check(:readme, "the repository needs a README", :blocker) { !github? || repo&.readme },
       check(:playable, "the shipped link needs to work", :blocker, fix: playable_fix) { playable_ok? },
       check(:playable_host, "the shipped link needs to go to a page where someone can experience your pet", :warning) { itch_or_blank? },
@@ -97,6 +100,7 @@ class SubmitGate
   def long_enough? = description.blank? || description.length >= MIN_DESCRIPTION
   def hackatime_projects? = @project.hackatime_projects.any?
   def code_link? = @project.code_url.present?
+  def stardance_shipped? = code_link? && StardanceRepos.for_project(@project, @project.code_url) == :shipped
   def playable_link? = @project.playable_url.present?
   def screenshot? = @project.screenshots.any?
 

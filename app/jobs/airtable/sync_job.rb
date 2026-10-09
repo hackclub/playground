@@ -2,8 +2,10 @@
 # Every minute, for each table, it upserts the 10 rows with the oldest
 # synced_at, never-synced rows first. A change to a row sets synced_at back to
 # nil, so the row goes next. The ship copy never overwrites a row the Unified
-# DB has taken, and sets "Automation - Submit to Unified YSWS" on every ship
-# it copies, since only final ships cross.
+# DB has taken. It sets "Automation - Submit to Unified YSWS" on a ship it
+# copies, unless the ship's repo is shipped on Stardance (StardanceRepos), so
+# the work is not paid twice. If that list can't be read, no ship in the batch
+# is checked, and a person decides.
 module Airtable
   class SyncJob < ApplicationJob
     queue_as :default
@@ -54,11 +56,27 @@ module Airtable
       taken, fresh = ships.partition { existing.dig("ship-#{it.id}", "fields", UNIFIED_FIELD).present? }
       Ship.where(id: taken.map(&:id)).update_all(in_unified: true)
       return if fresh.empty?
-      @client.upsert(@tables[:ships], fresh.map { AirtableFields.ship(it) }, merge_on: "playground_id").each do |key, record|
+      stardance = stardance_repos
+      rows = fresh.map { AirtableFields.ship(it, unified: unified?(it, stardance)) }
+      @client.upsert(@tables[:ships], rows, merge_on: "playground_id").each do |key, record|
         Ship.where(id: key.delete_prefix("ship-")).update_all(airtable_record_id: record["id"])
       end
     ensure
       Ship.where(id: ships.map(&:id)).update_all(synced_at: Time.current) if ships&.any?
+    end
+
+    # The normalized repo URLs shipped on Stardance, or nil when they can't be
+    # read, which leaves every ship in the batch unchecked.
+    def stardance_repos
+      StardanceRepos.keys
+    rescue => e
+      Rails.logger.error("Stardance shipped repos not read (#{e.class}); no ship is checked for the Unified DB")
+      nil
+    end
+
+    def unified?(ship, stardance)
+      code_url = ship.snapshot["code_url"]
+      !stardance.nil? && UnifiedSearch.normalize(code_url).present? && !StardanceRepos.shipped?(code_url, stardance)
     end
 
     def sync_redemptions

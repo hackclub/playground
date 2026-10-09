@@ -43,6 +43,24 @@ class SubmitGateCodeTest < ActiveSupport::TestCase
     assert_not result(gate(nil), :repo), "no link fails too"
   end
 
+  test "a repo shipped on Stardance blocks the ship, and an outage does not" do
+    OfflineStardance.urls = [ "https://github.com/pet/rock/" ]
+    gate = gate("https://github.com/Pet/Rock")
+    assert_not result(gate, :not_stardance)
+    assert_includes gate.blockers.map(&:key), :not_stardance
+    assert_equal "This project is shipped on Stardance, so it's reviewed there.", gate.checks.find { it.key == :not_stardance }.detail
+    assert result(gate("https://github.com/pet/other"), :not_stardance)
+    OfflineStardance.error = StardanceMcp::Error.new("down")
+    assert result(gate("https://github.com/pet/rock"), :not_stardance), "an outage lets the reviewer see it"
+  end
+
+  test "a project with a ship already in the Unified DB is not blocked by Stardance" do
+    OfflineStardance.urls = [ "https://github.com/pet/rock" ]
+    project = @user.projects.create!(name: "rock", code_url: "https://github.com/pet/rock")
+    project.ships.create!(user: @user, claimed_seconds: 60, in_unified: true)
+    assert result(SubmitGate.new(project), :not_stardance)
+  end
+
   test "the labels speak to the participant about their pet" do
     labels = gate(nil).checks.map(&:label)
     assert_empty labels.grep(/the pet/)

@@ -29,6 +29,28 @@ module OfflineGithub
 end
 OfflineGithub.install!
 
+# Stardance's database stays out of tests too. The repos shipped on Stardance
+# are none, unless a test sets them or an error. asked counts the reads.
+module OfflineStardance
+  REAL = StardanceRepos.method(:fetch)
+
+  def self.install!
+    StardanceRepos.define_singleton_method(:fetch) do |mcp = nil|
+      next OfflineStardance::REAL.call(mcp) if mcp
+      OfflineStardance.asked += 1
+      raise OfflineStardance.error if OfflineStardance.error
+      OfflineStardance.urls
+    end
+  end
+
+  class << self
+    attr_accessor :urls, :error, :asked
+    def reset! = (@urls = []; @error = nil; @asked = 0)
+  end
+end
+OfflineStardance.install!
+OfflineStardance.reset!
+
 # R2 stand-in for tests only. Development and production never use it.
 class MemoryScreenshotStore
   attr_reader :objects, :deleted
@@ -46,6 +68,7 @@ module ActiveSupport
     fixtures :all
     setup do
       OfflineGithub.reset!
+      OfflineStardance.reset!
       ScreenshotStore.current = MemoryScreenshotStore.new
       # A window from 2000 to tomorrow, so the fake's time all counts whatever
       # the date. Tests of the window itself set their own.
