@@ -1,10 +1,11 @@
 # The new site, without the desktop: the landing, the guide in steps with the
 # next step and the hours beside it, and my pets. It is behind a flag on each
 # user, users.new_site. An account made at signup from LAUNCHED_ON on starts
-# with it on (SessionsController). For an older account only an admin turns
-# it on, and an admin can turn it off for anyone, from the admin's page for
-# that user (Admin::PeopleController#new_site). Older accounts without the
-# flag get the desktop site, unchanged. Signed-out visitors get the new site.
+# with it on (SessionsController), and a migration turned it on for every
+# older account. An admin can turn it off or on for anyone, from the admin's
+# page for that user (Admin::PeopleController#new_site). An account without
+# the flag gets the desktop site, unchanged. Signed-out visitors get the new
+# site.
 #
 # The gate sits in three places:
 # - routes: the new site's own addresses sit in a constraint (NewSite.request?),
