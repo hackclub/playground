@@ -56,6 +56,8 @@ class ShipChecklist
   end
 
   def passed? = gate.passed?
+  # The Stardance projects the ship list links when the pet is shipped there.
+  def stardance_ids = gate.stardance_ids
 
   private
 

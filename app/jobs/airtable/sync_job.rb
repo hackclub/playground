@@ -65,10 +65,10 @@ module Airtable
       Ship.where(id: ships.map(&:id)).update_all(synced_at: Time.current) if ships&.any?
     end
 
-    # The normalized repo URLs shipped on Stardance, or nil when they can't be
+    # The normalized repo URLs shipped on Stardance (StardanceRepos.index), or nil when they can't be
     # read, which leaves every ship in the batch unchecked.
     def stardance_repos
-      StardanceRepos.keys
+      StardanceRepos.index
     rescue => e
       Rails.logger.error("Stardance shipped repos not read (#{e.class}); no ship is checked for the Unified DB")
       nil

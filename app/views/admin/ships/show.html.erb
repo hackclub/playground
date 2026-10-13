@@ -148,7 +148,7 @@
         <section class="panel">
           <h2>verdict</h2>
           <% if @stardance == :shipped %>
-            <p class="banner"><%= StardanceRepos::MESSAGE %> Approve is off. Request changes or reject.</p>
+            <p class="banner"><%= StardanceRepos::MESSAGE %> <%= stardance_links(@stardance_ids) %> Approve is off. Request changes or reject.</p>
           <% elsif @stardance == :unknown %>
             <p class="muted">Could not check whether this repo is shipped on Stardance.</p>
           <% end %>

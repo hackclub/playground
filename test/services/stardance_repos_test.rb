@@ -6,21 +6,47 @@ class StardanceReposTest < ActiveSupport::TestCase
   FakeMcp = Struct.new(:rows, :asked) do
     def query(sql, question:)
       self.asked = [ sql, question ]
-      StardanceMcp::Result.new(columns: %w[repo], rows:)
+      StardanceMcp::Result.new(columns: %w[repo project_id], rows:)
     end
   end
 
   def hex(text) = text.unpack1("H*")
 
-  test "fetch: one query, the URLs decoded" do
-    mcp = FakeMcp.new([ [ hex("https://github.com/a/b") ], [ hex("https://example.org/ü") ] ])
-    assert_equal [ "https://github.com/a/b", "https://example.org/ü" ], StardanceRepos.fetch(mcp)
+  test "fetch: one query, the URLs decoded, each with its Stardance project id" do
+    mcp = FakeMcp.new([ [ hex("https://github.com/a/b"), "12" ], [ hex("https://example.org/ü"), "7" ] ])
+    assert_equal [ StardanceRepos::Repo.new("https://github.com/a/b", 12), StardanceRepos::Repo.new("https://example.org/ü", 7) ],
+                 StardanceRepos.fetch(mcp)
     sql = mcp.asked.first
     assert_includes sql, "m.slug = 'playground'"
     assert_includes sql, "pma.deleted_at IS NULL AND pma.detached_at IS NULL"
     assert_includes sql, "p.deleted_at IS NULL"
     assert_includes sql, "postable_type = 'Post::ShipEvent'"
-    assert_includes sql, "se.certification_status IS DISTINCT FROM 'rejected'"
+    assert_includes sql, "COALESCE(se.certification_status, 'pending') NOT IN ('returned', 'rejected')"
+    assert_includes sql, "p.id AS project_id"
+  end
+
+  test "the SQL counts approved, pending, misfiled, and empty ships, not returned or rejected" do
+    sql = StardanceRepos::SQL
+    assert_includes sql, "COALESCE(se.certification_status, 'pending') NOT IN ('returned', 'rejected')"
+    assert_not_includes sql, "IS DISTINCT FROM"
+  end
+
+  test "index: each normalized repo with its sorted project ids, and a repo without an id still counts" do
+    OfflineStardance.urls = [ StardanceRepos::Repo.new("https://GitHub.com/a/b.git", 9), StardanceRepos::Repo.new("https://github.com/a/b/", 3),
+                              "https://github.com/c/d" ]
+    index = StardanceRepos.index
+    assert_equal [ 3, 9 ], index[UnifiedSearch.normalize("https://github.com/a/b")]
+    assert_equal [], index[UnifiedSearch.normalize("https://github.com/c/d")]
+    assert_equal [ 3, 9 ], StardanceRepos.project_ids("https://github.com/A/B")
+    assert_equal [], StardanceRepos.project_ids("https://github.com/other/repo")
+    OfflineStardance.error = StardanceMcp::Error.new("down")
+    assert_equal [], StardanceRepos.project_ids("https://github.com/a/b")
+  end
+
+  test "message: the text, then one Stardance project URL for each id" do
+    assert_equal StardanceRepos::MESSAGE, StardanceRepos.message
+    assert_equal "#{StardanceRepos::MESSAGE} https://stardance.hackclub.com/projects/3 https://stardance.hackclub.com/projects/9",
+                 StardanceRepos.message([ 3, 9 ])
   end
 
   test "fetch without a token raises, so callers fail closed" do

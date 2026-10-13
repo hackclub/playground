@@ -54,6 +54,13 @@ class SubmitGateCodeTest < ActiveSupport::TestCase
     assert result(gate("https://github.com/pet/rock"), :not_stardance), "an outage lets the reviewer see it"
   end
 
+  test "the Stardance block names the matched Stardance project" do
+    OfflineStardance.urls = [ StardanceRepos::Repo.new("https://github.com/pet/rock", 42) ]
+    gate = gate("https://github.com/pet/rock")
+    assert_equal "#{StardanceRepos::MESSAGE} https://stardance.hackclub.com/projects/42", gate.checks.find { it.key == :not_stardance }.detail
+    assert_equal [ 42 ], gate.stardance_ids
+  end
+
   test "a project with a ship already in the Unified DB is not blocked by Stardance" do
     OfflineStardance.urls = [ "https://github.com/pet/rock" ]
     project = @user.projects.create!(name: "rock", code_url: "https://github.com/pet/rock")
