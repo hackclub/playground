@@ -52,7 +52,7 @@ module Admin
       @ship.claims.where(stage: "review").delete_all
       done("review", "review saved")
     rescue ArgumentError => e
-      redirect_to admin_ship_path(@ship, stage: "review", flow: params[:flow]), alert: e.message
+      refill_form("review", e)
     end
 
     def fraud
@@ -67,7 +67,7 @@ module Admin
       @ship.claims.where(stage: "fraud").delete_all
       done("fraud", "fraud verdict saved")
     rescue ArgumentError => e
-      redirect_to admin_ship_path(@ship, stage: "fraud", flow: params[:flow]), alert: e.message
+      refill_form("fraud", e)
     end
 
     # Pulls a ship that passed review, and waits for the fraud check, back to
@@ -79,7 +79,7 @@ module Admin
       @ship.claims.where(stage: "fraud").delete_all
       redirect_to admin_ship_path(@ship, stage: "review"), notice: "sent back to review"
     rescue ArgumentError => e
-      redirect_to admin_ship_path(@ship, stage: "fraud", flow: params[:flow]), alert: e.message
+      refill_form("fraud", e)
     end
 
     # The checklist saves on every tick.
@@ -89,6 +89,15 @@ module Admin
     end
 
     private
+
+    # Shows the form again with what the admin typed and the error.
+    def refill_form(stage, error)
+      params[:stage] = stage
+      @snapshot = ShipSnapshot.new(@ship)
+      load_page
+      flash.now[:alert] = error.message
+      render :show, status: :unprocessable_entity
+    end
 
     def set_ship = @ship = Ship.find(params[:id])
 
