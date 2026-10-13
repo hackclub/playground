@@ -1,0 +1,26 @@
+<%# The ship's snapshot, as reviewers and the Airtable copy see it. Edits change
+    this ship only. The participant's pet keeps its own. The screenshots save
+    as they change, and the fields save with the button. %>
+<details class="panel" id="snapshot-edit" <%= "open" if snapshot.errors.any? %>>
+  <summary><h2 class="inline">edit snapshot</h2></summary>
+  <% if ship.user_id == current_user.id %>
+    <p class="muted">someone else edits your own ship.</p>
+  <% else %>
+    <p class="muted">changes this ship only, for review and Airtable. the participant's pet keeps its own.</p>
+    <h3>screenshots</h3>
+    <p class="muted">the first is the cover. drag one, or focus it and use the arrow keys, to move it. click one to replace it.</p>
+    <%= render "projects/screenshot_upload", owner: ship, shots: snapshot.screenshots,
+               url: admin_ship_screenshots_path(ship), order_url: order_admin_ship_screenshots_path(ship) %>
+    <h3>name, description, and links</h3>
+    <%= form_with model: snapshot, scope: :snapshot, url: snapshot_admin_ship_path(ship, stage:, flow: params[:flow]),
+                  method: :patch, class: "stack", id: "snapshot-form" do |f| %>
+      <% if snapshot.errors.any? %><p class="banner alert"><%= snapshot.errors.full_messages.to_sentence %></p><% end %>
+      <label>name <%= f.text_field :name, required: true, maxlength: 80 %></label>
+      <label>description <%= f.text_area :description, rows: 4, maxlength: 2000 %></label>
+      <label>code link <%= f.url_field :code_url %></label>
+      <label>shipped link <%= f.url_field :playable_url %></label>
+      <label>ship message <span class="muted">a link to the message in #playground-ships</span> <%= f.url_field :ship_message_url %></label>
+      <div class="row"><button class="btn primary">save snapshot</button></div>
+    <% end %>
+  <% end %>
+</details>

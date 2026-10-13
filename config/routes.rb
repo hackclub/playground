@@ -82,6 +82,10 @@ Rails.application.routes.draw do
         post :review
         post :fraud
         patch :checklist
+        patch :snapshot
+      end
+      resources :screenshots, only: %i[create destroy], controller: "ship_screenshots" do
+        patch :order, on: :collection
       end
     end
     resources :redemptions, only: :show do

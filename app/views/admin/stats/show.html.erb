@@ -209,7 +209,7 @@
     <table class="list">
       <tr><th>when</th><th>pet</th><th>feedback</th></tr>
       <% notes.each do |ship| %>
-        <tr><td class="muted"><%= ship.reviewed_at.to_date %></td><td><%= link_to ship.project.name, admin_ship_path(ship) %></td><td><%= ship.review_feedback %></td></tr>
+        <tr><td class="muted"><%= ship.reviewed_at.to_date %></td><td><%= link_to ship_name(ship), admin_ship_path(ship) %></td><td><%= ship.review_feedback %></td></tr>
       <% end %>
     </table>
   <% end %>

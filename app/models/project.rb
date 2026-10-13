@@ -5,6 +5,7 @@ class Project < ApplicationRecord
   # A ship message is a post in #playground-ships (channel C0C51NCK1DG),
   # linked from Slack's "copy link": a thread reply adds a query.
   SHIP_MESSAGE_LINK = %r{\Ahttps://hackclub\.slack\.com/archives/C0C51NCK1DG/p\d+(\?\S*)?\z}
+  LINK = %r{\Ahttps?://\S+\z}
 
   belongs_to :user
   has_many :ships, -> { order(:created_at) }, dependent: :destroy
@@ -12,7 +13,7 @@ class Project < ApplicationRecord
   validates :name, presence: true, length: { maximum: 80 }
   validates :description, length: { maximum: 2000 }
   validates :code_url, :playable_url,
-            format: { with: %r{\Ahttps?://\S+\z}, message: "must be a full http(s) link" }, allow_blank: true
+            format: { with: LINK, message: "must be a full http(s) link" }, allow_blank: true
   validates :ship_message_url, format: { with: SHIP_MESSAGE_LINK, message: "must be a link to your message in #playground-ships" },
                                allow_blank: true
   validate :hackatime_projects_are_plain_names

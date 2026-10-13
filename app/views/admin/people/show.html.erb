@@ -26,7 +26,7 @@
     <tr><th>item</th><th>claimed</th><th>review</th><th>fraud</th><th>approved</th><th></th></tr>
     <% @ships.each do |s| %>
       <tr>
-        <td><%= s.project.name %> #<%= s.number %> <span class="muted"><%= s.created_at.to_date %></span></td>
+        <td><%= ship_name(s) %> #<%= s.number %> <span class="muted"><%= s.created_at.to_date %></span></td>
         <td><%= hours(s.claimed_seconds) %></td>
         <td><%= state_badge(s.review_status) %></td>
         <td><%= state_badge(s.fraud_status) %></td>

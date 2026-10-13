@@ -22,11 +22,8 @@ class ScreenshotsController < ApplicationController
     return render_error("send one image file", :unprocessable_entity) unless file.respond_to?(:read)
 
     result = ScreenshotProcessor.call(file.read(ScreenshotLimits::MAX_REQUEST_BYTES + 1))
-    # Development and production share credentials, so anything but
-    # production writes under its environment's name in the bucket.
-    prefix = Rails.env.production? ? "" : "#{Rails.env}/"
     id = SecureRandom.uuid
-    key = "#{prefix}screenshots/#{@project.id}/#{id}.webp"
+    key = ScreenshotStore.key_for(@project, id)
     shot = { "id" => id, "key" => key, "url" => ScreenshotStore.current.put(key, result.bytes) }
 
     # Another upload may have landed while this one was processed.
