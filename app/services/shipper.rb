@@ -22,10 +22,12 @@ class Shipper
     warnings << "Lapse time is #{(art * 100).round}% of the claimed hours; art counts at most #{Ship::ART_CAP_PERCENT}%" if art > Ship::ART_CAP_PERCENT / 100.0
     warnings << "Lapses unavailable: #{lapses.error}" if lapses.error
 
+    ai = ai_coding(project, user, ProgramWindow.current.starts_at, ProgramWindow.current.ends_at, warnings)
+
     # Two ship requests at once both pass the gate, so the lock lets one in.
     project.with_lock do
       raise Blocked, "your last ship needs its review first" if project.ships.reload.any?(&:pending?)
-      create_ship!(project, user, stats, gate, lapses, warnings).tap do
+      create_ship!(project, user, stats, gate, lapses, warnings, ai).tap do
         # The link belongs to this ship. The next ship needs a message of its own.
         project.update_columns(ship_message_url: nil)
       end
@@ -36,7 +38,19 @@ class Shipper
     raise Blocked, "#{Hackatime::UNLINKED} link it again below"
   end
 
-  def self.create_ship!(project, user, stats, gate, lapses, warnings)
+  # This ship's share of the window's "ai coding" time: the window's total less
+  # what earlier ships counted. nil when Hackatime does not answer, and then
+  # the review asks again. `before` leaves out ships made at or after it.
+  def self.ai_coding(project, user, from, to, warnings = nil, before: nil)
+    total = Hackatime.for(user).ai_coding_seconds(project.hackatime_projects, from:, to:)
+    earlier = project.ships.reject { it.changes_needed? || it.created_at < from || (before && it.created_at >= before) }
+    [ total - earlier.sum { it.snapshot["ai_coding_seconds"].to_i }, 0 ].max
+  rescue HttpJson::Error => e
+    warnings&.<< "Hackatime ai coding time unavailable: #{e.message.first(120)}; the review fetches it"
+    nil
+  end
+
+  def self.create_ship!(project, user, stats, gate, lapses, warnings, ai = nil)
     project.ships.create!(
       user: user,
       claimed_seconds: project.unshipped_seconds,
@@ -46,6 +60,7 @@ class Shipper
         "hackatime_projects" => project.hackatime_projects,
         "projects" => stats.projects,
         "tracked_seconds" => stats.total_seconds,
+        "ai_coding_seconds" => ai,
         "window" => { "starts_at" => ProgramWindow.current.starts_at.iso8601, "ends_at" => ProgramWindow.current.ends_at.iso8601 },
         "previously_claimed_seconds" => project.claimed_by,
         "commits" => gate.repo&.commits,

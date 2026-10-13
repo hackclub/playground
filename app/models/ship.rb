@@ -36,9 +36,10 @@ class Ship < ApplicationRecord
 
   def approve_review!(by:, seconds:, judgement:, feedback:, deflation_reason: nil)
     raise ArgumentError, "the reviewer writes a judgement" if judgement.blank?
-    seconds = claimed_seconds if (claimed_seconds - seconds).abs <= FORM_ROUNDING_SECONDS
-    seconds = seconds.clamp(0, claimed_seconds)
-    if claimed_seconds - seconds >= 60 && deflation_reason.blank?
+    cap = ai_cap_seconds
+    seconds = cap if (cap - seconds).abs <= FORM_ROUNDING_SECONDS
+    seconds = seconds.clamp(0, cap)
+    if cap - seconds >= 60 && deflation_reason.blank?
       raise ArgumentError, "say why the hours are deflated"
     end
     update!(review_status: "approved", reviewer: by, reviewed_at: Time.current,
@@ -85,6 +86,15 @@ class Ship < ApplicationRecord
     end
     AuditEvent.record(by, self, "fraud.ban")
   end
+
+  # Hackatime's "ai coding" time counts at a third, so a ship is approved for
+  # at most claimed less two thirds of it. Unknown (nil) means no cut.
+  def ai_coding_seconds
+    value = snapshot["ai_coding_seconds"]
+    [ value.to_i, claimed_seconds ].min unless value.nil?
+  end
+
+  def ai_cap_seconds = [ (claimed_seconds - ai_coding_seconds.to_i * 2 / 3.0).round, 0 ].max
 
   def deflated_seconds = claimed_seconds - review_seconds.to_i
 

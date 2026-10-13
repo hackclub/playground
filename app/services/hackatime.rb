@@ -72,6 +72,21 @@ class Hackatime
               user_id: data["user_id"].to_s)
   end
 
+  # Seconds Hackatime categorises as "ai coding" on the given projects from
+  # `from` to just before `to`. The rule that counts it at a third is
+  # https://hackclub.gitbook.io/ysws-project-submission-guidelines (Override
+  # Hours Spent, "AI Coding Heartbeats Deflation"). total_seconds=true sums by
+  # another path than the projects feature, so take only this figure from it.
+  def ai_coding_seconds(names, from:, to:)
+    names = self.class.keep(names)
+    return 0 if names.empty?
+    zone = ProgramWindow::ZONE
+    query = { start_date: from.in_time_zone(zone).iso8601, end_date: to.in_time_zone(zone).iso8601,
+              filter_by_project: names.join(","), filter_by_category: "ai coding", total_seconds: true }
+    body = get("#{SITE}/api/v1/users/my/stats?#{query.to_query}")
+    (body["total_seconds"] || body.dig("data", "total_seconds")).to_i
+  end
+
   # Stretches of coding on the given projects from `from` to `to`, oldest
   # first. Hackatime runs the projects' heartbeats through one time-ordered
   # pass, so the spans never overlap and add up to what stats counts for the
@@ -130,6 +145,14 @@ class Hackatime
       picked = within(window).select { names.include?(it.name) }
       Stats.new(total_seconds: picked.sum(&:total_seconds), projects: picked.to_h { [ it.name, it.total_seconds ] },
                 trust_level: @user.email.to_s.include?("red") ? "red" : "blue", user_id: "fake-#{@user.id}")
+    end
+
+    # Tests set the AI seconds the fake answers; with none set, there are none.
+    cattr_accessor :ai_seconds
+
+    def ai_coding_seconds(names, from:, to:)
+      refuse_revoked
+      self.class.ai_seconds.to_i
     end
 
     # Each project's stretch is one span, cut to the range. Unlike
