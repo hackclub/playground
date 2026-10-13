@@ -73,7 +73,7 @@ class AdminSendBackTest < ActionDispatch::IntegrationTest
 
   test "the action needs a reason and a ship that waits for fraud" do
     post send_back_admin_ship_path(@ship), params: { reason: "" }
-    assert_equal "say why it goes back to review", flash[:alert]
+    assert_equal 'write the "reason" box first. say why it goes back to review.', flash[:alert]
     assert_equal "approved", @ship.reload.review_status
     @ship.pass_fraud!(by: @reviewer)
     post send_back_admin_ship_path(@ship), params: { reason: "late" }
@@ -147,7 +147,7 @@ class AdminSendBackTest < ActionDispatch::IntegrationTest
     assert_select "button[name=verdict][value=ban]", text: "fraud: reject and ban"
     assert_select "textarea[name=notes]"
     post review_admin_ship_path(fresh), params: { verdict: "ban", notes: "", judgement: "copied" }
-    assert_equal "record the evidence", flash[:alert]
+    assert_equal 'write the "evidence" box first. say what shows the fraud.', flash[:alert]
     assert_equal "pending", fresh.reload.state
     post review_admin_ship_path(fresh), params: { verdict: "ban", notes: "cloned repo", judgement: "copied" }
     fresh.reload

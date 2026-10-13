@@ -60,7 +60,7 @@ class Ship < ApplicationRecord
   # Art is held to ART_CAP_PERCENT of the approved total, by itself, with no
   # reason. A reviewer's cut below either limit needs a reason.
   def approve_review!(by:, seconds:, judgement:, feedback:, deflation_reason: nil, art_seconds: nil)
-    raise ArgumentError, "the reviewer writes a judgement" if judgement.blank?
+    raise ArgumentError, 'write the "specific technical features" box first. name the features that explain the hours.' if judgement.blank?
     cap = ai_cap_seconds
     seconds = cap if (cap - seconds).abs <= FORM_ROUNDING_SECONDS
     seconds = seconds.clamp(0, cap)
@@ -69,7 +69,7 @@ class Ship < ApplicationRecord
     art = allowed if (allowed - art).abs <= FORM_ROUNDING_SECONDS
     art = art.clamp(0, allowed)
     if (cap - seconds >= 60 || allowed - art >= 60) && deflation_reason.blank?
-      raise ArgumentError, "say why the hours are deflated"
+      raise ArgumentError, 'write the "why deflated" box first. say why you approve less than the rules allow.'
     end
     update!(review_status: "approved", reviewer: by, reviewed_at: Time.current,
             review_coding_seconds: seconds, review_art_seconds: art,
@@ -85,7 +85,7 @@ class Ship < ApplicationRecord
   # earlier review held is kept in the audit event.
   def send_back_to_review!(by:, reason:)
     raise ArgumentError, "only a ship that waits for the fraud check goes back" unless sent_back_possible?
-    raise ArgumentError, "say why it goes back to review" if reason.blank?
+    raise ArgumentError, 'write the "reason" box first. say why it goes back to review.' if reason.blank?
     transaction do
       AuditEvent.record(by, self, "review.send_back", reason: reason.strip, reviewer_id: reviewer_id, reviewer_name: reviewer&.display_name,
                         reviewed_at: reviewed_at, review_seconds: review_seconds, review_coding_seconds: review_coding_seconds,
@@ -100,14 +100,14 @@ class Ship < ApplicationRecord
   def sent_back_possible? = state == "pending" && review_status == "approved" && fraud_status == "pending"
 
   def return_for_changes!(by:, judgement:, feedback:)
-    raise ArgumentError, "tell the participant what to change" if feedback.blank?
+    raise ArgumentError, 'write the "note to the participant" box first. say what to change.' if feedback.blank?
     update!(review_status: "changes_needed", state: "changes_needed", reviewer: by, reviewed_at: Time.current,
             review_judgement: judgement, review_feedback: feedback)
     AuditEvent.record(by, self, "review.changes")
   end
 
   def reject_review!(by:, judgement:, feedback:)
-    raise ArgumentError, "the reviewer writes a judgement" if judgement.blank?
+    raise ArgumentError, 'write the "specific technical features" box first. for reject, say what is missing.' if judgement.blank?
     update!(review_status: "rejected", state: "rejected", reviewer: by, reviewed_at: Time.current,
             review_judgement: judgement, review_feedback: feedback)
     AuditEvent.record(by, self, "review.reject")
@@ -116,7 +116,7 @@ class Ship < ApplicationRecord
   # The fraud stage ends the ship. Deduction is in seconds; 0 is a plain pass.
   def pass_fraud!(by:, deduction_seconds: 0, notes: nil)
     deduction = deduction_seconds.to_i.clamp(0, review_seconds.to_i)
-    raise ArgumentError, "explain the deduction" if deduction.positive? && notes.blank?
+    raise ArgumentError, 'write the "notes" box first. explain the deduction.' if deduction.positive? && notes.blank?
     update!(fraud_status: deduction.positive? ? "deducted" : "passed", fraud_reviewer: by,
             fraud_reviewed_at: Time.current, fraud_deduction_seconds: deduction, fraud_notes: notes,
             approved_seconds: review_seconds.to_i - deduction, state: "approved")
@@ -126,7 +126,10 @@ class Ship < ApplicationRecord
   # Called from the fraud stage, or from review when the fraud is clear. From
   # review the ship is also rejected there, by the same reviewer.
   def ban_for_fraud!(by:, notes:, judgement: nil)
-    raise ArgumentError, "record the evidence" if notes.blank?
+    if notes.blank?
+      box = review_status == "pending" ? "evidence" : "notes"
+      raise ArgumentError, "write the \"#{box}\" box first. say what shows the fraud."
+    end
     transaction do
       from_review = review_status == "pending"
       if from_review
