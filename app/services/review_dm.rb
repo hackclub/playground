@@ -58,7 +58,6 @@ class ReviewDm
     I18n.t("review_dm.#{state}",
            name: escape(ship.user.display_name),
            pet: escape(ship.project.name),
-           hours: Hours.format(ship.approved_seconds.to_i),
            reviewed_by: reviewer ? I18n.t("review_dm.reviewed_by", reviewer:) : ABSENT,
            feedback: feedback.empty? ? "" : I18n.t("review_dm.feedback", quote:),
            url: pet_url(ship.project))
