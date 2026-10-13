@@ -4,21 +4,27 @@
     together upload one after another, each in its cell with its own
     progress. A screenshot moves by drag, or by the arrow keys once it has
     focus. A click, Enter, or a file dropped on it replaces it, and its ×
-    removes it. %>
-<% hint = dom_id(project, :screenshots_hint) %>
+    removes it.
+    The admin ship page passes a ship's screenshots (each { "id", "url" })
+    and its own URLs, which answer the same way. %>
+<% owner = local_assigns[:owner] || project
+   shots = local_assigns[:shots] || project.screenshots
+   url = local_assigns[:url] || project_screenshots_path(project)
+   order_url = local_assigns[:order_url] || order_project_screenshots_path(project)
+   hint = dom_id(owner, :screenshots_hint) %>
 <div class="shots-editor" data-controller="screenshot-upload"
-     data-screenshot-upload-url-value="<%= project_screenshots_path(project) %>"
-     data-screenshot-upload-order-url-value="<%= order_project_screenshots_path(project) %>"
+     data-screenshot-upload-url-value="<%= url %>"
+     data-screenshot-upload-order-url-value="<%= order_url %>"
      data-action="dragenter->screenshot-upload#enter dragover->screenshot-upload#over dragleave->screenshot-upload#leave drop->screenshot-upload#drop"
      <%= tag.attributes(ScreenshotLimits.data_attributes.transform_keys { "data-screenshot-upload-#{it.to_s.dasherize}-value" }) %>>
   <div class="shots-grid" data-screenshot-upload-target="grid">
     <ol class="shots" aria-label="screenshots, in order" data-screenshot-upload-target="list">
-      <% project.screenshots.each.with_index(1) do |shot, number| %>
-        <%= render "projects/screenshot_thumb", shot:, hint:, label: "screenshot #{number} of #{project.screenshots.size}#{", the cover" if number == 1}",
+      <% shots.each.with_index(1) do |shot, number| %>
+        <%= render "projects/screenshot_thumb", shot:, hint:, label: "screenshot #{number} of #{shots.size}#{", the cover" if number == 1}",
                                        cover: number == 1 %>
       <% end %>
     </ol>
-    <% free = ScreenshotLimits::PER_PET - project.screenshots.size %>
+    <% free = ScreenshotLimits::PER_PET - shots.size %>
     <div class="shot-cell add" role="button" tabindex="0" data-screenshot-upload-target="add" <%= "hidden" if free.zero? %>
          data-action="click->screenshot-upload#pick keydown.enter->screenshot-upload#pick keydown.space->screenshot-upload#pick:prevent">
       <svg class="plus" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>

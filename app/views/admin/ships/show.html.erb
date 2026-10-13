@@ -1,7 +1,7 @@
 <% queue_path = @stage == "review" ? admin_review_path(skip: @ship.id) : admin_fraud_path(skip: @ship.id) %>
 <header class="itemhead">
   <div>
-    <h1><%= @project.name %> <span class="muted">ship #<%= @ship.number %></span></h1>
+    <h1><%= ship_name(@ship) %> <span class="muted">ship #<%= @ship.number %></span></h1>
     <p>
       by <%= link_to @user.display_name, admin_person_path(@user) %> ·
       <%= state_badge(@ship.state) %> · review <%= state_badge(@ship.review_status) %> · fraud <%= state_badge(@ship.fraud_status) %> ·
@@ -87,7 +87,7 @@
       <% if @other_ships.empty? %><p class="muted">none</p><% end %>
       <ul class="events">
         <% @other_ships.each do |s| %>
-          <li><%= link_to "#{s.project.name} ##{s.number}", admin_ship_path(s) %> <%= state_badge(s.state) %> <%= hours(s.approved_seconds || s.claimed_seconds) %></li>
+          <li><%= link_to "#{ship_name(s)} ##{s.number}", admin_ship_path(s) %> <%= state_badge(s.state) %> <%= hours(s.approved_seconds || s.claimed_seconds) %></li>
         <% end %>
       </ul>
     </section>
@@ -117,12 +117,17 @@
       <% end %>
       <%# Every screenshot the ship was taken with, cover first. An older ship
           has only its one. %>
-      <% shots = Array(@ship.snapshot["screenshots"]).presence || Array(@ship.snapshot["screenshot_url"].presence) %>
+      <% shots = ShipSnapshot.screenshot_urls(@ship) %>
       <% shots.each.with_index(1) do |url, number| %>
         <img class="shot" src="<%= url %>" alt="screenshot <%= number %> of <%= shots.size %>">
       <% end %>
       <p><%= @ship.snapshot["description"] %></p>
+      <% if (edited_at = @snapshot.edited_at) %>
+        <p class="muted" id="snapshot-edited">edited by <%= @snapshot.edited_by&.display_name || "an admin" %>
+          <%= time_tag edited_at, "#{time_ago_in_words(edited_at)} ago", title: edited_at.utc.strftime("%Y-%m-%d %H:%M UTC") %></p>
+      <% end %>
     </section>
+    <%= render "snapshot_edit", ship: @ship, snapshot: @snapshot, stage: @stage %>
 
     <% if @stage == "review" %>
       <% if @readme %>

@@ -7,6 +7,14 @@ class ScreenshotStore
   class << self
     attr_writer :current
     def current = @current ||= new
+
+    # Where a pet's screenshot is stored. Development and production share
+    # credentials, so anything but production writes under its environment's
+    # name in the bucket.
+    def key_for(project, id)
+      prefix = Rails.env.production? ? "" : "#{Rails.env}/"
+      "#{prefix}screenshots/#{project.id}/#{id}.webp"
+    end
   end
 
   def configured? = creds.values_at(:endpoint, :access_key_id, :secret_access_key).all?(&:present?)

@@ -1,25 +1,25 @@
 module Admin
   class ShipsController < BaseController
     before_action :set_ship
-    before_action :refuse_own_ship, only: %i[review fraud]
+    before_action :refuse_own_ship, only: %i[review fraud snapshot]
 
     def show
-      @stage = params[:stage].presence_in(%w[review fraud]) || (@ship.review_status == "pending" ? "review" : "fraud")
-      @claim, @held = claim_for(@stage)
-      @user = @ship.user
-      @project = @ship.project
-      repo_name = @project.github_repo
-      @repo = repo_name && (Github.repo(repo_name) rescue nil)
-      @readme = repo_name && Github.readme_html(repo_name) if @stage == "review"
-      @commits = repo_name ? Github.recent_commits(repo_name) : []
-      @live = (Hackatime.for(@user).stats(@project.hackatime_projects) rescue nil) if @user.hackatime_connected?
-      @other_ships = @user.ships.where.not(id: @ship.id).includes(:project).order(created_at: :desc)
-      @duplicates = Project.where(code_url: @project.code_url).where.not(user_id: @user.id).includes(:user) if @project.code_url.present?
-      @shared_hackatime = User.where(hackatime_user_id: @user.hackatime_user_id).where.not(id: @user.id) if @user.hackatime_user_id.present?
-      @unified = UnifiedSearch.check(@ship.snapshot["code_url"])
-      @stardance = StardanceRepos.for_project(@project, @ship.snapshot["code_url"])
-      @stardance_ids = @stardance == :shipped ? StardanceRepos.project_ids(@ship.snapshot["code_url"]) : []
-      @justification = Justification.new(@ship).to_s if @ship.review_seconds
+      @snapshot = ShipSnapshot.new(@ship)
+      load_page
+    end
+
+    # The name, description, and links reviewers see. The screenshots save
+    # through Admin::ShipScreenshotsController. A field that fails its check
+    # comes back on the page with what was typed.
+    def snapshot
+      @snapshot = ShipSnapshot.new(@ship)
+      case @snapshot.update(params.fetch(:snapshot, {}).permit(*ShipSnapshot::TEXT), by: current_user)
+      when true then redirect_to admin_ship_path(@ship, stage: params[:stage], flow: params[:flow]), notice: "snapshot saved"
+      when nil then redirect_to admin_ship_path(@ship, stage: params[:stage], flow: params[:flow]), notice: "nothing changed"
+      else
+        load_page
+        render :show, status: :unprocessable_entity
+      end
     end
 
     def review
@@ -64,7 +64,26 @@ module Admin
 
     def set_ship = @ship = Ship.find(params[:id])
 
-    # The queues skip an admin's own ships, and a direct post can't judge one.
+    def load_page
+      @stage = params[:stage].presence_in(%w[review fraud]) || (@ship.review_status == "pending" ? "review" : "fraud")
+      @claim, @held = claim_for(@stage)
+      @user = @ship.user
+      @project = @ship.project
+      repo_name = @project.github_repo
+      @repo = repo_name && (Github.repo(repo_name) rescue nil)
+      @readme = repo_name && Github.readme_html(repo_name) if @stage == "review"
+      @commits = repo_name ? Github.recent_commits(repo_name) : []
+      @live = (Hackatime.for(@user).stats(@project.hackatime_projects) rescue nil) if @user.hackatime_connected?
+      @other_ships = @user.ships.where.not(id: @ship.id).includes(:project).order(created_at: :desc)
+      @duplicates = Project.where(code_url: @project.code_url).where.not(user_id: @user.id).includes(:user) if @project.code_url.present?
+      @shared_hackatime = User.where(hackatime_user_id: @user.hackatime_user_id).where.not(id: @user.id) if @user.hackatime_user_id.present?
+      @unified = UnifiedSearch.check(@ship.snapshot["code_url"])
+      @stardance = StardanceRepos.for_project(@project, @ship.snapshot["code_url"])
+      @stardance_ids = @stardance == :shipped ? StardanceRepos.project_ids(@ship.snapshot["code_url"]) : []
+      @justification = Justification.new(@ship).to_s if @ship.review_seconds
+    end
+
+    # The queues skip an admin's own ships, and a direct post can't judge or edit one.
     def refuse_own_ship
       redirect_to admin_ship_path(@ship), alert: "someone else judges your own ship" if @ship.user_id == current_user.id
     end
