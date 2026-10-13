@@ -21,6 +21,7 @@
                     type="button" class="tip-mark" aria-label="more about this" aria-describedby="ship-tip-<%= item.key %>"
                     data-tip-target="mark" data-action="click->tip#show focus->tip#show blur->tip#hide">i</button><span
                     class="tip-text" role="tooltip" id="ship-tip-<%= item.key %>" data-tip-target="text" hidden><%= ship_tip(item) %></span></span><% end %></span>
+          <% if item.key == "not_stardance" && !item.ok %><span class="muted"><%= StardanceRepos::MESSAGE %></span> <%= stardance_links(@checklist.stardance_ids) %><% end %>
           <% if item.key == "hackatime_link" && !item.ok %><%= hackatime_button "link it again", class: "linkish", params: ({ origin: GuidePage.href("ship") } if ship_in_guide?) %><% end %>
           <% if item.key == "eligible" && !item.ok && ship_in_guide? %><%= link_to "verify it ↗", HackClubAuth.portal_url("verify", guide_page_url(GuidePage.holding("ship"), anchor: "ship")), target: "_blank", rel: "noopener" %><% end %>
           <% if item.field %><%= render "projects/ship_fix", item: %><% end %>

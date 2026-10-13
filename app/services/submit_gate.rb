@@ -72,6 +72,10 @@ class SubmitGate
   # The keys of the offline checks this pet fails. Makes no network call.
   def unmet_offline = OFFLINE.filter_map { |key, rule| key unless send(rule) }
 
+  # The Stardance project ids of this pet's repo, for the links beside a
+  # blocked ship. None when it is not shipped there or can't be read.
+  def stardance_ids = @stardance_ids ||= StardanceRepos.project_ids(@project.code_url)
+
   def repo
     return @repo if defined?(@repo)
     @repo = @project.github_repo && Github.repo(@project.github_repo)
@@ -153,6 +157,7 @@ class SubmitGate
 
   def detail_for(key)
     case key
+    when :not_stardance then StardanceRepos.message(stardance_ids)
     when :playable
       if release then release.assets.empty? ? "the release has no installer or executable, only source code" : "#{release.assets.size} file(s) in #{release.tag}"
       end

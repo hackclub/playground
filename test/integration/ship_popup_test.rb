@@ -46,6 +46,19 @@ class ShipPopupTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#{project_path(@project)}']", "← rock"
   end
 
+  test "a pet shipped on Stardance links its Stardance project in the list, and a returned one does not block" do
+    @project.update!(READY)
+    OfflineStardance.urls = [ StardanceRepos::Repo.new("https://github.com/pet/rock.git", 42) ]
+    get checks_project_path(@project), headers: STREAM
+    assert_select "#ship-checks li[data-check=not_stardance]", /shipped on Stardance/ do
+      assert_select "a[href='https://stardance.hackclub.com/projects/42'][target=_blank]"
+    end
+
+    OfflineStardance.urls = []
+    get checks_project_path(@project), headers: STREAM
+    assert_select "#ship-checks li[data-check=not_stardance]", 0
+  end
+
   test "the list shows only what blocks, each with only its own fix" do
     get checks_project_path(@project), headers: STREAM
     assert_response :ok

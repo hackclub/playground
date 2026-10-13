@@ -30,7 +30,9 @@ end
 OfflineGithub.install!
 
 # Stardance's database stays out of tests too. The repos shipped on Stardance
-# are none, unless a test sets them or an error. asked counts the reads.
+# are none, unless a test sets them or an error. A URL is a string, or a
+# StardanceRepos::Repo when the test needs its Stardance project id. asked
+# counts the reads.
 module OfflineStardance
   REAL = StardanceRepos.method(:fetch)
 
@@ -39,7 +41,7 @@ module OfflineStardance
       next OfflineStardance::REAL.call(mcp) if mcp
       OfflineStardance.asked += 1
       raise OfflineStardance.error if OfflineStardance.error
-      OfflineStardance.urls
+      OfflineStardance.urls.map { it.is_a?(StardanceRepos::Repo) ? it : StardanceRepos::Repo.new(it, nil) }
     end
   end
 

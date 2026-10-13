@@ -25,6 +25,20 @@ class AdminStardanceTest < ActionDispatch::IntegrationTest
     assert_select "button[value=reject]:not([disabled])"
   end
 
+  test "the banner and the refusal link the matched Stardance project" do
+    OfflineStardance.urls = [ StardanceRepos::Repo.new("https://GitHub.com/pet/rock.git", 42) ]
+    get admin_ship_path(@ship, stage: "review")
+    assert_select ".banner a[href='https://stardance.hackclub.com/projects/42'][target=_blank]"
+    approve
+    assert_equal "#{StardanceRepos::MESSAGE} https://stardance.hackclub.com/projects/42", flash[:alert]
+  end
+
+  test "a project with no id on hand still blocks, without a link" do
+    get admin_ship_path(@ship, stage: "review")
+    assert_select ".banner", /shipped on Stardance/
+    assert_select ".banner a[href*='stardance.hackclub.com']", count: 0
+  end
+
   test "a direct approve is refused with the reason, and changes and reject go through" do
     approve
     assert_redirected_to admin_ship_path(@ship, stage: "review")
