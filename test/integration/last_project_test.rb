@@ -52,6 +52,9 @@ class LastProjectTest < ActionDispatch::IntegrationTest
   end
 
   test "the guide's pick step does not list the placeholder, and a pick of it makes no pet" do
+    # The fake heartbeats start now, so the clock must sit inside WINDOW or the
+    # window filter drops them and the list is empty.
+    travel_to WINDOW.ends_at - 1.minute
     user = log_in("newbie")
     post dev_hackatime_path, params: { origin: "/guide/setup#hackatime-step" }
     FakeHeartbeats.start(user, LAST)

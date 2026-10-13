@@ -762,6 +762,9 @@ class DesktopTest < ApplicationSystemTestCase
     held = -> { page.evaluate_script("(box => [box.left, box.top, box.right, box.bottom].map(Math.round))(document.getElementById('desktop-pet-static').getBoundingClientRect())") }
     mouse = page.driver.browser.action
     mouse.move_to_location(x, y).click_and_hold.perform
+    # Where the press took hold, in the rock's own box. The rock walks on its own, so
+    # its box is not where it was measured above, and the press offset is what counts.
+    grabbed = page.evaluate_script("parseFloat(document.getElementById('desktop-pet-static').style.left)")
     [ [ 0, 0 ], [ width - 1, 0 ], [ width - 1, height - 1 ], [ 0, height - 1 ] ].each do |to|
       mouse.move_to_location(*to).perform
       left, top, right, bottom = held.call
@@ -779,7 +782,7 @@ class DesktopTest < ApplicationSystemTestCase
     mouse.move_to_location(760, height - 400).release.perform
     assert_selector "#desktop-pet[style*='bottom: -9px']"
     rock = page.evaluate_script("parseFloat(document.getElementById('desktop-pet').style.left)")
-    assert_in_delta 760 - 75, rock, 1
+    assert_in_delta 760 - (x - grabbed), rock, 1
     assert_includes %w[desktop-pet desktop-pet-static], page.evaluate_script("document.elementFromPoint(#{rock.round + 75}, #{height - 60}).id")
 
     # Let go over the sponsor's icon, it lands beside it, clear of it with its
