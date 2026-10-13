@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_14_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -146,7 +146,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
     t.string "fraud_status", default: "waiting", null: false
     t.boolean "in_unified", default: false, null: false
     t.bigint "project_id", null: false
+    t.integer "review_art_seconds"
     t.jsonb "review_checklist", default: {}, null: false
+    t.integer "review_coding_seconds"
     t.text "review_deflation_reason"
     t.text "review_feedback"
     t.text "review_judgement"

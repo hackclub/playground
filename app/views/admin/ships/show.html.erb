@@ -158,24 +158,48 @@
             <p class="muted">Could not check whether this repo is shipped on Stardance.</p>
           <% end %>
           <%# The presets fill in shares of the claimed hours that are not quarter hours, so the field's step is only for its arrows. %>
+          <% h = ->(seconds) { (seconds / 3600.0).round(2) } %>
+          <% art = @ship.art_claimed_seconds.positive? %>
+          <% coding_cap = @ship.ai_cap_seconds %>
+          <% art_start = @ship.art_allowed_seconds(h.(coding_cap) * 3600) %>
           <%= form_with url: review_admin_ship_path(@ship, flow: params[:flow]), class: "stack", id: "verdict", html: { novalidate: true },
-                data: { controller: "deflate", deflate_claimed_value: @ship.claimed_seconds / 3600.0 } do %>
+                data: { controller: "deflate", deflate_claimed_value: h.(@ship.coding_claimed_seconds), deflate_cap_value: h.(coding_cap),
+                        deflate_art_claimed_value: h.(@ship.art_claimed_seconds), deflate_art_percent_value: Ship::ART_CAP_PERCENT } do %>
             <% if @ship.snapshot["ai_coding_seconds"].nil? %>
               <p class="banner">ai coding time unknown, check Hackatime. no cap applies.</p>
-            <% elsif @ship.ai_coding_seconds.positive? %>
-              <p class="muted">ai coding: <%= hours(@ship.ai_coding_seconds) %>, counts at most a third. approved hours cap at <%= (@ship.ai_cap_seconds / 3600.0).round(2) %>.</p>
-            <% else %>
-              <p class="muted">ai coding: none.</p>
             <% end %>
-            <label>approved hours <span class="muted">claimed <%= (@ship.claimed_seconds / 3600.0).round(2) %>. deflate when the evidence says less.</span>
-              <%= number_field_tag :approved_hours, (@ship.ai_cap_seconds / 3600.0).round(2), step: 0.25, min: 0, max: (@ship.ai_cap_seconds / 3600.0).round(2), data: { shortcut: "h", deflate_target: "hours" } %></label>
-            <div class="row" role="group" aria-label="deflate to a share of the claimed hours">
-              <span class="muted">deflate to</span>
+            <ul class="muted" id="breakdown">
+              <li>coding claimed <%= hours(@ship.coding_claimed_seconds) %></li>
+              <% if @ship.snapshot["ai_coding_seconds"] && @ship.ai_coding_seconds.positive? %>
+                <li>ai coding: <%= hours(@ship.ai_coding_seconds) %>, counts at most a third. coding caps at <%= h.(coding_cap) %>.</li>
+              <% elsif @ship.snapshot["ai_coding_seconds"] %>
+                <li>ai coding: none.</li>
+              <% end %>
+              <% if art %>
+                <li>art claimed (Lapse) <%= hours(@ship.art_claimed_seconds) %>. art counts at most <%= Ship::ART_CAP_PERCENT %>% of the total, so at most <strong data-deflate-target="artMax"><%= h.(@ship.art_max_seconds(coding_cap)) %></strong>h with this coding.</li>
+              <% end %>
+              <li>total <strong data-deflate-target="total"><%= h.(coding_cap + art_start) %></strong>h</li>
+            </ul>
+            <label>approved coding hours <span class="muted">claimed <%= h.(@ship.coding_claimed_seconds) %>. deflate when the evidence says less.</span>
+              <%= number_field_tag :approved_hours, h.(coding_cap), step: 0.25, min: 0, max: h.(coding_cap), data: { shortcut: "h", deflate_target: "hours", action: "input->deflate#changed" } %></label>
+            <div class="row" role="group" aria-label="deflate coding to a share of the claimed coding hours">
+              <span class="muted">deflate coding to</span>
               <% [ 15, 30, 50, 75 ].each do |percent| %>
-                <button type="button" class="btn" data-percent="<%= percent %>" data-action="deflate#set"><%= percent %>% · <%= (@ship.claimed_seconds * percent / 360000.0).round(2) %>h</button>
+                <button type="button" class="btn" data-percent="<%= percent %>" data-action="deflate#set"><%= percent %>% · <%= h.(@ship.coding_claimed_seconds * percent / 100.0) %>h</button>
               <% end %>
             </div>
-            <label>why deflated <span class="muted">required when approving below the claim. what the evidence did not support.</span>
+            <% if art %>
+              <label>approved art hours <span class="muted">claimed <%= h.(@ship.art_claimed_seconds) %>.</span>
+                <%= number_field_tag :approved_art_hours, h.(art_start), step: 0.25, min: 0, max: h.(@ship.art_claimed_seconds), data: { deflate_target: "art", action: "input->deflate#changedArt" } %></label>
+              <p class="muted" data-deflate-target="hold" <%= "hidden" unless @ship.art_claimed_seconds > @ship.art_max_seconds(h.(coding_cap) * 3600) %>>art held at <%= Ship::ART_CAP_PERCENT %>% of the total.</p>
+              <div class="row" role="group" aria-label="deflate art to a share of the claimed art hours">
+                <span class="muted">deflate art to</span>
+                <% [ 15, 30, 50, 75 ].each do |percent| %>
+                  <button type="button" class="btn" data-art-percent="<%= percent %>" data-action="deflate#setArt"><%= percent %>% · <%= h.(@ship.art_claimed_seconds * percent / 100.0) %>h</button>
+                <% end %>
+              </div>
+            <% end %>
+            <label>why deflated <span class="muted">required when you approve less coding or art than the rules allow. the ai cut and the art hold need none.</span>
               <%= text_area_tag :deflation_reason, nil, rows: 2 %></label>
             <label>specific technical features <span class="muted">internal record for spot-checkers, so no praise or encouragement. name the features that explain the hours, like custom jumping physics, a save file, a tray menu. if AI was used, note the submitter's experience. for changes or reject, say what is missing.</span>
               <%= text_area_tag :judgement, nil, rows: 3, data: { shortcut: "j" } %></label>

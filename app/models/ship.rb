@@ -34,16 +34,25 @@ class Ship < ApplicationRecord
   # close to the claim is the claim itself, not a deflation.
   FORM_ROUNDING_SECONDS = 36
 
-  def approve_review!(by:, seconds:, judgement:, feedback:, deflation_reason: nil)
+  # `seconds` is the approved coding time, `art_seconds` the approved art
+  # time (nil takes the most the rules allow). Coding is held to the AI cap.
+  # Art is held to ART_CAP_PERCENT of the approved total, by itself, with no
+  # reason. A reviewer's cut below either limit needs a reason.
+  def approve_review!(by:, seconds:, judgement:, feedback:, deflation_reason: nil, art_seconds: nil)
     raise ArgumentError, "the reviewer writes a judgement" if judgement.blank?
     cap = ai_cap_seconds
     seconds = cap if (cap - seconds).abs <= FORM_ROUNDING_SECONDS
     seconds = seconds.clamp(0, cap)
-    if cap - seconds >= 60 && deflation_reason.blank?
+    allowed = art_allowed_seconds(seconds)
+    art = art_seconds.nil? ? allowed : art_seconds
+    art = allowed if (allowed - art).abs <= FORM_ROUNDING_SECONDS
+    art = art.clamp(0, allowed)
+    if (cap - seconds >= 60 || allowed - art >= 60) && deflation_reason.blank?
       raise ArgumentError, "say why the hours are deflated"
     end
     update!(review_status: "approved", reviewer: by, reviewed_at: Time.current,
-            review_seconds: seconds, review_judgement: judgement,
+            review_coding_seconds: seconds, review_art_seconds: art,
+            review_seconds: seconds + art, review_judgement: judgement,
             review_deflation_reason: deflation_reason.presence,
             review_feedback: feedback, fraud_status: "pending")
     AuditEvent.record(by, self, "review.approve", seconds: review_seconds)
@@ -94,7 +103,23 @@ class Ship < ApplicationRecord
     [ value.to_i, claimed_seconds ].min unless value.nil?
   end
 
-  def ai_cap_seconds = [ (claimed_seconds - ai_coding_seconds.to_i * 2 / 3.0).round, 0 ].max
+  # Art is the ship's Lapse time, part of the claimed total. Coding is the rest.
+  def art_claimed_seconds = [ snapshot["lapse_seconds"].to_i, claimed_seconds ].min
+  def coding_claimed_seconds = claimed_seconds - art_claimed_seconds
+
+  # The most coding approves for: the AI time counts at a third. It is all
+  # inside coding, never more than coding.
+  def ai_cap_seconds
+    ai = [ ai_coding_seconds.to_i, coding_claimed_seconds ].min
+    [ (coding_claimed_seconds - ai * 2 / 3.0).round, 0 ].max
+  end
+
+  # Art counts for at most ART_CAP_PERCENT of coding plus art.
+  def art_max_seconds(coding) = (coding * ART_CAP_PERCENT / (100.0 - ART_CAP_PERCENT)).round
+  def art_allowed_seconds(coding) = [ art_claimed_seconds, art_max_seconds(coding) ].min
+
+  # Ships reviewed before the split have only a total.
+  def split_review? = review_coding_seconds && art_claimed_seconds.positive?
 
   def deflated_seconds = claimed_seconds - review_seconds.to_i
 

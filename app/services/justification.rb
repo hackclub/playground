@@ -20,7 +20,11 @@ class Justification
     s = @ship
     parts = []
     parts << ai_line if ai.to_i.positive?
-    parts << deflation_sentence if deflated?
+    if split?
+      parts.concat(split_sentences)
+    elsif deflated?
+      parts << deflation_sentence
+    end
     parts << "Fraud check deducted #{Hours.format(s.fraud_deduction_seconds)}: #{s.fraud_notes}" if s.fraud_deduction_seconds.positive?
     parts.join(" ").presence
   end
@@ -37,9 +41,12 @@ class Justification
     if snap["previously_claimed_seconds"].to_i.positive?
       lines << "Update: #{Hours.format(snap["previously_claimed_seconds"])} were claimed by earlier ships; this ship claims only the time since."
     end
+    sentences = split? ? split_sentences : []
     lines << "Claimed: #{Hours.format(s.claimed_seconds)}. Approved by review: #{Hours.format(s.review_seconds)}" +
-             (deflated? ? "." : ", no deflation.")
-    lines << deflation_sentence if deflated?
+             ((split? ? sentences.any? : deflated?) ? "." : ", no deflation.")
+    lines << split_breakdown if split?
+    lines.concat(sentences)
+    lines << deflation_sentence if deflated? && !split?
     lapses = Array(snap["lapses"])
     if lapses.any?
       lines << "Lapse links: " + lapses.map { "#{it["url"]} (#{it["title"]}, #{Hours.format(it["duration"])})" }.join(", ") + "."
@@ -52,7 +59,8 @@ class Justification
     end
     lines << "Final approved hours: #{Hours.format(s.approved_seconds)}." if s.approved_seconds
     lines << "Reviewed by #{s.reviewer&.display_name} on #{s.reviewed_at&.to_date}. Fraud check by #{s.fraud_reviewer&.display_name} on #{s.fraud_reviewed_at&.to_date}."
-    if s.review_checklist["art_cap"]
+    # Ships reviewed since the split have the cap applied and stated above.
+    if s.review_checklist["art_cap"] && s.review_coding_seconds.nil?
       lines << "Art hours count at most #{Ship::ART_CAP_PERCENT}% of approved hours; the reviewer checked the Lapse time against that cap."
     end
     lines.join("\n")
@@ -64,6 +72,46 @@ class Justification
   def deflated? = @ship.deflated_seconds >= 60
 
   def ai = @ship.ai_coding_seconds
+
+  def split? = @ship.split_review?
+
+  def reason
+    r = @ship.review_deflation_reason
+    r.present? ? r.strip.chomp(".") : nil
+  end
+
+  def split_breakdown
+    s = @ship
+    held = s.review_art_seconds >= s.art_max_seconds(s.review_coding_seconds) - 1 && s.art_claimed_seconds > s.art_max_seconds(s.review_coding_seconds)
+    "Coding: claimed #{Hours.format(s.coding_claimed_seconds)}, approved #{Hours.format(s.review_coding_seconds)}. " \
+      "Art (Lapse): claimed #{Hours.format(s.art_claimed_seconds)}, approved #{Hours.format(s.review_art_seconds)}" +
+      (held ? ", held at #{Ship::ART_CAP_PERCENT}% of the approved total." : ".")
+  end
+
+  # What was cut, by part: the AI cap on coding, a reviewer cut on coding or
+  # art with the reviewer's reason, and the automatic art hold.
+  def split_sentences
+    s = @ship
+    out = []
+    coding = s.review_coding_seconds
+    ai_cut = s.coding_claimed_seconds - s.ai_cap_seconds >= 60
+    human_coding = s.ai_cap_seconds - coding >= 60
+    if ai_cut || human_coding
+      head = "Coding deflated from #{Hours.format(s.coding_claimed_seconds)} to #{Hours.format(coding)}"
+      because = reason ? " because #{reason}" : ""
+      out << if ai_cut && human_coding then "#{head}: ai coding time counted at a third, and further#{because}."
+      elsif ai_cut then "#{head}: ai coding time counted at a third."
+      else "#{head}#{because}."
+      end
+    end
+    allowed = s.art_allowed_seconds(coding)
+    if allowed - s.review_art_seconds >= 60
+      out << "Art deflated from #{Hours.format(s.art_claimed_seconds)} to #{Hours.format(s.review_art_seconds)}#{" because #{reason}" if reason}."
+    elsif s.art_claimed_seconds - s.review_art_seconds >= 60
+      out << "Art held at #{Ship::ART_CAP_PERCENT}% of the approved total: #{Hours.format(s.art_claimed_seconds)} to #{Hours.format(s.review_art_seconds)}."
+    end
+    out
+  end
 
   def ai_line
     return "Hackatime ai coding time: none." unless ai.positive?
