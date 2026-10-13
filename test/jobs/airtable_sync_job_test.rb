@@ -61,7 +61,7 @@ class AirtableSyncJobTest < ActiveSupport::TestCase
     assert_equal [ "ship-#{ship.id}" ], rows.map { it["playground_id"] }
     row = rows.first
     assert_equal 2.0, row["Optional - Override Hours Spent"]
-    assert_includes row["Optional - Override Hours Spent Justification"], "Reviewer judgement: fine"
+    assert_includes row["Optional - Override Hours Spent Justification"], "Specific technical features: fine"
     assert_equal "fine", row["Justification - Specific Technical Features"]
     assert_match "p (2h 0m)", row["Justification - Hackatime Project Name(s) + Date Range(s)"]
     assert_equal "a", row["GitHub Username"]

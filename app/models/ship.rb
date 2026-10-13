@@ -30,10 +30,20 @@ class Ship < ApplicationRecord
 
   def number = project.ships.index(self).to_i + 1
 
-  def approve_review!(by:, seconds:, judgement:, feedback:)
+  # The review form fills hours rounded to 0.01 h (36 s), so a figure that
+  # close to the claim is the claim itself, not a deflation.
+  FORM_ROUNDING_SECONDS = 36
+
+  def approve_review!(by:, seconds:, judgement:, feedback:, deflation_reason: nil)
     raise ArgumentError, "the reviewer writes a judgement" if judgement.blank?
+    seconds = claimed_seconds if (claimed_seconds - seconds).abs <= FORM_ROUNDING_SECONDS
+    seconds = seconds.clamp(0, claimed_seconds)
+    if claimed_seconds - seconds >= 60 && deflation_reason.blank?
+      raise ArgumentError, "say why the hours are deflated"
+    end
     update!(review_status: "approved", reviewer: by, reviewed_at: Time.current,
-            review_seconds: seconds.clamp(0, claimed_seconds), review_judgement: judgement,
+            review_seconds: seconds, review_judgement: judgement,
+            review_deflation_reason: deflation_reason.presence,
             review_feedback: feedback, fraud_status: "pending")
     AuditEvent.record(by, self, "review.approve", seconds: review_seconds)
   end

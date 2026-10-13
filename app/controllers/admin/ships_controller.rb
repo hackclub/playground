@@ -28,7 +28,7 @@ module Admin
       return stardance_shipped if params[:verdict] == "approve" && StardanceRepos.for_project(@ship.project, @ship.snapshot["code_url"]) == :shipped
       seconds = (params[:approved_hours].to_f * 3600).round
       case params[:verdict]
-      when "approve" then @ship.approve_review!(by: current_user, seconds:, judgement: params[:judgement], feedback: params[:feedback])
+      when "approve" then @ship.approve_review!(by: current_user, seconds:, judgement: params[:judgement], feedback: params[:feedback], deflation_reason: params[:deflation_reason])
       when "changes" then @ship.return_for_changes!(by: current_user, judgement: params[:judgement], feedback: params[:feedback])
       when "reject" then @ship.reject_review!(by: current_user, judgement: params[:judgement], feedback: params[:feedback])
       else return head(:bad_request)

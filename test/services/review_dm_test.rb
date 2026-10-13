@@ -17,7 +17,7 @@ class ReviewDmTest < ActiveSupport::TestCase
   teardown { SlackDm::Fake.reset! }
 
   def approve(ship = @ship, feedback: "Lovely.")
-    ship.approve_review!(by: @admin, seconds: 5400, judgement: "ok", feedback:)
+    ship.approve_review!(by: @admin, seconds: 5400, judgement: "ok", feedback:, deflation_reason: "idle")
     ship.pass_fraud!(by: @admin)
   end
 
@@ -55,14 +55,14 @@ class ReviewDmTest < ActiveSupport::TestCase
   end
 
   test "the review approval alone sends nothing, the fraud pass sends the approval" do
-    @ship.approve_review!(by: @admin, seconds: 3600, judgement: "ok", feedback: nil)
+    @ship.approve_review!(by: @admin, seconds: 3600, judgement: "ok", feedback: nil, deflation_reason: "idle")
     assert_empty dm_jobs
     @ship.pass_fraud!(by: @admin)
     assert_equal [ [ @ship.id, "approved" ] ], dm_jobs.map { it["arguments"] }
   end
 
   test "a ban rejects the ship and sends the rejection" do
-    @ship.approve_review!(by: @admin, seconds: 3600, judgement: "ok", feedback: nil)
+    @ship.approve_review!(by: @admin, seconds: 3600, judgement: "ok", feedback: nil, deflation_reason: "idle")
     perform_enqueued_jobs { @ship.ban_for_fraud!(by: @admin, notes: "copied") }
     assert_equal 1, SlackDm::Fake.sent.size
     assert_includes SlackDm::Fake.sent.last[:text], "> This project was rejected."
@@ -77,7 +77,7 @@ class ReviewDmTest < ActiveSupport::TestCase
   test "a fraud ban names no one, on the banned ship and on each pending ship it rejects" do
     banner = User.create!(hca_id: "ident!dm-banner", email: "b@example.com", admin: true, slack_id: "U0BAN")
     other = @user.projects.create!(name: "owl").ships.create!(user: @user, claimed_seconds: 3600)
-    @ship.approve_review!(by: @admin, seconds: 3600, judgement: "ok", feedback: nil)
+    @ship.approve_review!(by: @admin, seconds: 3600, judgement: "ok", feedback: nil, deflation_reason: "idle")
     perform_enqueued_jobs { @ship.ban_for_fraud!(by: banner, notes: "copied") }
     assert_equal banner, other.reload.fraud_reviewer
     texts = SlackDm::Fake.sent.pluck(:text)
