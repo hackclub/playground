@@ -24,7 +24,7 @@ class Ship < ApplicationRecord
 
   after_update :mark_unsynced, if: -> { saved_change_to_state? || saved_change_to_approved_seconds? }
 
-  after_update_commit :email_participant, if: :saved_change_to_state?
+  after_update_commit :message_participant, if: :saved_change_to_state?
 
   STATES.each { |s| define_method(:"#{s}?") { state == s } }
 
@@ -68,7 +68,8 @@ class Ship < ApplicationRecord
       update!(fraud_status: "banned", fraud_reviewer: by, fraud_reviewed_at: Time.current,
               fraud_notes: notes, state: "rejected", review_feedback: review_feedback.presence || "This project was rejected.")
       user.ships.where(state: "pending").where.not(id: id).find_each do |other|
-        other.update!(state: "rejected", review_status: "rejected", fraud_status: "banned", fraud_notes: "banned with ship #{id}")
+        other.update!(state: "rejected", review_status: "rejected", fraud_status: "banned", fraud_reviewer: by,
+                      fraud_reviewed_at: Time.current, fraud_notes: "banned with ship #{id}")
       end
       user.ban!(notes, by: by)
     end
@@ -79,10 +80,13 @@ class Ship < ApplicationRecord
 
   private
 
-  # One email per move into approved or changes_needed. A re-save leaves the
-  # state alone, so it never reaches here. A rejection or a ban sends nothing.
-  def email_participant
-    ShipMailer.notify(self) if state.in?(%w[approved changes_needed])
+  # One Slack DM per move into approved, changes_needed, or rejected, a ban
+  # included. A re-save leaves the state alone, so it never reaches here.
+  # Never raises: a Slack problem must not undo a review.
+  def message_participant
+    ReviewDmJob.perform_later(id, state) if state.in?(ReviewDm::STATES)
+  rescue StandardError => e
+    Rails.logger.error("review dm: could not queue the DM for ship #{id}: #{e.class}")
   end
 
   def mark_unsynced = update_column(:synced_at, nil)
