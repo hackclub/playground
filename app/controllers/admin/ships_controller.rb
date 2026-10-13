@@ -80,7 +80,17 @@ module Admin
       @unified = UnifiedSearch.check(@ship.snapshot["code_url"])
       @stardance = StardanceRepos.for_project(@project, @ship.snapshot["code_url"])
       @stardance_ids = @stardance == :shipped ? StardanceRepos.project_ids(@ship.snapshot["code_url"]) : []
+      load_ai_coding if @stage == "review" && @ship.review_status == "pending" && @ship.pending?
       @justification = Justification.new(@ship).to_s if @ship.review_seconds
+    end
+
+    # A ship from before the cap has no AI figure. Ask Hackatime with the
+    # participant's token and keep the answer. If it won't say, no cap applies.
+    def load_ai_coding
+      return unless @ship.snapshot["ai_coding_seconds"].nil? && @ship.snapshot["window"] && @user.hackatime_connected?
+      window = @ship.snapshot["window"]
+      ai = Shipper.ai_coding(@project, @user, Time.zone.parse(window["starts_at"]), Time.zone.parse(window["ends_at"]), before: @ship.created_at)
+      @ship.update_columns(snapshot: @ship.snapshot.merge("ai_coding_seconds" => ai)) unless ai.nil?
     end
 
     # The queues skip an admin's own ships, and a direct post can't judge or edit one.

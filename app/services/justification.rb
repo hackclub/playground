@@ -19,6 +19,7 @@ class Justification
   def deflation
     s = @ship
     parts = []
+    parts << ai_line if ai.to_i.positive?
     parts << deflation_sentence if deflated?
     parts << "Fraud check deducted #{Hours.format(s.fraud_deduction_seconds)}: #{s.fraud_notes}" if s.fraud_deduction_seconds.positive?
     parts.join(" ").presence
@@ -27,9 +28,11 @@ class Justification
   def to_s
     s = @ship
     snap = s.snapshot
+    ai = s.ai_coding_seconds
     lines = []
     lines << "Hackatime projects: #{projects_list}#{", #{window_note}" if window_note}."
     lines << combined_total_line if snap["tracked_seconds"]
+    lines << ai_line if ai
     lines << "Submitter Hackatime ID: #{snap["hackatime_user_id"]}. Trust level at ship: #{snap["trust_level"]}."
     if snap["previously_claimed_seconds"].to_i.positive?
       lines << "Update: #{Hours.format(snap["previously_claimed_seconds"])} were claimed by earlier ships; this ship claims only the time since."
@@ -60,10 +63,22 @@ class Justification
   # Under a minute is form rounding, not a deflation. Older ships stored it.
   def deflated? = @ship.deflated_seconds >= 60
 
+  def ai = @ship.ai_coding_seconds
+
+  def ai_line
+    return "Hackatime ai coding time: none." unless ai.positive?
+    "Hackatime ai coding time: #{Hours.format(ai)}, counted at a third (#{Hours.format(ai / 3)}), per the AI coding heartbeats rule."
+  end
+
   def deflation_sentence
     s = @ship
-    "Deflated from #{Hours.format(s.claimed_seconds)} to #{Hours.format(s.review_seconds)}" +
-      (s.review_deflation_reason.present? ? " because #{s.review_deflation_reason.strip.chomp(".")}." : ".")
+    reason = s.review_deflation_reason.present? ? s.review_deflation_reason.strip.chomp(".") : nil
+    head = "Deflated from #{Hours.format(s.claimed_seconds)} to #{Hours.format(s.review_seconds)}"
+    ai_cut = s.claimed_seconds - s.ai_cap_seconds >= 60
+    human_cut = s.ai_cap_seconds - s.review_seconds.to_i >= 60
+    return "#{head}#{" because #{reason}" if reason}." unless ai_cut
+    return "#{head}: ai coding time counted at a third." unless human_cut
+    "#{head}: ai coding time counted at a third, and further#{" because #{reason}" if reason}."
   end
 
   # One entry per project, "name M/D/YYYY-M/D/YYYY (Xh Ym)", as the guide asks:

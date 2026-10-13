@@ -36,6 +36,14 @@ class HackatimeTest < ActiveSupport::TestCase
                    "filter_by_project" => "rock-pet,rock-pet-art" }, query(stats))
   end
 
+  test "ai coding asks for the category on the same projects and window" do
+    ProgramWindow.current = WINDOW
+    @answer = { "total_seconds" => 4189 }
+    assert_equal 4189, Hackatime.new("hka_ok").ai_coding_seconds([ "rock-pet" ], from: WINDOW.starts_at, to: WINDOW.ends_at)
+    assert_equal({ "start_date" => "2026-09-25T17:00:00-04:00", "end_date" => "2026-10-09T17:00:00-04:00", "filter_by_project" => "rock-pet",
+                   "filter_by_category" => "ai coding", "total_seconds" => "true" }, query(@urls.last))
+  end
+
   test "the fake counts only the part of each stretch inside the window" do
     ProgramWindow.current = WINDOW
     fake = Hackatime::Fake.new(User.create!(hca_id: "ident!fake-window", hackatime_access_token: "fake"))

@@ -160,8 +160,15 @@
           <%# The presets fill in shares of the claimed hours that are not quarter hours, so the field's step is only for its arrows. %>
           <%= form_with url: review_admin_ship_path(@ship, flow: params[:flow]), class: "stack", id: "verdict", html: { novalidate: true },
                 data: { controller: "deflate", deflate_claimed_value: @ship.claimed_seconds / 3600.0 } do %>
+            <% if @ship.snapshot["ai_coding_seconds"].nil? %>
+              <p class="banner">ai coding time unknown, check Hackatime. no cap applies.</p>
+            <% elsif @ship.ai_coding_seconds.positive? %>
+              <p class="muted">ai coding: <%= hours(@ship.ai_coding_seconds) %>, counts at most a third. approved hours cap at <%= (@ship.ai_cap_seconds / 3600.0).round(2) %>.</p>
+            <% else %>
+              <p class="muted">ai coding: none.</p>
+            <% end %>
             <label>approved hours <span class="muted">claimed <%= (@ship.claimed_seconds / 3600.0).round(2) %>. deflate when the evidence says less.</span>
-              <%= number_field_tag :approved_hours, (@ship.claimed_seconds / 3600.0).round(2), step: 0.25, min: 0, max: (@ship.claimed_seconds / 3600.0).round(2), data: { shortcut: "h", deflate_target: "hours" } %></label>
+              <%= number_field_tag :approved_hours, (@ship.ai_cap_seconds / 3600.0).round(2), step: 0.25, min: 0, max: (@ship.ai_cap_seconds / 3600.0).round(2), data: { shortcut: "h", deflate_target: "hours" } %></label>
             <div class="row" role="group" aria-label="deflate to a share of the claimed hours">
               <span class="muted">deflate to</span>
               <% [ 15, 30, 50, 75 ].each do |percent| %>
