@@ -184,6 +184,11 @@
           <% art = @ship.art_claimed_seconds.positive? %>
           <% coding_cap = @ship.ai_cap_seconds %>
           <% art_start = @ship.art_allowed_seconds(h.(coding_cap) * 3600) %>
+          <%# A ship sent back opens with its earlier review. What was typed before an error wins, then that review, then the defaults. %>
+          <% earlier = @send_backs&.last&.data || {} %>
+          <% coding_now = params[:approved_hours] || (earlier["review_coding_seconds"] ? [ h.(earlier["review_coding_seconds"]), h.(coding_cap) ].min : h.(coding_cap)) %>
+          <% art_limit = @ship.art_allowed_seconds(coding_now.to_f * 3600) %>
+          <% art_now = params[:approved_art_hours] || (earlier["review_art_seconds"] ? [ h.(earlier["review_art_seconds"]), h.(art_limit) ].min : h.(art_start)) %>
           <%= form_with url: review_admin_ship_path(@ship, flow: params[:flow]), class: "stack", id: "verdict", html: { novalidate: true },
                 data: { controller: "deflate", deflate_claimed_value: h.(@ship.coding_claimed_seconds), deflate_cap_value: h.(coding_cap),
                         deflate_art_claimed_value: h.(@ship.art_claimed_seconds), deflate_art_percent_value: Ship::ART_CAP_PERCENT } do %>
@@ -200,10 +205,10 @@
               <% if art %>
                 <li>art claimed (Lapse) <%= hours(@ship.art_claimed_seconds) %>. art counts at most <%= Ship::ART_CAP_PERCENT %>% of the total, so at most <strong data-deflate-target="artMax"><%= h.(@ship.art_max_seconds(coding_cap)) %></strong>h with this coding.</li>
               <% end %>
-              <li>total <strong data-deflate-target="total"><%= h.(coding_cap + art_start) %></strong>h</li>
+              <li>total <strong data-deflate-target="total"><%= (coding_now.to_f + (art ? art_now.to_f : 0)).round(2) %></strong>h</li>
             </ul>
             <label>approved coding hours <span class="muted">claimed <%= h.(@ship.coding_claimed_seconds) %>. deflate when the evidence says less.</span>
-              <%= number_field_tag :approved_hours, params[:approved_hours] || h.(coding_cap), step: 0.25, min: 0, max: h.(coding_cap), data: { shortcut: "h", deflate_target: "hours", action: "input->deflate#changed" } %></label>
+              <%= number_field_tag :approved_hours, coding_now, step: 0.25, min: 0, max: h.(coding_cap), data: { shortcut: "h", deflate_target: "hours", action: "input->deflate#changed" } %></label>
             <div class="row" role="group" aria-label="deflate coding to a share of the claimed coding hours">
               <span class="muted">deflate coding to</span>
               <% [ 15, 30, 50, 75 ].each do |percent| %>
@@ -212,7 +217,7 @@
             </div>
             <% if art %>
               <label>approved art hours <span class="muted">claimed <%= h.(@ship.art_claimed_seconds) %>.</span>
-                <%= number_field_tag :approved_art_hours, params[:approved_art_hours] || h.(art_start), step: 0.25, min: 0, max: h.(@ship.art_claimed_seconds), data: { deflate_target: "art", action: "input->deflate#changedArt" } %></label>
+                <%= number_field_tag :approved_art_hours, art_now, step: 0.25, min: 0, max: h.(@ship.art_claimed_seconds), data: { deflate_target: "art", action: "input->deflate#changedArt" } %></label>
               <p class="muted" data-deflate-target="hold" <%= "hidden" unless @ship.art_claimed_seconds > @ship.art_max_seconds(h.(coding_cap) * 3600) %>>art held at <%= Ship::ART_CAP_PERCENT %>% of the total.</p>
               <div class="row" role="group" aria-label="deflate art to a share of the claimed art hours">
                 <span class="muted">deflate art to</span>
@@ -222,11 +227,11 @@
               </div>
             <% end %>
             <label>why deflated <span class="muted">required when you approve less coding or art than the rules allow. the ai cut and the art hold need none.</span>
-              <%= text_area_tag :deflation_reason, params[:deflation_reason], rows: 2 %></label>
+              <%= text_area_tag :deflation_reason, params[:deflation_reason] || earlier["review_deflation_reason"], rows: 2 %></label>
             <label>specific technical features <span class="muted">internal record for spot-checkers, so no praise or encouragement. name the features that explain the hours, like custom jumping physics, a save file, a tray menu. if AI was used, note the submitter's experience. for changes or reject, say what is missing.</span>
-              <%= text_area_tag :judgement, params[:judgement], rows: 3, data: { shortcut: "j" } %></label>
+              <%= text_area_tag :judgement, params[:judgement] || earlier["review_judgement"], rows: 3, data: { shortcut: "j" } %></label>
             <label>note to the participant <span class="muted">shown to them. required for changes needed.</span>
-              <%= text_area_tag :feedback, params[:feedback], rows: 2, data: { shortcut: "f" } %></label>
+              <%= text_area_tag :feedback, params[:feedback] || earlier["review_feedback"], rows: 2, data: { shortcut: "f" } %></label>
             <label>evidence <span class="muted">required only for fraud: reject and ban. write what shows the fraud.</span>
               <%= text_area_tag :notes, params[:notes], rows: 2 %></label>
             <div class="row">

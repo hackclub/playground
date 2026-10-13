@@ -167,4 +167,52 @@ class AdminSendBackTest < ActionDispatch::IntegrationTest
   end
 
   def stage_html(ship) = ApplicationController.helpers.extend(AdminHelper).stage_badge(ship)
+
+  # 5h claimed, 2h of it art: coding caps at 3h and art at 3/7 of the coding.
+  def sent_back_ship_with_art
+    snap = { "projects" => { "a" => 18_000 }, "tracked_seconds" => 18_000, "ai_coding_seconds" => 0, "lapse_seconds" => 7200, "lapses" => [] }
+    ship = @user.projects.create!(name: "arty").ships.create!(user: @user, claimed_seconds: 18_000, snapshot: snap)
+    ship.approve_review!(by: @reviewer, seconds: 8400, art_seconds: 3600, judgement: "custom physics", feedback: "great", deflation_reason: "idle time")
+    ship.send_back_to_review!(by: @admin, reason: "recheck")
+    ship
+  end
+
+  test "a ship sent back opens its review with the earlier review filled in" do
+    ship = sent_back_ship_with_art
+    get admin_ship_path(ship, stage: "review")
+    assert_select "textarea[name=judgement]", text: "custom physics"
+    assert_select "textarea[name=feedback]", text: "great"
+    assert_select "textarea[name=deflation_reason]", text: "idle time"
+    assert_select "input[name=approved_hours][value=?]", "2.33"
+    assert_select "input[name=approved_art_hours][value=?]", "1.0"
+    assert_select "[data-deflate-target=total]", text: "3.33"
+    assert_select "textarea[name=notes]", text: ""
+    assert_select ".tick input[checked]", count: 0
+  end
+
+  test "the earlier review is held to the current cap" do
+    ship = sent_back_ship_with_art
+    ship.update!(snapshot: ship.snapshot.merge("ai_coding_seconds" => 9000))
+    get admin_ship_path(ship, stage: "review")
+    cap = (ship.reload.ai_cap_seconds / 3600.0).round(2)
+    assert_select "input[name=approved_hours][value=?]", cap.to_s
+  end
+
+  test "what was typed before an error beats the earlier review" do
+    ship = sent_back_ship_with_art
+    post review_admin_ship_path(ship), params: { verdict: "changes", judgement: "typed", feedback: "", approved_hours: "1.5", approved_art_hours: "0.5", deflation_reason: "typed reason" }
+    follow_redirect! if response.redirect?
+    assert_select "textarea[name=judgement]", text: "typed"
+    assert_select "textarea[name=deflation_reason]", text: "typed reason"
+    assert_select "input[name=approved_hours][value=?]", "1.5"
+    assert_select "input[name=approved_art_hours][value=?]", "0.5"
+    assert_select "[data-deflate-target=total]", text: "2.0"
+  end
+
+  test "a ship never sent back opens with the defaults" do
+    fresh = @user.projects.create!(name: "fresh").ships.create!(user: @user, claimed_seconds: 7200)
+    get admin_ship_path(fresh, stage: "review")
+    assert_select "textarea[name=judgement]", text: ""
+    assert_select "input[name=approved_hours][value=?]", "2.0"
+  end
 end
