@@ -1,0 +1,71 @@
+# The Slack DM a participant gets when a reviewer decides about a ship
+# (app/services/review_dm.rb). Edit the copy here.
+#
+# Slack mrkdwn, not HTML or Markdown: *bold*, _italic_, <https://link|link
+# text>, and "> " at the start of a line for a quote. A single newline is a
+# line break. https://docs.slack.dev/messaging/formatting-message-text/
+#
+# Each [[ARMAND: ...]] slot is unwritten copy. In production a message that
+# still holds a slot is not sent; the site logs a line instead.
+#
+# The site fills these in:
+#   %{name}         the participant's display name
+#   %{pet}          the pet's name
+#   %{reviewed_by}  the reviewed_by line below; the whole line goes when no reviewer is on record
+#   %{hours}        the approved hours, such as "1h 30m" (approved only)
+#   %{feedback}     the feedback block below, or nothing when the reviewer wrote none
+#   %{url}          the pet's page on the site
+en:
+  review_dm:
+    approved: |-
+      [[ARMAND: greeting]] %{name}
+
+      [[ARMAND: approved body]]
+
+      *Pet:* %{pet}
+      %{reviewed_by}
+      *Approved hours:* %{hours}
+
+      %{feedback}
+
+      <%{url}|[[ARMAND: link text]]>
+
+      [[ARMAND: sign-off]]
+
+    changes_needed: |-
+      [[ARMAND: greeting]] %{name}
+
+      [[ARMAND: changes body]]
+
+      *Pet:* %{pet}
+      %{reviewed_by}
+
+      %{feedback}
+
+      <%{url}|[[ARMAND: link text]]>
+
+      [[ARMAND: sign-off]]
+
+    rejected: |-
+      [[ARMAND: greeting]] %{name}
+
+      [[ARMAND: rejected body]]
+
+      *Pet:* %{pet}
+      %{reviewed_by}
+
+      %{feedback}
+
+      <%{url}|[[ARMAND: link text]]>
+
+      [[ARMAND: sign-off]]
+
+    # Who reviewed the ship. %{reviewer} is a Slack mention of them, or their
+    # name when they have no Slack id. For a fraud ban it is the fraud reviewer.
+    reviewed_by: |-
+      *[[ARMAND: reviewed by label]]* %{reviewer}
+
+    # The reviewer's feedback. %{quote} is each line of it after "> ".
+    feedback: |-
+      *[[ARMAND: feedback heading]]*
+      %{quote}
