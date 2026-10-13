@@ -11,7 +11,7 @@
 # The site fills these in:
 #   %{name}         the participant's display name
 #   %{pet}          the pet's name
-#   %{reviewed_by}  the reviewed_by line below; the whole line goes when no reviewer is on record
+#   %{reviewed_by}  the reviewed_by line below; the whole line goes when no reviewer is on record, and for a fraud ban rejection
 #   %{hours}        the approved hours, such as "1h 30m" (approved only)
 #   %{feedback}     the feedback block below, or nothing when the reviewer wrote none
 #   %{url}          the pet's page on the site
@@ -61,7 +61,8 @@ en:
       [[ARMAND: sign-off]]
 
     # Who reviewed the ship. %{reviewer} is a Slack mention of them, or their
-    # name when they have no Slack id. For a fraud ban it is the fraud reviewer.
+    # name when they have no Slack id. A rejection from a fraud ban has no
+    # reviewed_by line.
     reviewed_by: |-
       *[[ARMAND: reviewed by label]]* %{reviewer}
 

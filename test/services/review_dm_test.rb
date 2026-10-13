@@ -82,7 +82,7 @@ class ReviewDmTest < ActiveSupport::TestCase
     assert_includes SlackDm::Fake.sent.last[:text], "*[[ARMAND: reviewed by label]]* <@U0ADA>"
   end
 
-  test "a fraud ban names the banner, on the banned ship and on each pending ship it rejects" do
+  test "a fraud ban names no one, on the banned ship and on each pending ship it rejects" do
     banner = User.create!(hca_id: "ident!dm-banner", email: "b@example.com", admin: true, slack_id: "U0BAN")
     other = @user.projects.create!(name: "owl").ships.create!(user: @user, claimed_seconds: 3600)
     @ship.approve_review!(by: @admin, seconds: 3600, judgement: "ok", feedback: nil)
@@ -90,7 +90,10 @@ class ReviewDmTest < ActiveSupport::TestCase
     assert_equal banner, other.reload.fraud_reviewer
     texts = SlackDm::Fake.sent.pluck(:text)
     assert_equal 2, texts.size
-    texts.each { assert_includes it, "*[[ARMAND: reviewed by label]]* <@U0BAN>" }
+    texts.each do
+      assert_not_includes it, "reviewed by"
+      assert_not_includes it, "U0BAN"
+    end
   end
 
   test "with no reviewer on record the reviewed by line goes" do
