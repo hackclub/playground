@@ -77,7 +77,7 @@ class ProgramTimeTest < ActionDispatch::IntegrationTest
     assert_equal @rock - 55 * 60 + 50 * 60, ship.claimed_seconds
     assert_equal({ "starts_at" => "2026-09-25T17:00:00-04:00", "ends_at" => "2026-10-09T17:00:00-04:00" }, ship.snapshot["window"])
     assert_equal 0, @pet.reload.unshipped_seconds
-    assert_match "rock-pet-art (50m), 2026-09-25 17:00 to 2026-10-09 17:00 US Eastern time", Justification.new(ship).hackatime_projects
+    assert_match "rock-pet-art 9/25/2026-10/9/2026 (50m), window 2026-09-25 17:00 to 2026-10-09 17:00 US Eastern time", Justification.new(ship).hackatime_projects
   end
 
   test "a linked project with no time in the window stays in the picker and through a save" do
@@ -113,7 +113,7 @@ class ProgramTimeTest < ActionDispatch::IntegrationTest
     post ship_project_path(@pet)
     ship = @pet.ships.sole
     assert_equal 55 * 60, ship.claimed_seconds
-    assert_match "rock-pet (55m), 2026-09-25 17:00 to 2026-09-25 18:00 US Eastern time", Justification.new(ship).to_s
+    assert_match "rock-pet 9/25/2026-9/25/2026 (55m), window 2026-09-25 17:00 to 2026-09-25 18:00 US Eastern time", Justification.new(ship).to_s
 
     travel_to WINDOW.starts_at + 2.hours
     reset!

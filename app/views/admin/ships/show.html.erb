@@ -168,7 +168,9 @@
                 <button type="button" class="btn" data-percent="<%= percent %>" data-action="deflate#set"><%= percent %>% · <%= (@ship.claimed_seconds * percent / 360000.0).round(2) %>h</button>
               <% end %>
             </div>
-            <label>your judgement <span class="muted">internal. goes into the justification. the numbers are written for you.</span>
+            <label>why deflated <span class="muted">required when approving below the claim. what the evidence did not support.</span>
+              <%= text_area_tag :deflation_reason, nil, rows: 2 %></label>
+            <label>specific technical features <span class="muted">internal record for spot-checkers, so no praise or encouragement. name the features that explain the hours, like custom jumping physics, a save file, a tray menu. if AI was used, note the submitter's experience. for changes or reject, say what is missing.</span>
               <%= text_area_tag :judgement, nil, rows: 3, data: { shortcut: "j" } %></label>
             <label>note to the participant <span class="muted">shown to them. required for changes needed.</span>
               <%= text_area_tag :feedback, nil, rows: 2, data: { shortcut: "f" } %></label>

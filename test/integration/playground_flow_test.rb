@@ -60,7 +60,7 @@ class PlaygroundFlowTest < ActionDispatch::IntegrationTest
     assert_select "img.shot[alt='screenshot 2 of 3']"
     assert_select ".readme script", 0
     approved = ship.claimed_seconds / 3600.0 - 0.25
-    post review_admin_ship_path(ship), params: { verdict: "approve", approved_hours: approved, judgement: "runs, readme is good", feedback: "nice rock" }
+    post review_admin_ship_path(ship), params: { verdict: "approve", approved_hours: approved, judgement: "runs, readme is good", feedback: "nice rock", deflation_reason: "the second hour was idle" }
     assert_redirected_to admin_review_path
     ship.reload
     assert_equal "approved", ship.review_status
@@ -76,7 +76,7 @@ class PlaygroundFlowTest < ActionDispatch::IntegrationTest
     ship.reload
     assert ship.approved?
     assert_equal ship.review_seconds, ship.approved_seconds
-    assert_includes Justification.new(ship).to_s, "deflated by 15m"
+    assert_includes Justification.new(ship).to_s, "Deflated from"
 
     # The participant has 3h+ approved: stickers unlock, the shirt does not.
     reset!
