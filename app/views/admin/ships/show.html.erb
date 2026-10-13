@@ -15,6 +15,28 @@
   </div>
 </header>
 <%= render "claim", claim: @claim, held: @held, ship: @ship, stage: @stage %>
+<% if @ship.sent_back_possible? %>
+  <details class="panel" id="send-back">
+    <summary><h2 class="inline">send back to review</h2></summary>
+    <%= form_with url: send_back_admin_ship_path(@ship, flow: params[:flow]), class: "stack" do %>
+      <p class="muted">review approved this ship and the fraud check has not run. Sending it back clears the review and the checklist, and the participant gets no message.</p>
+      <label>reason <span class="muted">required</span>
+        <%= text_area_tag :reason, nil, rows: 2, required: true %></label>
+      <div class="row"><button class="btn danger" data-confirm="Send this ship back to review?">send back to review</button></div>
+    <% end %>
+  </details>
+<% end %>
+<% if @send_backs&.any? %>
+  <section class="panel">
+    <h2>sent back to review</h2>
+    <ul class="events">
+      <% @send_backs.each do |e| %>
+        <li><span class="muted"><%= e.created_at.to_fs(:short) %></span> <%= e.actor&.display_name %>: <%= e.data["reason"] %>
+          <span class="muted">(earlier review by <%= e.data["reviewer_name"] || "unknown" %>, <%= hours(e.data["review_seconds"]) %> approved<%= ", #{e.data["review_judgement"]}" if e.data["review_judgement"].present? %>)</span></li>
+      <% end %>
+    </ul>
+  </section>
+<% end %>
 
 <div class="columns">
   <aside class="col side">
@@ -205,10 +227,13 @@
               <%= text_area_tag :judgement, nil, rows: 3, data: { shortcut: "j" } %></label>
             <label>note to the participant <span class="muted">shown to them. required for changes needed.</span>
               <%= text_area_tag :feedback, nil, rows: 2, data: { shortcut: "f" } %></label>
+            <label>evidence <span class="muted">required only for fraud: reject and ban. write what shows the fraud.</span>
+              <%= text_area_tag :notes, nil, rows: 2 %></label>
             <div class="row">
               <button class="btn primary" name="verdict" value="approve" data-shortcut="a" data-shortcut-confirm <%= "disabled" if @stardance == :shipped %>>approve</button><kbd>a a</kbd>
               <button class="btn" name="verdict" value="changes" data-shortcut="c" data-shortcut-confirm>changes needed</button><kbd>c c</kbd>
               <button class="btn danger" name="verdict" value="reject" data-shortcut="r" data-shortcut-confirm>reject</button><kbd>r r</kbd>
+              <button class="btn danger primary" name="verdict" value="ban" data-shortcut="b" data-shortcut-confirm>fraud: reject and ban</button><kbd>b b</kbd>
             </div>
             <p class="muted"><kbd>h</kbd> hours <kbd>j</kbd> judgement <kbd>f</kbd> note · press a verdict key twice</p>
           <% end %>

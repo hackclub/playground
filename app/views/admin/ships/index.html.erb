@@ -1,0 +1,32 @@
+<section class="panel">
+  <h2>ships</h2>
+  <p class="row">
+    <%= link_to "all (#{@counts.values.sum})", admin_ships_path, class: "btn #{"primary" unless @stage}" %>
+    <% Ship::STAGES.each do |key, label| %>
+      <%= link_to "#{label} (#{@counts[key]})", admin_ships_path(stage: key), class: "btn #{"primary" if @stage == key}" %>
+    <% end %>
+  </p>
+  <% if @ships.empty? %>
+    <p class="muted">no ships in this stage.</p>
+  <% else %>
+    <table class="kv">
+      <tr><th>ship</th><th>participant</th><th>shipped</th><th>claimed</th><th>stage</th><th>review</th><th>review hours</th><th>fraud</th><th>final hours</th><th>Unified DB</th><th></th></tr>
+      <% @ships.each do |ship| %>
+        <tr>
+          <td><%= link_to "#{ship_name(ship)} ##{ship.number}", admin_ship_path(ship) %></td>
+          <td><%= ship.user.display_name %></td>
+          <td class="muted"><%= ship.created_at.to_fs(:short) %></td>
+          <td><%= hours(ship.claimed_seconds) %></td>
+          <td><%= stage_badge(ship) %></td>
+          <td><% if ship.reviewed_at %><%= ship.reviewer&.display_name || "unknown" %> <span class="muted"><%= ship.reviewed_at.to_fs(:short) %></span><% end %></td>
+          <td><%= hours(ship.review_seconds) if ship.review_seconds %></td>
+          <td><% if ship.fraud_reviewed_at %><%= state_badge(ship.fraud_status) %> <%= ship.fraud_reviewer&.display_name || "unknown" %> <span class="muted"><%= ship.fraud_reviewed_at.to_fs(:short) %></span><% end %></td>
+          <td><%= hours(ship.approved_seconds) if ship.approved_seconds %></td>
+          <td><%= ship.in_unified ? "yes" : "no" %></td>
+          <td><%= link_to "send back to review", admin_ship_path(ship, stage: "fraud", anchor: "send-back"), class: "btn" if ship.sent_back_possible? %></td>
+        </tr>
+      <% end %>
+    </table>
+    <% if @total > @ships.size %><p class="muted">showing the newest <%= @ships.size %> of <%= @total %>.</p><% end %>
+  <% end %>
+</section>
