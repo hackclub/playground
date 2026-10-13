@@ -2230,10 +2230,15 @@ function landed(frame, owner) {
 // show at the top of that page when it next loads in its window. They are
 // the site's own text, and go in as text. Messages no window shows within
 // half a minute are dropped.
+// After a save, the messages come as a promise made by the frame's page.
+// That page goes once its window goes back to its own page, and Chrome
+// never settles a promise from a page that has gone. The desktop takes the
+// messages over in a promise of its own at once, so a window whose page
+// loads after that still shows them.
 const carried = [];
 
 function carryMessages(page, messages) {
-    carried.push({ path: new URL(page.url, location.href).pathname, messages, until: Date.now() + 30000 });
+    carried.push({ path: new URL(page.url, location.href).pathname, messages: Promise.resolve(messages), until: Date.now() + 30000 });
 }
 
 function messagesIn(doc) {
