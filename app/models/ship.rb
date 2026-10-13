@@ -22,11 +22,32 @@ class Ship < ApplicationRecord
   scope :awaiting_review, -> { where(state: "pending", review_status: "pending").order(:created_at) }
   scope :awaiting_fraud, -> { where(state: "pending", fraud_status: "pending").order(:reviewed_at) }
 
+  # Where a ship is in the pipeline, for the admin overview. A fraud ban ends
+  # in the rejected stage.
+  STAGES = {
+    "awaiting_review" => "awaiting review", "awaiting_fraud" => "awaiting fraud check",
+    "approved" => "approved", "changes_needed" => "changes needed", "rejected" => "rejected"
+  }.freeze
+
+  scope :in_stage, lambda { |stage|
+    case stage
+    when "awaiting_review" then where(state: "pending", review_status: "pending")
+    when "awaiting_fraud" then where(state: "pending", fraud_status: "pending")
+    when *STAGES.keys then where(state: stage)
+    else none
+    end
+  }
+
   after_update :mark_unsynced, if: -> { saved_change_to_state? || saved_change_to_approved_seconds? }
 
   after_update_commit :message_participant, if: :saved_change_to_state?
 
   STATES.each { |s| define_method(:"#{s}?") { state == s } }
+
+  def stage
+    return state unless state == "pending"
+    review_status == "pending" ? "awaiting_review" : "awaiting_fraud"
+  end
 
   def number = project.ships.index(self).to_i + 1
 
@@ -58,6 +79,26 @@ class Ship < ApplicationRecord
     AuditEvent.record(by, self, "review.approve", seconds: review_seconds)
   end
 
+  # An approved review that has not had its fraud check goes back to the
+  # review queue. The state stays pending, so the participant gets no DM, and
+  # created_at keeps the ship in its original place in the queue. What the
+  # earlier review held is kept in the audit event.
+  def send_back_to_review!(by:, reason:)
+    raise ArgumentError, "only a ship that waits for the fraud check goes back" unless sent_back_possible?
+    raise ArgumentError, "say why it goes back to review" if reason.blank?
+    transaction do
+      AuditEvent.record(by, self, "review.send_back", reason: reason.strip, reviewer_id: reviewer_id, reviewer_name: reviewer&.display_name,
+                        reviewed_at: reviewed_at, review_seconds: review_seconds, review_coding_seconds: review_coding_seconds,
+                        review_art_seconds: review_art_seconds, review_judgement: review_judgement,
+                        review_deflation_reason: review_deflation_reason, review_feedback: review_feedback)
+      update!(review_status: "pending", fraud_status: "waiting", reviewer: nil, reviewed_at: nil, review_seconds: nil,
+              review_coding_seconds: nil, review_art_seconds: nil, review_judgement: nil, review_feedback: nil,
+              review_deflation_reason: nil, review_checklist: {})
+    end
+  end
+
+  def sent_back_possible? = state == "pending" && review_status == "approved" && fraud_status == "pending"
+
   def return_for_changes!(by:, judgement:, feedback:)
     raise ArgumentError, "tell the participant what to change" if feedback.blank?
     update!(review_status: "changes_needed", state: "changes_needed", reviewer: by, reviewed_at: Time.current,
@@ -82,9 +123,15 @@ class Ship < ApplicationRecord
     AuditEvent.record(by, self, "fraud.pass", deduction_seconds: deduction)
   end
 
-  def ban_for_fraud!(by:, notes:)
+  # Called from the fraud stage, or from review when the fraud is clear. From
+  # review the ship is also rejected there, by the same reviewer.
+  def ban_for_fraud!(by:, notes:, judgement: nil)
     raise ArgumentError, "record the evidence" if notes.blank?
     transaction do
+      from_review = review_status == "pending"
+      if from_review
+        assign_attributes(review_status: "rejected", reviewer: by, reviewed_at: Time.current, review_judgement: judgement.presence)
+      end
       update!(fraud_status: "banned", fraud_reviewer: by, fraud_reviewed_at: Time.current,
               fraud_notes: notes, state: "rejected", review_feedback: review_feedback.presence || "This project was rejected.")
       user.ships.where(state: "pending").where.not(id: id).find_each do |other|

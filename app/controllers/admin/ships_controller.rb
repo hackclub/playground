@@ -1,7 +1,21 @@
 module Admin
   class ShipsController < BaseController
-    before_action :set_ship
-    before_action :refuse_own_ship, only: %i[review fraud snapshot]
+    before_action :set_ship, except: :index
+    before_action :refuse_own_ship, only: %i[review fraud snapshot send_back]
+
+    LIST_CAP = 300
+
+    # Every ship and the stage it is in, newest first, with a tab per stage.
+    def index
+      @stage = params[:stage].presence_in(Ship::STAGES.keys)
+      @counts = Ship.group(:state, :review_status, :fraud_status).count.each_with_object(Hash.new(0)) do |((state, review, fraud), n), by|
+        key = state != "pending" ? state : (review == "pending" ? "awaiting_review" : (fraud == "pending" ? "awaiting_fraud" : nil))
+        by[key] += n if key
+      end
+      scope = @stage ? Ship.in_stage(@stage) : Ship.all
+      @total = scope.count
+      @ships = scope.includes(:user, :reviewer, :fraud_reviewer, project: :ships).order(created_at: :desc).limit(LIST_CAP)
+    end
 
     def show
       @snapshot = ShipSnapshot.new(@ship)
@@ -32,6 +46,7 @@ module Admin
                                                 art_seconds: (params[:approved_art_hours].present? ? (params[:approved_art_hours].to_f * 3600).round : nil))
       when "changes" then @ship.return_for_changes!(by: current_user, judgement: params[:judgement], feedback: params[:feedback])
       when "reject" then @ship.reject_review!(by: current_user, judgement: params[:judgement], feedback: params[:feedback])
+      when "ban" then @ship.ban_for_fraud!(by: current_user, notes: params[:notes], judgement: params[:judgement])
       else return head(:bad_request)
       end
       @ship.claims.where(stage: "review").delete_all
@@ -51,6 +66,18 @@ module Admin
       end
       @ship.claims.where(stage: "fraud").delete_all
       done("fraud", "fraud verdict saved")
+    rescue ArgumentError => e
+      redirect_to admin_ship_path(@ship, stage: "fraud", flow: params[:flow]), alert: e.message
+    end
+
+    # Pulls a ship that passed review, and waits for the fraud check, back to
+    # the review queue.
+    def send_back
+      return stale unless @ship.sent_back_possible?
+      return taken("fraud") if Claim.held_by_other?(@ship, "fraud", current_user)
+      @ship.send_back_to_review!(by: current_user, reason: params[:reason])
+      @ship.claims.where(stage: "fraud").delete_all
+      redirect_to admin_ship_path(@ship, stage: "review"), notice: "sent back to review"
     rescue ArgumentError => e
       redirect_to admin_ship_path(@ship, stage: "fraud", flow: params[:flow]), alert: e.message
     end
@@ -82,6 +109,7 @@ module Admin
       @stardance = StardanceRepos.for_project(@project, @ship.snapshot["code_url"])
       @stardance_ids = @stardance == :shipped ? StardanceRepos.project_ids(@ship.snapshot["code_url"]) : []
       load_ai_coding if @stage == "review" && @ship.review_status == "pending" && @ship.pending?
+      @send_backs = AuditEvent.where(subject: @ship, action: "review.send_back").includes(:actor).order(:created_at)
       @justification = Justification.new(@ship).to_s if @ship.review_seconds
     end
 

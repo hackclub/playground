@@ -77,10 +77,11 @@ Rails.application.routes.draw do
     get "review" => "queues#review"
     get "fraud" => "queues#fraud"
     get "fulfillment" => "queues#fulfillment"
-    resources :ships, only: :show do
+    resources :ships, only: %i[index show] do
       member do
         post :review
         post :fraud
+        post :send_back
         patch :checklist
         patch :snapshot
       end
