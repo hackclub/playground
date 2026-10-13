@@ -65,11 +65,11 @@ class ReviewDm
       .gsub(/^#{ABSENT}\n?/, "").gsub(/\n{3,}/, "\n\n").strip
   end
 
-  # Who decided. A fraud ban is the fraud reviewer's call, anything else the
-  # reviewer's. Either falls back to the other.
+  # Who decided. The reviewer, else the fraud reviewer. A rejection from a
+  # fraud ban names no one. The ban still records its fraud reviewer for audit.
   def self.reviewer(ship, state)
-    banned = state == "rejected" && ship.fraud_status == "banned"
-    banned ? ship.fraud_reviewer || ship.reviewer : ship.reviewer || ship.fraud_reviewer
+    return if state == "rejected" && ship.fraud_status == "banned"
+    ship.reviewer || ship.fraud_reviewer
   end
 
   # A Slack mention when the user has a Slack id, else their escaped name.
