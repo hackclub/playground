@@ -1,5 +1,18 @@
 require "application_system_test_case"
 
+# Holds the pet page's load in its own window until the test lets it go. The
+# ship's own fetch, which follows the redirect to the same page, is Turbo's
+# and goes through.
+module HoldPetPage
+  mattr_accessor :release
+
+  def show
+    HoldPetPage.release&.pop(timeout: 10) unless request.headers["X-Turbo-Request-Id"]
+    super
+  end
+end
+ProjectsController.prepend(HoldPetPage)
+
 # On the desktop, the pet page sits in the pet's own window, and its ship
 # button opens the pet's ship window: a desktop window with the ship list in
 # a frame, which drags by its header like the others. Closing it after a fix,
@@ -18,6 +31,8 @@ class ShipWindowTest < ApplicationSystemTestCase
   end
 
   teardown do
+    HoldPetPage.release&.close
+    HoldPetPage.release = nil
     ActionController::Base.allow_forgery_protection = false
     page.current_window.resize_to(1440, 900)
   end
@@ -111,15 +126,44 @@ class ShipWindowTest < ApplicationSystemTestCase
     # The ship asks Hack Club Auth and Hackatime again first.
     assert_no_selector window, wait: 10
     within_frame(find(pet_frame(@project))) do
-      assert_selector ".flash.notice", count: 1, exact_text: "shipped! your hours are pending review."
-      assert_selector ".badge", text: "pending"
+      # The page with the ship has loaded, and the notice the desktop carried
+      # over from the ship window shows at its top.
       assert_selector ".ships li", text: "#1"
+      assert_selector ".badge", text: "pending"
+      assert_selector ".flash.notice", count: 1, exact_text: "shipped! your hours are pending review."
     end
     assert @project.ships.sole.pending?
 
     # Opened again, it shows the list, not the page the ship landed on.
     within_frame(find(pet_frame(@project))) { click_link "ship" }
     within_frame(find("#{window} iframe")) { assert_text "your last ship needs its review first" }
+  end
+
+  # The ship window's frame followed the redirect and used up the notice, so
+  # the desktop carries it over. Its frame goes back to the list at once, and
+  # on a slow machine the pet page loads only after that.
+  test "the notice shows when the pet page loads after the ship window has gone back to its list" do
+    @project.update!(READY)
+    open_pet(@project)
+    within_frame(find(pet_frame(@project))) { click_link "ship" }
+    window = "#window-ship-#{@project.id}"
+    HoldPetPage.release = Queue.new
+    within_frame(find("#{window} iframe")) do
+      page.execute_script("document.body.dataset.old = ''")
+      accept_confirm { find("#ship-checks .row button:not([disabled])").click }
+    end
+    assert_no_selector window, wait: 10
+
+    # The window's frame shows a new copy of the list, and its old page is gone.
+    page.document.synchronize do
+      back = page.evaluate_script("(doc => !!doc?.querySelector('#ship-checks') && !('old' in doc.body.dataset))(document.querySelector(arguments[0]).contentDocument)", "#{window} iframe")
+      raise Capybara::ExpectationNotMet, "the ship window is still on its old page" unless back
+    end
+    HoldPetPage.release << true
+    within_frame(find(pet_frame(@project))) do
+      assert_selector ".ships li", text: "#1"
+      assert_selector ".flash.notice", count: 1, exact_text: "shipped! your hours are pending review."
+    end
   end
 
   test "in the ship window, a tip shows whole inside the window's frame" do
