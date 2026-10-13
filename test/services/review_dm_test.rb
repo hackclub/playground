@@ -23,17 +23,12 @@ class ReviewDmTest < ActiveSupport::TestCase
 
   def dm_jobs = enqueued_jobs.select { it["job_class"] == "ReviewDmJob" }
 
-  test "the approved DM has the facts and the placeholders" do
+  test "the approved DM greets, links the pet, quotes the feedback and names the reviewer" do
     perform_enqueued_jobs { approve }
     assert_equal 1, SlackDm::Fake.sent.size
     dm = SlackDm::Fake.sent.last
     assert_equal "U0KID", dm[:channel]
-    text = dm[:text]
-    assert_includes text, "[[ARMAND: greeting]] Pixel Fox"
-    assert_includes text, "*Pet:* rock\n*[[ARMAND: reviewed by label]]* Ada &amp; Co\n*Approved hours:* 1h 30m"
-    assert_includes text, "> Lovely."
-    assert_includes text, "<http://example.com/projects/#{@project.id}|"
-    [ "greeting", "approved body", "reviewed by label", "feedback heading", "link text", "sign-off" ].each { assert_includes text, "[[ARMAND: #{it}]]" }
+    assert_equal "Hey Pixel Fox!\n\nYour pet <http://example.com/projects/#{@project.id}|rock> has been approved!\n\nFeedback:\n> Lovely.\n- Ada &amp; Co", dm[:text]
   end
 
   test "changes needed and rejected each send their own DM" do
@@ -41,12 +36,9 @@ class ReviewDmTest < ActiveSupport::TestCase
     other = @project.ships.create!(user: @user, claimed_seconds: 3600)
     perform_enqueued_jobs { other.reject_review!(by: @admin, judgement: "no", feedback: nil) }
     changes, rejected = SlackDm::Fake.sent.pluck(:text)
-    assert_includes changes, "[[ARMAND: changes body]]"
-    assert_includes changes, "> Add a screenshot."
-    assert_includes rejected, "[[ARMAND: rejected body]]"
-    assert_not_includes rejected, "feedback heading"
-    assert_not_includes rejected, "Approved hours"
-    assert_no_match(/\n{3,}/, rejected)
+    url = "http://example.com/projects/#{@project.id}"
+    assert_equal "Hey Pixel Fox!\n\nYour pet <#{url}|rock> has some feedback\n\nFeedback:\n> Add a screenshot.\n- Ada &amp; Co", changes
+    assert_equal "Hey Pixel Fox!\n\nYour pet <#{url}|rock> has been rejected\n\n- Ada &amp; Co", rejected
   end
 
   test "one DM per transition, none on a re-save or a move back to pending" do
@@ -79,7 +71,7 @@ class ReviewDmTest < ActiveSupport::TestCase
   test "a reviewer with a Slack id is mentioned" do
     @admin.update!(slack_id: "U0ADA")
     perform_enqueued_jobs { @ship.return_for_changes!(by: @admin, judgement: "no", feedback: "Fix it.") }
-    assert_includes SlackDm::Fake.sent.last[:text], "*[[ARMAND: reviewed by label]]* <@U0ADA>"
+    assert SlackDm::Fake.sent.last[:text].end_with?("\n- <@U0ADA>")
   end
 
   test "a fraud ban names no one, on the banned ship and on each pending ship it rejects" do
@@ -91,18 +83,22 @@ class ReviewDmTest < ActiveSupport::TestCase
     texts = SlackDm::Fake.sent.pluck(:text)
     assert_equal 2, texts.size
     texts.each do
-      assert_not_includes it, "reviewed by"
+      assert_not_includes it, "\n- "
       assert_not_includes it, "U0BAN"
+      assert_includes it, "has been rejected"
     end
   end
 
   test "with no reviewer on record the reviewed by line goes" do
-    @ship.update_columns(state: "approved", approved_seconds: 3600)
+    @ship.update_columns(state: "approved", approved_seconds: 3600, review_feedback: "Fine.")
     text = ReviewDm.text(@ship.reload, "approved")
-    assert_includes text, "*Pet:* rock\n*Approved hours:* 1h 0m"
-    assert_not_includes text, "reviewed by"
+    assert_equal "Hey Pixel Fox!\n\nYour pet <http://example.com/projects/#{@project.id}|rock> has been approved!\n\nFeedback:\n> Fine.", text
     assert_not_includes text, ReviewDm::ABSENT
-    assert_no_match(/\n{3,}/, ReviewDm.text(@ship, "rejected"))
+  end
+
+  test "with no feedback the DM has no Feedback line" do
+    perform_enqueued_jobs { approve(feedback: nil) }
+    assert_equal "Hey Pixel Fox!\n\nYour pet <http://example.com/projects/#{@project.id}|rock> has been approved!\n\n- Ada &amp; Co", SlackDm::Fake.sent.last[:text]
   end
 
   test "a participant with no Slack id gets nothing" do
@@ -115,17 +111,19 @@ class ReviewDmTest < ActiveSupport::TestCase
     @project.update!(name: "<!channel> & co")
     perform_enqueued_jobs { approve(feedback: "Nice <@U123>.\nAlso > this.") }
     text = SlackDm::Fake.sent.last[:text]
-    assert_includes text, "*Pet:* &lt;!channel&gt; &amp; co"
+    assert_includes text, "|&lt;!channel&gt; &amp; co> has been approved!"
     assert_includes text, "> Nice &lt;@U123&gt;.\n> Also &gt; this."
   end
 
   test "a real send with a placeholder left posts nothing and logs" do
     posted = []
     with_methods(FakeServices, on?: -> { false }) do
+      with_methods(ReviewDm, text: ->(*) { "Hey [[ARMAND: greeting]]" }) do
       with_methods(SlackDm, configured?: -> { true }, post: ->(*args) { posted << args }) do
         approve
         logs = capture_log { perform_enqueued_jobs }
         assert_includes logs, "the copy is not written yet"
+      end
       end
     end
     assert_empty posted
