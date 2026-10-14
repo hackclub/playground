@@ -26,6 +26,7 @@ class SubmitGate
   # two, and a reviewer looks at it by hand.
   def checks
     @checks ||= [
+      check(:ship_open, ProgramWindow.current.ship_note(@project).to_s, :blocker) { !ProgramWindow.current.ship_closed_for?(@project) },
       check(:eligible, "your identity needs to be verified, and your account eligible", :blocker,
             fix: "verify your identity at auth.hackclub.com, then reload this page") { owner_eligible? },
       check(:not_banned, "your account needs to be unbanned", :blocker, fix: "ask in #playground") { !@user.banned? },

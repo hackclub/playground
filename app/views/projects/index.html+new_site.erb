@@ -77,9 +77,12 @@
               <p class="pet-actions">
                 <% if project.pending_ship? %>
                   <span class="pet-waiting">in review</span>
+                <% elsif ProgramWindow.current.ship_closed_for?(project) %>
+                  <span class="pet-waiting"><%= ProgramWindow.current.ship_note(project) %></span>
                 <% else %>
                   <%= link_to({ "draft" => "ship it", "changes_needed" => "fix and ship" }.fetch(project.state, "ship again"), ship_project_path(project),
                               class: "btn primary small", aria: { label: "ship #{project.name}" }) %>
+                  <% if (note = ProgramWindow.current.ship_note(project)) %><span class="muted"><%= note %></span><% end %>
                 <% end %>
                 <%= link_to "edit", edit_project_path(project), aria: { label: "edit #{project.name}" } %>
               </p>

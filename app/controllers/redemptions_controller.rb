@@ -34,6 +34,7 @@ class RedemptionsController < ApplicationController
   def set_goal = @goal = Goal.find(params[:goal_key]) || raise(ActionController::RoutingError, "no such goal")
 
   def check_can_redeem
+    return back("prize claiming closed on #{ProgramWindow.current.redeem_closed_on}") if ProgramWindow.current.redeem_closed?
     @identity = HackClubAuth.for(current_user).refresh_user!
     current_user.reload
     return back("verify your identity first") unless current_user.eligible?

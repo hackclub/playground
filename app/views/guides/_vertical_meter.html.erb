@@ -45,6 +45,7 @@
         <span><strong><%= goal.name %></strong>
           <span class="muted"><% if state == :redeemable %><span class="visually-hidden">reached, </span><% end %><span class="goal-hours"><%= goal.hours %>h</span>
             <% if redeemed %>· <%= redeemed.status == "fulfilled" ? "shipped to you!" : "redeemed · #{redeemed.status.tr("_", " ")}" %>
+            <% elsif state == :redeemable && ProgramWindow.current.redeem_closed? %>· claiming closed <%= ProgramWindow.current.redeem_ends_at.strftime("%b %-d") %>
             <% elsif state == :redeemable && current_user.eligible? && !current_user.banned? %>· <%= link_to "redeem", new_redemption_path(goal_key: goal.key) %>
             <% elsif state == :redeemable %>· verify to redeem
             <% elsif state == :in_review %>· in review
