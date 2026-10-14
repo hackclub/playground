@@ -215,4 +215,32 @@ class AdminSendBackTest < ActionDispatch::IntegrationTest
     assert_select "textarea[name=judgement]", text: ""
     assert_select "input[name=approved_hours][value=?]", "2.0"
   end
+
+  # A review from before the split keeps only its total.
+  def strip_split(ship)
+    event = AuditEvent.where(subject: ship, action: "review.send_back").last
+    event.update!(data: event.data.except("review_coding_seconds", "review_art_seconds"))
+  end
+
+  test "an earlier review with only a total fills coding with the total, when the ship has no art" do
+    ship = @user.projects.create!(name: "old").ships.create!(user: @user, claimed_seconds: 30_000,
+                                                              snapshot: { "projects" => { "a" => 30_000 }, "tracked_seconds" => 30_000, "ai_coding_seconds" => 0 })
+    ship.approve_review!(by: @reviewer, seconds: 24_780, judgement: "ok", feedback: nil, deflation_reason: "idle")
+    ship.send_back_to_review!(by: @admin, reason: "recheck")
+    strip_split(ship)
+    get admin_ship_path(ship, stage: "review")
+    assert_select "input[name=approved_hours][value=?]", "6.88"
+    assert_select "[data-deflate-target=total]", text: "6.88"
+  end
+
+  test "an earlier review with only a total takes the default art off it, when the ship has art" do
+    ship = sent_back_ship_with_art
+    strip_split(ship)
+    get admin_ship_path(ship, stage: "review")
+    # 12000 s approved, default art 4629 s at the 3h cap, so coding is 7371 s.
+    # Art then holds at 3/7 of that coding, 3159 s.
+    assert_select "input[name=approved_hours][value=?]", "2.05"
+    assert_select "input[name=approved_art_hours][value=?]", "0.88"
+    assert_select "[data-deflate-target=total]", text: "2.93"
+  end
 end
