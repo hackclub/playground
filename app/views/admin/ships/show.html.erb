@@ -186,9 +186,12 @@
           <% art_start = @ship.art_allowed_seconds(h.(coding_cap) * 3600) %>
           <%# A ship sent back opens with its earlier review. What was typed before an error wins, then that review, then the defaults. %>
           <% earlier = @send_backs&.last&.data || {} %>
-          <% coding_now = params[:approved_hours] || (earlier["review_coding_seconds"] ? [ h.(earlier["review_coding_seconds"]), h.(coding_cap) ].min : h.(coding_cap)) %>
+          <%# A review from before coding and art were split has only a total: its art is the default art, and coding is the rest. %>
+          <% earlier_art = earlier["review_art_seconds"] || (earlier["review_seconds"] && (art ? art_start : 0)) %>
+          <% earlier_coding = earlier["review_coding_seconds"] || (earlier["review_seconds"] && [ earlier["review_seconds"] - earlier_art, 0 ].max) %>
+          <% coding_now = params[:approved_hours] || (earlier_coding ? [ h.(earlier_coding), h.(coding_cap) ].min : h.(coding_cap)) %>
           <% art_limit = @ship.art_allowed_seconds(coding_now.to_f * 3600) %>
-          <% art_now = params[:approved_art_hours] || (earlier["review_art_seconds"] ? [ h.(earlier["review_art_seconds"]), h.(art_limit) ].min : h.(art_start)) %>
+          <% art_now = params[:approved_art_hours] || (earlier_art ? [ h.(earlier_art), h.(art_limit) ].min : h.(art_start)) %>
           <%= form_with url: review_admin_ship_path(@ship, flow: params[:flow]), class: "stack", id: "verdict", html: { novalidate: true },
                 data: { controller: "deflate", deflate_claimed_value: h.(@ship.coding_claimed_seconds), deflate_cap_value: h.(coding_cap),
                         deflate_art_claimed_value: h.(@ship.art_claimed_seconds), deflate_art_percent_value: Ship::ART_CAP_PERCENT } do %>
