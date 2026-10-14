@@ -33,7 +33,7 @@ class NextStep < Data.define(:title, :detail, :href, :action, :pet, :progress, :
                    **go_to("pick-project") })
     elsif !user.hackatime_connected?
       new(title: "connect Hackatime", detail: "connect it and pick #{pet.name}'s project, so the hours you spend on it count.", **go_to("pick-project"), pet:)
-    elsif (goal = goals.find { hours.goal_state(it) == :redeemable }) && user.eligible?
+    elsif (goal = goals.find { hours.goal_state(it) == :redeemable }) && user.eligible? && !ProgramWindow.current.redeem_closed?
       new(title: "redeem your #{goal.name}", detail: "your approved hours reached #{goal.hours}h.",
           href: Rails.application.routes.url_helpers.new_redemption_path(goal_key: goal.key), action: "redeem")
     elsif pet.nil?
@@ -41,14 +41,14 @@ class NextStep < Data.define(:title, :detail, :href, :action, :pet, :progress, :
     elsif unlinked?(pet)
       new(title: "link #{pet.name} to Hackatime", detail: "Hackatime counts no time on #{pet.name} yet. pick the project Godot sends its time to, so its hours count.",
           **go_to("pick-project"), pet:)
-    elsif goals.any? { hours.goal_state(it) == :ship_to_redeem } && !pet.pending_ship?
+    elsif goals.any? { hours.goal_state(it) == :ship_to_redeem } && !pet.pending_ship? && !ProgramWindow.current.ship_closed_for?(pet)
       # The prize with the most hours that all the participant's hours so
       # far, approved, pending, and unshipped, would reach once approved.
       goal = goals.select { hours.total_seconds >= it.seconds }.max_by(&:seconds)
       new(title: ship_title(pet), detail: "you have the hours for the #{goal.name}. ship to get it reviewed.", **go_to("ship"), pet:)
     elsif pet.pending_ship?
       new(title: "#{pet.name} is in review", detail: "keep building. you can ship again once it's reviewed.", **go_to("your-own"), pet:)
-    elsif pet.ships.any? && (new_seconds = pet.unshipped_seconds).positive?
+    elsif pet.ships.any? && !ProgramWindow.current.ship_closed_for?(pet) && (new_seconds = pet.unshipped_seconds).positive?
       new(title: ship_title(pet), detail: "#{Hours.format(new_seconds)} since its last ship. ship to get them reviewed.", **go_to("ship"), pet:)
     else
       goal = goals.find { hours.total_seconds < it.seconds }

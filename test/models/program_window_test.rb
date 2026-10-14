@@ -56,4 +56,14 @@ class ProgramWindowTest < ActiveSupport::TestCase
     assert_match "PROGRAM_ENDS_AT (2026-10-09 17:00) is not after PROGRAM_STARTS_AT (2026-10-10 17:00)", out
     assert_no_match "booted", out
   end
+
+  test "prize claiming closes 7 days after the window ends, at the same Eastern hour" do
+    window = ProgramWindow.load({ starts_at: "2026-09-25 17:00", ends_at: "2026-10-19 02:00" })
+    assert_equal Time.utc(2026, 10, 26, 6), window.redeem_ends_at, "2am EDT is 06:00 UTC"
+    assert_equal "October 26", window.redeem_closed_on
+    assert_not window.redeem_closed?(window.redeem_ends_at - 1.second)
+    assert window.redeem_closed?(window.redeem_ends_at)
+    across = ProgramWindow.load({ starts_at: "2026-10-01 17:00", ends_at: "2026-10-30 02:00" })
+    assert_equal Time.utc(2026, 11, 6, 7), across.redeem_ends_at, "2am EST is 07:00 UTC, not 06:00"
+  end
 end

@@ -35,4 +35,26 @@ class ProgramWindow < Data.define(:starts_at, :ends_at)
   private_class_method :time
 
   def started?(now = Time.current) = now >= starts_at
+
+  # Prizes can be claimed for 7 days after the window ends. Counted in Eastern
+  # days, so the close is the same wall-clock hour across a daylight saving change.
+  def redeem_ends_at = ends_at.in_time_zone(ZONE) + 7.days
+  def redeem_closed?(now = Time.current) = now >= redeem_ends_at
+  def redeem_closed_on = redeem_ends_at.strftime("%B %-d")
+
+  # From the end on, no new ship. A pet whose latest ship needs changes can
+  # still be shipped again until the same close as claiming prizes.
+  def ended?(now = Time.current) = now >= ends_at
+  def resubmit?(project) = project.latest_ship&.changes_needed? || false
+  def ship_closed_for?(project, now = Time.current)
+    ended?(now) && (redeem_closed?(now) || !resubmit?(project))
+  end
+
+  # A short line for a pet's ship button once the window has ended, or nil.
+  def ship_note(project, now = Time.current)
+    return unless ended?(now)
+    if !ship_closed_for?(project, now) then "resubmit by #{redeem_ends_at.strftime("%b %-d")}"
+    else "shipping closed #{(resubmit?(project) ? redeem_ends_at : ends_at.in_time_zone(ZONE)).strftime("%b %-d")}"
+    end
+  end
 end

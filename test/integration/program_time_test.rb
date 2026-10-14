@@ -68,12 +68,16 @@ class ProgramTimeTest < ActionDispatch::IntegrationTest
     get edit_project_path(@pet)
     assert_equal %w[rock-pet rock-pet-art frog-widget], picker.keys
 
-    # An hour after the end, rock-pet's last 55 minutes fall after it.
+    # An hour after the end, rock-pet's last 55 minutes fall after it. Only a
+    # pet sent back for changes ships then.
+    earlier = @pet.ships.create!(user: @pet.user, claimed_seconds: 60)
+    earlier.return_for_changes!(by: User.create!(hca_id: "ident!time-admin", admin: true), judgement: "ok", feedback: "fix it")
     travel_to WINDOW.ends_at + 1.hour
     get checks_project_path(@pet)
     assert_select ".checks li", 0
     post ship_project_path(@pet)
-    ship = @pet.ships.sole
+    ship = @pet.ships.reload.last
+    assert_equal 2, @pet.ships.size
     assert_equal @rock - 55 * 60 + 50 * 60, ship.claimed_seconds
     assert_equal({ "starts_at" => "2026-09-25T17:00:00-04:00", "ends_at" => "2026-10-09T17:00:00-04:00" }, ship.snapshot["window"])
     assert_equal 0, @pet.reload.unshipped_seconds

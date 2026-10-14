@@ -18,8 +18,13 @@
     <%# The ship popup lists only what still blocks shipping, each with its own
         fix, and ships. On the desktop it opens as a window of its own. The
         link opens the same list as a page in a new tab. %>
-    <%= link_to "ship", checks_project_path(@project), class: "btn primary", aria: { haspopup: "dialog" },
-          data: { action: "ship-popup#open:prevent" } %>
+    <% if ProgramWindow.current.ship_closed_for?(@project) %>
+      <span class="muted"><%= ProgramWindow.current.ship_note(@project) %></span>
+    <% else %>
+      <%= link_to "ship", checks_project_path(@project), class: "btn primary", aria: { haspopup: "dialog" },
+            data: { action: "ship-popup#open:prevent" } %>
+      <% if (note = ProgramWindow.current.ship_note(@project)) %><span class="muted"><%= note %></span><% end %>
+    <% end %>
     <dialog class="popup ship-popup" aria-labelledby="ship-popup-title" data-controller="popup-drag" data-ship-popup-target="dialog"
             data-action="keydown->ship-popup#trap cancel->ship-popup#save close->ship-popup#closed ship-checks:saving->ship-popup#started ship-checks:saved->ship-popup#ended screenshot-upload:changed->ship-popup#changed">
       <div class="popup-head" data-popup-drag-target="head" data-action="pointerdown->popup-drag#start pointermove->popup-drag#move pointerup->popup-drag#end pointercancel->popup-drag#end lostpointercapture->popup-drag#end">

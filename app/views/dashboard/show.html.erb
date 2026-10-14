@@ -44,7 +44,9 @@
           <p class="badge badge-approved"><%= redeemed.status == "fulfilled" ? "shipped!" : "redeemed · #{redeemed.status.tr("_", " ")}" %></p>
         <% else %>
           <p class="progress"><%= goal_progress(@hours, goal) %></p>
-          <% if state == :redeemable && current_user.eligible? && !current_user.banned? %>
+          <% if state == :redeemable && ProgramWindow.current.redeem_closed? %>
+            <p class="muted">claiming closed <%= ProgramWindow.current.redeem_ends_at.strftime("%b %-d") %></p>
+          <% elsif state == :redeemable && current_user.eligible? && !current_user.banned? %>
             <%= link_to "redeem", new_redemption_path(goal_key: goal.key), class: "btn primary" %>
           <% elsif state == :redeemable %>
             <p class="muted">verify your identity to redeem</p>
