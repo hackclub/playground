@@ -44,7 +44,7 @@ class ShipCloseTest < ActionDispatch::IntegrationTest
     travel_to WINDOW.ends_at + 1.day
     get project_path(@pet)
     assert_select "a.btn.primary", "ship"
-    assert_select ".muted", "resubmit by Oct 26"
+    assert_select ".muted", "resubmit by Nov 2"
     post ship_project_path(@pet), headers: STREAM
     assert_redirected_to project_path(@pet)
     assert_equal 2, @pet.ships.reload.count
@@ -60,7 +60,7 @@ class ShipCloseTest < ActionDispatch::IntegrationTest
     @pet.update_columns(ship_message_url: READY[:ship_message_url])
     travel_to WINDOW.redeem_ends_at
     get project_path(@pet)
-    assert_select ".muted", "shipping closed Oct 26"
+    assert_select ".muted", "shipping closed Nov 2"
     post ship_project_path(@pet), headers: STREAM
     assert_response :unprocessable_entity
     assert_equal 3, @pet.ships.reload.count
