@@ -1,6 +1,6 @@
 require "test_helper"
 
-# Prize claiming closes 7 days after the program window ends.
+# Prize claiming closes 14 days after the program window ends.
 class RedeemCloseTest < ActionDispatch::IntegrationTest
   WINDOW = ProgramWindow.load({ starts_at: "2026-09-25 17:00", ends_at: "2026-10-19 02:00" })
   SHIPPING = { shipping: { first_name: "Sam", last_name: "Dev", line_1: "15 Falls Road", city: "Shelburne", country: "US" } }.freeze
@@ -32,10 +32,10 @@ class RedeemCloseTest < ActionDispatch::IntegrationTest
       travel_to at
       get new_redemption_path(goal_key: "stickers")
       assert_redirected_to dashboard_path
-      assert_equal "prize claiming closed on October 26", flash[:alert]
+      assert_equal "prize claiming closed on November 2", flash[:alert]
       post redemptions_path(goal_key: "stickers"), params: SHIPPING
       assert_redirected_to dashboard_path
-      assert_equal "prize claiming closed on October 26", flash[:alert]
+      assert_equal "prize claiming closed on November 2", flash[:alert]
     end
     assert_empty @user.redemptions
   end
@@ -53,6 +53,6 @@ class RedeemCloseTest < ActionDispatch::IntegrationTest
     travel_to WINDOW.redeem_ends_at
     get dashboard_path
     assert_select "a[href=?]", new_redemption_path(goal_key: "stickers"), 0
-    assert_select ".goal .muted", "claiming closed Oct 26"
+    assert_select ".goal .muted", "claiming closed Nov 2"
   end
 end

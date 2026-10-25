@@ -36,9 +36,11 @@ class ProgramWindow < Data.define(:starts_at, :ends_at)
 
   def started?(now = Time.current) = now >= starts_at
 
-  # Prizes can be claimed for 7 days after the window ends. Counted in Eastern
-  # days, so the close is the same wall-clock hour across a daylight saving change.
-  def redeem_ends_at = ends_at.in_time_zone(ZONE) + 7.days
+  # Prizes can be claimed for 14 days after the window ends, 7 at first and
+  # a week more granted on 2026-10-25. Resubmission shares this close, below.
+  # Counted in Eastern days, so the close is the same wall-clock hour across
+  # a daylight saving change.
+  def redeem_ends_at = ends_at.in_time_zone(ZONE) + 14.days
   def redeem_closed?(now = Time.current) = now >= redeem_ends_at
   def redeem_closed_on = redeem_ends_at.strftime("%B %-d")
 
