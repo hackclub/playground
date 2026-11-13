@@ -64,7 +64,7 @@ end
 
 # Login through Hack Club Auth, and Hackatime OAuth for hours.
 gem "omniauth-hack_club", "~> 1.0"
-gem "omniauth-oauth2", "~> 1.8"
+gem "omniauth-oauth2", "~> 1.10"
 gem "omniauth-rails_csrf_protection", "~> 2.0"
 
 # json 3.0 changed JSON.parse's arity; ActiveSupport 8.1.3.1 still calls the
