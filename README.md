@@ -21,7 +21,7 @@ review, fraud, and fulfillment tool.
 ## Development
 
 ```sh
-mise install          # Ruby 3.4.10
+mise install          # Ruby 3.4.13
 bundle install
 bin/rails db:prepare
 bin/rails server
